@@ -9,8 +9,8 @@
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "1.00"
-#property description "BytamerFX v1.0.0 - SPM-FIFO Strateji"
+#property version     "1.10"
+#property description "BytamerFX v1.1.0 - SPM-FIFO Strateji"
 #property description "7 Katmanli Hibrit Sinyal Motoru"
 #property description "SL=YOK | Asla Zararina Satis Yok"
 #property description "Copyright 2026, By T@MER"

@@ -141,7 +141,7 @@ private:
 
       string json = "{\"embeds\":[{";
       json += "\"title\":\"" + EscapeJSON(title) + "\",";
-      json += "\"description\":\"" + description + "\",";
+      json += "\"description\":\"" + EscapeJSON(description) + "\",";
       json += "\"color\":" + IntegerToString(clr) + ",";
       json += "\"footer\":{\"text\":\"" + EscapeJSON(footer) + "\"},";
 
