@@ -1,0 +1,25 @@
+# MetaTrader 5 / MQL5 Generated Files
+*.ex5
+*.log
+*.dat
+*.bin
+*.raw
+
+# MetaTrader Cache
+MQL5/Files/
+Logs/
+Tester/
+
+# Windows
+Thumbs.db
+desktop.ini
+*.tmp
+
+# IDE
+.vs/
+*.suo
+*.user
+
+# Backup files
+*.bak
+*~
