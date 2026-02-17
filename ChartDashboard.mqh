@@ -38,13 +38,13 @@
 //| Layout Constants                                                  |
 //+------------------------------------------------------------------+
 #define DASH_FONT           "Consolas"
-#define DASH_FONT_SIZE      8
-#define DASH_HEADER_SIZE    9
-#define DASH_PANEL_W        260
+#define DASH_FONT_SIZE      9
+#define DASH_HEADER_SIZE    10
+#define DASH_PANEL_W        270
 #define DASH_PANEL_X        10
-#define DASH_LINE_H         16
+#define DASH_LINE_H         17
 #define DASH_INDENT         10
-#define DASH_VAL_X          140
+#define DASH_VAL_X          145
 
 //+------------------------------------------------------------------+
 //| CChartDashboard                                                   |
@@ -232,7 +232,7 @@ private:
    void CreatePanel1(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 250;
+      int ph = 265;
       CreatePanel("P1", baseX, baseY, pw, ph);
 
       int x = baseX + DASH_INDENT;
@@ -312,7 +312,7 @@ private:
    void CreatePanel2(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 250;
+      int ph = 270;
       CreatePanel("P2", baseX, baseY, pw, ph);
 
       int x = baseX + DASH_INDENT;
@@ -398,7 +398,7 @@ private:
    void CreatePanel3(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 120;
+      int ph = 130;
       CreatePanel("P3", baseX, baseY, pw, ph);
 
       int x = baseX + DASH_INDENT;
@@ -438,7 +438,7 @@ private:
    void CreatePanel4(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 160;
+      int ph = 175;
       CreatePanel("P4", baseX, baseY, pw, ph);
 
       int x = baseX + DASH_INDENT;
@@ -843,10 +843,10 @@ public:
       //--- Create all 4 panels
       int x = m_panelX;
 
-      CreatePanel1(x, 30);    // y=30,   h=250
-      CreatePanel2(x, 290);   // y=290,  h=250
-      CreatePanel3(x, 550);   // y=550,  h=120
-      CreatePanel4(x, 680);   // y=680,  h=160
+      CreatePanel1(x, 30);    // y=30,   h=265
+      CreatePanel2(x, 305);   // y=305,  h=270
+      CreatePanel3(x, 585);   // y=585,  h=130
+      CreatePanel4(x, 725);   // y=725,  h=175
 
       ChartRedraw(m_chartId);
 

@@ -17,10 +17,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "1.0.0"
-#define EA_VERSION_NUM    "1.00"
+#define EA_VERSION        "1.1.0"
+#define EA_VERSION_NUM    "1.10"
 #define EA_VERSION_NAME   "SPM-FIFO"
-#define EA_VERSION_FULL   "BytamerFX v1.0.0 - SPM-FIFO"
+#define EA_VERSION_FULL   "BytamerFX v1.1.0 - SPM-FIFO"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
