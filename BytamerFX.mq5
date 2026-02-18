@@ -3,16 +3,16 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v1.2.0 - SPM-FIFO                                     |
+//| BytamerFX v1.3.0 - SmartSPM                                      |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
-//| Dinamik Lot | Kar Odakli SPM | Chart Overlay Indikator           |
+//| 5-Oy SPM Yon | Guclu Hedge Lot | Chart Overlay Indikator         |
 //| Hesap: 262230423 (Exness)                                        |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "1.20"
-#property description "BytamerFX v1.2.0 - SPM-FIFO Strateji"
-#property description "7 Katmanli Hibrit Sinyal + Kar Odakli SPM"
+#property version     "1.30"
+#property description "BytamerFX v1.3.0 - SmartSPM Strateji"
+#property description "5-Oy SPM Yon + Guclu Hedge + Akilli Bekleme"
 #property description "SL=YOK | Asla Zararina Satis Yok"
 #property description "Copyright 2026, By T@MER"
 #property strict

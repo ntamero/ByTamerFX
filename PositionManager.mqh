@@ -5,7 +5,8 @@
 //|                                    Copyright 2026, By T@MER      |
 //|                                    https://www.bytamer.com        |
 //|                                                                  |
-//|              SPM + FIFO KAR ODAKLI SISTEM v1.2.0                 |
+//|              SPM + FIFO KAR ODAKLI SISTEM v1.3.0                 |
+//|              SmartSPM: 5-Oy Yon + Guclu Hedge + Trend Bekle     |
 //+------------------------------------------------------------------+
 //|  KURALLAR:                                                       |
 //|  1. SL YOK - ASLA                                                |
@@ -13,7 +14,8 @@
 //|     SPM1 yonu: Trend + Sinyal + Mum cogunlugu ile belirlenir    |
 //|  3. SPM1 -3$ zarara gecti -> SPM2 ac (SPM1 tersine)             |
 //|  4. SPM2 -3$ zarara gecti -> SPM3 ac (SPM2 tersine)             |
-//|  5. Donus deseni: SPM1,3,5=ayni yon | SPM2,4,6=karsi yon       |
+//|  5. SPM yon: 5-oy sistemi (Trend,Sinyal,Mum,MACD,DI)           |
+//|     ASLA zarardaki ANA yonunde SPM acma (CheckSameDirectionBlock)|
 //|  6. SPM +4$ karda -> KAPAT, FIFO'ya ekle                        |
 //|  7. FIFO: spm_karlar_toplami - |ana_zarar| >= +5$ -> ANA kapat  |
 //|  8. AMA: Trend ANA yonune donuyorsa -> BEKLE                    |
@@ -73,6 +75,10 @@ private:
    //--- Peak profit tracking
    double               m_peakProfit[];
 
+   //--- SPM wait for ANA recovery
+   datetime             m_spmWaitStart;
+   bool                 m_spmWaitActive;
+
    //--- Main ticket
    bool                 m_adoptionDone;
    ulong                m_mainTicket;
@@ -101,9 +107,11 @@ private:
    void ManageActiveSPMs(int mainIdx);
    void CheckFIFOTarget();
 
-   //--- Direction logic
+   //--- Direction logic (5-oy sistemi)
    ENUM_SIGNAL_DIR DetermineSPMDirection(int parentLayer);
    ENUM_SIGNAL_DIR GetCandleDirection();
+   bool CheckSameDirectionBlock(ENUM_SIGNAL_DIR proposedDir);
+   bool ShouldWaitForANARecovery(int mainIdx);
 
    //--- Lot balance
    bool CheckLotBalance(ENUM_SIGNAL_DIR newDir, double newLot);
@@ -180,6 +188,8 @@ CPositionManager::CPositionManager()
    m_lastSPMTime         = 0;
    m_lastStatusLog       = 0;
    m_fifoWaitStart       = 0;
+   m_spmWaitStart        = 0;
+   m_spmWaitActive       = false;
 
    m_tpExtended          = false;
    m_currentTPLevel      = 0;
@@ -224,13 +234,13 @@ void CPositionManager::Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat,
 
    m_candle.Initialize(m_symbol, PERIOD_M15);
 
-   PrintFormat("[PM-%s] PositionManager v1.2.0 | Cat=%s | Balance=%.2f",
+   PrintFormat("[PM-%s] PositionManager v1.3.0 SmartSPM | Cat=%s | Balance=%.2f",
                m_symbol, GetCatName(), m_startBalance);
    PrintFormat("[PM-%s] SPM: Trigger=$%.1f | Close=$%.1f | Net=$%.1f | MaxLayers=%d",
                m_symbol, SPM_TriggerLossUSD, SPM_CloseProfitUSD, SPM_NetTargetUSD, SPM_MaxLayers);
-   PrintFormat("[PM-%s] SPM Lot: Base=%.1f | Increment=%.2f | Cooldown=%ds",
-               m_symbol, SPM_LotBase, SPM_LotIncrement, SPM_CooldownSec);
-   PrintFormat("[PM-%s] KAR ODAKLI: Kucuk karlari topla, kasaya ekle, SPM ile hedge",
+   PrintFormat("[PM-%s] SPM Lot: Base=%.1f | Inc=%.2f | Cap=%.1f | Cooldown=%ds | Wait=%ds",
+               m_symbol, SPM_LotBase, SPM_LotIncrement, SPM_LotCap, SPM_CooldownSec, SPM_WaitMaxSec);
+   PrintFormat("[PM-%s] SmartSPM: 5-Oy Yon + SameDir Block + Trend Bekle + Guclu Hedge",
                m_symbol);
 
    AdoptExistingPositions();
@@ -781,12 +791,29 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
    double totalVol = GetTotalBuyLots() + GetTotalSellLots();
    if(totalVol >= MaxTotalVolume) return;
 
-   //--- SPM1 yonu: Trend + Sinyal + Mum cogunlugu
+   //--- v1.3.0: ANA toparlanma bekleme kontrolu
+   if(ShouldWaitForANARecovery(mainIdx))
+   {
+      PrintFormat("[PM-%s] SPM1 BEKLE: Trend ANA yonune donuyor, toparlanma bekleniyor.", m_symbol);
+      return;
+   }
+
+   //--- SPM1 yonu: 5-OY gercek zamanli piyasa analizi
    ENUM_SIGNAL_DIR spmDir = DetermineSPMDirection(0);
 
    if(spmDir == SIGNAL_NONE)
    {
       // Fallback: ana tersine
+      if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
+         spmDir = SIGNAL_SELL;
+      else
+         spmDir = SIGNAL_BUY;
+   }
+
+   //--- v1.3.0: Ayni yon bloklama - ASLA zarardaki yonde ikiye katlama
+   if(CheckSameDirectionBlock(spmDir))
+   {
+      PrintFormat("[PM-%s] SPM1 SAME-DIR BLOCK! Override: ANA tersine zorunlu.", m_symbol);
       if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
          spmDir = SIGNAL_SELL;
       else
@@ -851,9 +878,25 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
          double totalVol = GetTotalBuyLots() + GetTotalSellLots();
          if(totalVol >= MaxTotalVolume) continue;
 
-         //--- Yon: Bir onceki SPM'nin TERSINE
-         // SPM2 = SPM1 tersine, SPM3 = SPM2 tersine...
+         //--- v1.3.0: ANA toparlanma bekleme kontrolu
+         if(ShouldWaitForANARecovery(mainIdx))
+         {
+            PrintFormat("[PM-%s] SPM%d BEKLE: Trend ANA yonune donuyor.", m_symbol, nextLayer);
+            continue;
+         }
+
+         //--- Yon: 5-OY gercek zamanli piyasa analizi (v1.3.0)
          ENUM_SIGNAL_DIR nextDir = DetermineSPMDirection(spmLayer);
+
+         //--- v1.3.0: Ayni yon bloklama
+         if(CheckSameDirectionBlock(nextDir))
+         {
+            PrintFormat("[PM-%s] SPM%d SAME-DIR BLOCK! Override: ANA tersine zorunlu.", m_symbol, nextLayer);
+            if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
+               nextDir = SIGNAL_SELL;
+            else
+               nextDir = SIGNAL_BUY;
+         }
 
          // Lot
          double nextLot = CalcSPMLot(m_positions[mainIdx].volume, nextLayer);
@@ -875,50 +918,24 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
 }
 
 //+------------------------------------------------------------------+
-//| DetermineSPMDirection - SPM yon belirleme                        |
-//| parentLayer=0: Trend+Sinyal+Mum cogunlugu (SPM1 icin)           |
-//| parentLayer>=1: Parent SPM'nin TERSINE                           |
+//| DetermineSPMDirection - 5-OY GERCEK ZAMANLI PIYASA ANALIZI      |
+//| TUM katmanlar (SPM1-6) ayni 5-oy sistemi kullanir               |
+//| Asla parent SPM'nin tersi degil, piyasanin GERCEK yonu          |
 //+------------------------------------------------------------------+
 ENUM_SIGNAL_DIR CPositionManager::DetermineSPMDirection(int parentLayer)
 {
-   //--- Layer 1+: Bir onceki SPM'nin TERSINE
-   if(parentLayer >= 1)
-   {
-      // Parent SPM'yi bul
-      for(int i = 0; i < m_posCount; i++)
-      {
-         if(m_positions[i].role == ROLE_SPM && m_positions[i].spmLayer == parentLayer)
-         {
-            if(m_positions[i].type == POSITION_TYPE_BUY)
-               return SIGNAL_SELL;
-            else
-               return SIGNAL_BUY;
-         }
-      }
-      // Parent bulunamadi - ana tersine
-      int mainIdx = FindMainPosition();
-      if(mainIdx >= 0)
-      {
-         if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
-            return SIGNAL_SELL;
-         else
-            return SIGNAL_BUY;
-      }
-      return SIGNAL_NONE;
-   }
-
-   //--- Layer 0 (SPM1): Trend + Sinyal + Mum COGUNLUGU
    int buyVotes = 0, sellVotes = 0;
 
-   // OY 1: Trend yonu
+   //--- OY 1: H1 Trend (EMA hizalamasi)
+   ENUM_SIGNAL_DIR trendDir = SIGNAL_NONE;
    if(m_signalEngine != NULL)
    {
-      ENUM_SIGNAL_DIR trendDir = m_signalEngine.GetCurrentTrend();
+      trendDir = m_signalEngine.GetCurrentTrend();
       if(trendDir == SIGNAL_BUY) buyVotes++;
       else if(trendDir == SIGNAL_SELL) sellVotes++;
    }
 
-   // OY 2: Sinyal gucune gore
+   //--- OY 2: Sinyal Skoru (7-katman tam analiz)
    if(m_signalEngine != NULL)
    {
       SignalData sig = m_signalEngine.Evaluate();
@@ -926,23 +943,39 @@ ENUM_SIGNAL_DIR CPositionManager::DetermineSPMDirection(int parentLayer)
       else if(sig.direction == SIGNAL_SELL && sig.score >= 25) sellVotes++;
    }
 
-   // OY 3: Mum hareket yonu
+   //--- OY 3: M15 Mum Yonu (son kapanan mum)
    ENUM_SIGNAL_DIR candleDir = GetCandleDirection();
    if(candleDir == SIGNAL_BUY) buyVotes++;
    else if(candleDir == SIGNAL_SELL) sellVotes++;
 
-   // Cogunluk
+   //--- OY 4: MACD Histogram Momentum
+   if(m_signalEngine != NULL)
+   {
+      double macdHist = m_signalEngine.GetMACDHist();
+      if(macdHist > 0) buyVotes++;
+      else if(macdHist < 0) sellVotes++;
+   }
+
+   //--- OY 5: DI Crossover (+DI vs -DI)
+   if(m_signalEngine != NULL)
+   {
+      double plusDI  = m_signalEngine.GetPlusDI();
+      double minusDI = m_signalEngine.GetMinusDI();
+      if(plusDI > minusDI) buyVotes++;
+      else if(minusDI > plusDI) sellVotes++;
+   }
+
+   //--- Cogunluk karari
+   PrintFormat("[PM-%s] 5-OY SPM%d: BUY=%d SELL=%d",
+               m_symbol, parentLayer + 1, buyVotes, sellVotes);
+
    if(buyVotes > sellVotes) return SIGNAL_BUY;
    if(sellVotes > buyVotes) return SIGNAL_SELL;
 
-   // Esitlik: trend yonunu kullan
-   if(m_signalEngine != NULL)
-   {
-      ENUM_SIGNAL_DIR trendDir = m_signalEngine.GetCurrentTrend();
-      if(trendDir != SIGNAL_NONE) return trendDir;
-   }
+   //--- Esitlik: H1 trend yonunu kullan
+   if(trendDir != SIGNAL_NONE) return trendDir;
 
-   // Hala belirsiz: ana tersine
+   //--- Hala belirsiz: ANA tersine (guvenli fallback)
    int mainIdx = FindMainPosition();
    if(mainIdx >= 0)
    {
@@ -951,6 +984,87 @@ ENUM_SIGNAL_DIR CPositionManager::DetermineSPMDirection(int parentLayer)
    }
 
    return SIGNAL_NONE;
+}
+
+//+------------------------------------------------------------------+
+//| CheckSameDirectionBlock - MUTLAK GUVENLIK                        |
+//| SPM yonu == ANA yonu VE ANA zararda → ENGELLE                   |
+//| Asla zarardaki yonde ikiye katlanmaz                             |
+//+------------------------------------------------------------------+
+bool CPositionManager::CheckSameDirectionBlock(ENUM_SIGNAL_DIR proposedDir)
+{
+   int mainIdx = FindMainPosition();
+   if(mainIdx < 0) return false;
+
+   ENUM_SIGNAL_DIR mainDir = SIGNAL_NONE;
+   if(m_positions[mainIdx].type == POSITION_TYPE_BUY) mainDir = SIGNAL_BUY;
+   else mainDir = SIGNAL_SELL;
+
+   if(proposedDir == mainDir && m_positions[mainIdx].profit < 0.0)
+   {
+      PrintFormat("[PM-%s] SAME-DIR BLOCK: SPM %s == ANA %s, ANA P/L=$%.2f < 0 -> ENGELLENDI",
+                  m_symbol,
+                  (proposedDir == SIGNAL_BUY) ? "BUY" : "SELL",
+                  (mainDir == SIGNAL_BUY) ? "BUY" : "SELL",
+                  m_positions[mainIdx].profit);
+      return true;
+   }
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| ShouldWaitForANARecovery - Trend Bekleme Mekanizmasi             |
+//| Trend+Mum+MACD ANA yonune donuyorsa → BEKLE (max SPM_WaitMaxSec)|
+//| ANA kara gecebilir, gereksiz SPM acmayi onler                   |
+//+------------------------------------------------------------------+
+bool CPositionManager::ShouldWaitForANARecovery(int mainIdx)
+{
+   if(mainIdx < 0) return false;
+
+   ENUM_SIGNAL_DIR mainDir = SIGNAL_NONE;
+   if(m_positions[mainIdx].type == POSITION_TYPE_BUY) mainDir = SIGNAL_BUY;
+   else mainDir = SIGNAL_SELL;
+
+   //--- Trend kontrolu
+   ENUM_SIGNAL_DIR tDir = SIGNAL_NONE;
+   if(m_signalEngine != NULL)
+      tDir = m_signalEngine.GetCurrentTrend();
+
+   //--- Mum kontrolu
+   ENUM_SIGNAL_DIR cDir = GetCandleDirection();
+
+   //--- MACD momentum kontrolu
+   bool macdAligned = false;
+   if(m_signalEngine != NULL)
+   {
+      double macdHist = m_signalEngine.GetMACDHist();
+      if(mainDir == SIGNAL_BUY && macdHist > 0) macdAligned = true;
+      if(mainDir == SIGNAL_SELL && macdHist < 0) macdAligned = true;
+   }
+
+   //--- UC UCU ANA yonune donuyorsa → BEKLE
+   if(tDir == mainDir && cDir == mainDir && macdAligned)
+   {
+      if(!m_spmWaitActive)
+      {
+         m_spmWaitStart = TimeCurrent();
+         m_spmWaitActive = true;
+         PrintFormat("[PM-%s] SPM BEKLE: Trend+Mum+MACD ANA yonune donuyor. MaxBekle=%dsn",
+                     m_symbol, SPM_WaitMaxSeconds);
+      }
+
+      if(TimeCurrent() - m_spmWaitStart < SPM_WaitMaxSeconds)
+         return true;
+
+      PrintFormat("[PM-%s] SPM BEKLE SURESI DOLDU (%dsn). ANA hala zararda, SPM aciliyor.",
+                  m_symbol, SPM_WaitMaxSeconds);
+      m_spmWaitActive = false;
+      return false;
+   }
+
+   //--- Hizalanma yok → bekleme yok, SPM hemen ac
+   m_spmWaitActive = false;
+   return false;
 }
 
 //+------------------------------------------------------------------+
@@ -1065,7 +1179,23 @@ bool CPositionManager::CheckLotBalance(ENUM_SIGNAL_DIR newDir, double newLot)
    else if(newDir == SIGNAL_SELL)
       proposedSell += newLot;
 
-   // 2:1 oran limiti - tek tarafli risk onleme
+   //--- v1.3.0: Tek tarafli birikim korumasi
+   // Sadece bir tarafta pozisyon varsa, o tarafin max hacmi sinirla
+   double oneSideMax = MaxTotalVolume * 0.6;  // Tek taraf max = toplam hacmin %60'i
+   if(proposedSell <= 0.0 && proposedBuy > oneSideMax)
+   {
+      PrintFormat("[PM-%s] TEK TARAF KORUMA: Sadece BUY=%.2f > %.2f (MaxVol*0.6)",
+                  m_symbol, proposedBuy, oneSideMax);
+      return false;
+   }
+   if(proposedBuy <= 0.0 && proposedSell > oneSideMax)
+   {
+      PrintFormat("[PM-%s] TEK TARAF KORUMA: Sadece SELL=%.2f > %.2f (MaxVol*0.6)",
+                  m_symbol, proposedSell, oneSideMax);
+      return false;
+   }
+
+   // 2.5:1 oran limiti - iki tarafli risk onleme
    if(proposedBuy > 0 && proposedSell > 0)
    {
       double ratio = MathMax(proposedBuy, proposedSell) / MathMin(proposedBuy, proposedSell);
@@ -1090,14 +1220,15 @@ bool CPositionManager::CheckLotBalance(ENUM_SIGNAL_DIR newDir, double newLot)
 }
 
 //+------------------------------------------------------------------+
-//| CalcSPMLot - Yukselen carpanli lot hesaplama                     |
-//| Layer 1: mainLot * 1.0                                          |
-//| Layer 2: mainLot * 1.1                                          |
-//| Layer 3: mainLot * 1.2  vb.                                     |
+//| CalcSPMLot - Guclu hedge carpanli lot hesaplama (v1.3.0)         |
+//| Layer 1: mainLot * 1.5  (SPM_LotBase)                           |
+//| Layer 2: mainLot * 1.8  (+SPM_LotIncrement)                     |
+//| Layer 3: mainLot * 2.1  (max SPM_LotCap=2.2)                    |
 //+------------------------------------------------------------------+
 double CPositionManager::CalcSPMLot(double mainLot, int layer)
 {
    double multiplier = SPM_LotMultiplier + (layer - 1) * SPM_LotIncrement;
+   if(multiplier > SPM_LotCap) multiplier = SPM_LotCap;  // v1.3.0: Max carpan siniri
    double lot = mainLot * multiplier;
 
    // ADX bonusu: guclu trend -> biraz daha buyuk lot
