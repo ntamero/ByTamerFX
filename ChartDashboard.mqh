@@ -3,8 +3,10 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v1.0.0 - 4 Panel Chart Dashboard                      |
-//| Real-time EA information display                                 |
+//| BytamerFX v1.2.0 - 4 Panel Chart Dashboard + Chart Overlay       |
+//| Real-time EA information display with indicator overlays          |
+//| Panels: ANA BILGILER, SINYAL SKOR, TP+INDIKATOR, SPM+FIFO       |
+//| Overlay: Bollinger Bands, Parabolic SAR, Momentum                |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, By T@MER"
 #property link      "https://www.bytamer.com"
@@ -40,11 +42,17 @@
 #define DASH_FONT           "Consolas"
 #define DASH_FONT_SIZE      9
 #define DASH_HEADER_SIZE    10
-#define DASH_PANEL_W        270
+#define DASH_PANEL_W        300
 #define DASH_PANEL_X        10
 #define DASH_LINE_H         17
 #define DASH_INDENT         10
-#define DASH_VAL_X          145
+#define DASH_VAL_X          155
+
+//+------------------------------------------------------------------+
+//| Indicator Overlay Constants                                       |
+//+------------------------------------------------------------------+
+#define IND_OVERLAY_BARS    50
+#define IND_OVERLAY_COOLDOWN 2
 
 //+------------------------------------------------------------------+
 //| CChartDashboard                                                   |
@@ -65,7 +73,17 @@ private:
    //--- Layout
    int m_panelX, m_panelY, m_panelW, m_panelH;
 
-   //--- Helper: Create background panel
+   //--- Indicator handles (chart overlay)
+   int               m_hSAR;
+   int               m_hMomentum;
+   int               m_hBB;
+
+   //--- Overlay throttling
+   datetime          m_lastOverlayDraw;
+
+   //=================================================================
+   // HELPER: Create background panel
+   //=================================================================
    void CreatePanel(string name, int x, int y, int w, int h)
    {
       string objName = "BTFX_" + name;
@@ -83,7 +101,9 @@ private:
       ObjectSetInteger(m_chartId, objName, OBJPROP_HIDDEN, true);
    }
 
-   //--- Helper: Create text label
+   //=================================================================
+   // HELPER: Create text label
+   //=================================================================
    void CreateLabel(string name, int x, int y, string text, color clr,
                     int fontSize = DASH_FONT_SIZE, string fontName = DASH_FONT)
    {
@@ -101,7 +121,9 @@ private:
       ObjectSetInteger(m_chartId, objName, OBJPROP_HIDDEN, true);
    }
 
-   //--- Helper: Create progress bar (bg + fill)
+   //=================================================================
+   // HELPER: Create progress bar (bg + fill)
+   //=================================================================
    void CreateProgressBar(string name, int x, int y, int w, int h,
                           double percent, color fillClr, color bgClr)
    {
@@ -140,7 +162,9 @@ private:
       ObjectSetInteger(m_chartId, fillName, OBJPROP_HIDDEN, true);
    }
 
-   //--- Helper: Update label text and color
+   //=================================================================
+   // HELPER: Update label text and color
+   //=================================================================
    void UpdateLabel(string name, string text, color clr)
    {
       string objName = "BTFX_" + name;
@@ -148,7 +172,9 @@ private:
       ObjectSetInteger(m_chartId, objName, OBJPROP_COLOR, clr);
    }
 
-   //--- Helper: Update progress bar fill
+   //=================================================================
+   // HELPER: Update progress bar fill
+   //=================================================================
    void UpdateProgressBar(string name, double percent, color fillClr)
    {
       double pct = MathMax(0.0, MathMin(percent, 100.0));
@@ -165,7 +191,9 @@ private:
       ObjectSetInteger(m_chartId, fillName, OBJPROP_BORDER_COLOR, fillClr);
    }
 
-   //--- Helper: Color by sign
+   //=================================================================
+   // HELPER: Color by sign
+   //=================================================================
    color ColorBySign(double value)
    {
       if(value > 0.0) return CLR_POSITIVE;
@@ -173,7 +201,9 @@ private:
       return CLR_VALUE;
    }
 
-   //--- Helper: Category name
+   //=================================================================
+   // HELPER: Category name
+   //=================================================================
    string GetCategoryName(ENUM_SYMBOL_CATEGORY cat)
    {
       switch(cat)
@@ -188,14 +218,18 @@ private:
       }
    }
 
-   //--- Helper: RSI color
+   //=================================================================
+   // HELPER: RSI color
+   //=================================================================
    color GetRSIColor(double rsi)
    {
       if(rsi < 30.0 || rsi > 70.0) return CLR_WARNING;
       return CLR_VALUE;
    }
 
-   //--- Helper: ADX color
+   //=================================================================
+   // HELPER: ADX color
+   //=================================================================
    color GetADXColor(double adx)
    {
       if(adx > 30.0)  return CLR_POSITIVE;
@@ -203,7 +237,9 @@ private:
       return CLR_NEGATIVE;
    }
 
-   //--- Helper: Trend strength string and color
+   //=================================================================
+   // HELPER: Trend strength string
+   //=================================================================
    string GetTrendStr(ENUM_TREND_STRENGTH ts)
    {
       switch(ts)
@@ -214,6 +250,9 @@ private:
       }
    }
 
+   //=================================================================
+   // HELPER: Trend strength color
+   //=================================================================
    color GetTrendColor(ENUM_TREND_STRENGTH ts)
    {
       switch(ts)
@@ -225,101 +264,101 @@ private:
    }
 
    //=================================================================
-   // PANEL CREATION METHODS
+   // PANEL 1 CREATION: ANA BILGILER  (y=30, h=285)
    //=================================================================
-
-   //--- Panel 1: ANA BILGILER
    void CreatePanel1(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 265;
+      int ph = 285;
       CreatePanel("P1", baseX, baseY, pw, ph);
 
-      int x = baseX + DASH_INDENT;
+      int x  = baseX + DASH_INDENT;
       int vx = baseX + DASH_VAL_X;
-      int y = baseY + 6;
+      int y  = baseY + 6;
 
       //--- Header
       CreateLabel("P1_HDR", x, y, "ANA BILGILER", CLR_HEADER, DASH_HEADER_SIZE);
       y += DASH_LINE_H + 2;
 
-      //--- Version
+      //--- Row 1: Versiyon
       CreateLabel("P1_VER_L", x, y, "Versiyon:", CLR_LABEL);
       CreateLabel("P1_VER_V", vx, y, EA_VERSION_FULL, CLR_HEADER);
       y += DASH_LINE_H;
 
-      //--- Balance
+      //--- Row 2: Bakiye
       CreateLabel("P1_BAL_L", x, y, "Bakiye:", CLR_LABEL);
       CreateLabel("P1_BAL_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Equity
+      //--- Row 3: Varlik
       CreateLabel("P1_EQ_L", x, y, "Varlik:", CLR_LABEL);
       CreateLabel("P1_EQ_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Margin Level
+      //--- Row 4: Marjin
       CreateLabel("P1_MRG_L", x, y, "Marjin:", CLR_LABEL);
       CreateLabel("P1_MRG_V", vx, y, "0.00%", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Symbol + Category
+      //--- Row 5: Sembol
       CreateLabel("P1_SYM_L", x, y, "Sembol:", CLR_LABEL);
       CreateLabel("P1_SYM_V", vx, y, m_symbol, CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- RSI
+      //--- Row 6: RSI(14)
       CreateLabel("P1_RSI_L", x, y, "RSI(14):", CLR_LABEL);
       CreateLabel("P1_RSI_V", vx, y, "0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- ADX
+      //--- Row 7: ADX(14)
       CreateLabel("P1_ADX_L", x, y, "ADX(14):", CLR_LABEL);
       CreateLabel("P1_ADX_V", vx, y, "0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- ATR
+      //--- Row 8: ATR(14)
       CreateLabel("P1_ATR_L", x, y, "ATR(14):", CLR_LABEL);
       CreateLabel("P1_ATR_V", vx, y, "0.00000", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Spread
+      //--- Row 9: Spread
       CreateLabel("P1_SPR_L", x, y, "Spread:", CLR_LABEL);
       CreateLabel("P1_SPR_V", vx, y, "0.0 / 0.0", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Positions
+      //--- Row 10: Pozisyon
       CreateLabel("P1_POS_L", x, y, "Pozisyon:", CLR_LABEL);
       CreateLabel("P1_POS_V", vx, y, "0 (SPM:0)", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Trend
+      //--- Row 11: Trend
       CreateLabel("P1_TRD_L", x, y, "Trend:", CLR_LABEL);
       CreateLabel("P1_TRD_V", vx, y, "---", CLR_LABEL);
       y += DASH_LINE_H;
 
-      //--- Trading Status
+      //--- Row 12: Durum
       CreateLabel("P1_STS_L", x, y, "Durum:", CLR_LABEL);
       CreateLabel("P1_STS_V", vx, y, "Aktif", CLR_POSITIVE);
       y += DASH_LINE_H;
 
-      //--- DI Values
+      //--- Row 13: +DI / -DI
       CreateLabel("P1_DI_L", x, y, "+DI / -DI:", CLR_LABEL);
       CreateLabel("P1_DI_V", vx, y, "0.0 / 0.0", CLR_VALUE);
    }
 
-   //--- Panel 2: SINYAL SKOR
+   //=================================================================
+   // PANEL 2 CREATION: SINYAL SKOR  (y=325, h=290)
+   //=================================================================
    void CreatePanel2(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 270;
+      int ph = 290;
       CreatePanel("P2", baseX, baseY, pw, ph);
 
-      int x = baseX + DASH_INDENT;
-      int vx = baseX + DASH_VAL_X;
+      int x    = baseX + DASH_INDENT;
+      int vx   = baseX + DASH_VAL_X;
       int barX = baseX + DASH_INDENT;
       int barW = pw - 2 * DASH_INDENT;
-      int y = baseY + 6;
+      int y    = baseY + 6;
 
       //--- Header
       CreateLabel("P2_HDR", x, y, "SINYAL SKOR", CLR_HEADER, DASH_HEADER_SIZE);
@@ -344,69 +383,70 @@ private:
       CreateLabel("P2_DIR_V", vx, y, "---", CLR_LABEL);
       y += DASH_LINE_H + 2;
 
-      //--- Breakdown: 7 layers
-      //--- EMA Trend
+      //--- Layer 1: EMA Trend (0/20)
       CreateLabel("P2_EMA_L", x, y, "EMA Trend:", CLR_LABEL);
       CreateLabel("P2_EMA_V", vx, y, "0/20", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_EMA_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
-      //--- MACD Momentum
+      //--- Layer 2: MACD Momentum (0/20)
       CreateLabel("P2_MACD_L", x, y, "MACD Mom.:", CLR_LABEL);
       CreateLabel("P2_MACD_V", vx, y, "0/20", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_MACD_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
-      //--- ADX Strength
+      //--- Layer 3: ADX Strength (0/15)
       CreateLabel("P2_ADXS_L", x, y, "ADX Guc:", CLR_LABEL);
       CreateLabel("P2_ADXS_V", vx, y, "0/15", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_ADXS_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
-      //--- RSI Level
+      //--- Layer 4: RSI Level (0/15)
       CreateLabel("P2_RSIL_L", x, y, "RSI Svye:", CLR_LABEL);
       CreateLabel("P2_RSIL_V", vx, y, "0/15", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_RSIL_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
-      //--- BB Position
+      //--- Layer 5: BB Position (0/15)
       CreateLabel("P2_BB_L", x, y, "BB Pozisyn:", CLR_LABEL);
       CreateLabel("P2_BB_V", vx, y, "0/15", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_BB_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
-      //--- Stoch Signal
+      //--- Layer 6: Stoch Signal (0/10)
       CreateLabel("P2_STCH_L", x, y, "Stoch Sny:", CLR_LABEL);
       CreateLabel("P2_STCH_V", vx, y, "0/10", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_STCH_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
-      //--- ATR Volatility
+      //--- Layer 7: ATR Volatility (0/5)
       CreateLabel("P2_ATRV_L", x, y, "ATR Volat:", CLR_LABEL);
       CreateLabel("P2_ATRV_V", vx, y, "0/5", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_ATRV_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
    }
 
-   //--- Panel 3: TP HEDEFLERI
+   //=================================================================
+   // PANEL 3 CREATION: TP HEDEFLERI + INDIKATORLER  (y=625, h=165)
+   //=================================================================
    void CreatePanel3(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 130;
+      int ph = 165;
       CreatePanel("P3", baseX, baseY, pw, ph);
 
-      int x = baseX + DASH_INDENT;
+      int x  = baseX + DASH_INDENT;
       int vx = baseX + DASH_VAL_X;
-      int y = baseY + 6;
+      int y  = baseY + 6;
 
       //--- Header
-      CreateLabel("P3_HDR", x, y, "TP HEDEFLERI", CLR_HEADER, DASH_HEADER_SIZE);
+      CreateLabel("P3_HDR", x, y, "TP + INDIKATORLER", CLR_HEADER, DASH_HEADER_SIZE);
       y += DASH_LINE_H + 2;
 
       //--- TP1
@@ -424,7 +464,7 @@ private:
       CreateLabel("P3_TP3_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Current Level
+      //--- TP Level
       CreateLabel("P3_LVL_L", x, y, "TP Seviye:", CLR_LABEL);
       CreateLabel("P3_LVL_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
@@ -432,20 +472,37 @@ private:
       //--- Trend Strength
       CreateLabel("P3_TST_L", x, y, "Trend Guc:", CLR_LABEL);
       CreateLabel("P3_TST_V", vx, y, "---", CLR_LABEL);
+      y += DASH_LINE_H;
+
+      //--- Parabolic SAR value + direction
+      CreateLabel("P3_SAR_L", x, y, "SAR:", CLR_LABEL);
+      CreateLabel("P3_SAR_V", vx, y, "---", CLR_VALUE);
+      y += DASH_LINE_H;
+
+      //--- Momentum value + direction
+      CreateLabel("P3_MOM_L", x, y, "Mom:", CLR_LABEL);
+      CreateLabel("P3_MOM_V", vx, y, "---", CLR_VALUE);
+      y += DASH_LINE_H;
+
+      //--- BB Squeeze status
+      CreateLabel("P3_BSQ_L", x, y, "BB:", CLR_LABEL);
+      CreateLabel("P3_BSQ_V", vx, y, "---", CLR_VALUE);
    }
 
-   //--- Panel 4: SPM+FIFO
+   //=================================================================
+   // PANEL 4 CREATION: SPM + FIFO  (y=800, h=195)
+   //=================================================================
    void CreatePanel4(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 175;
+      int ph = 195;
       CreatePanel("P4", baseX, baseY, pw, ph);
 
-      int x = baseX + DASH_INDENT;
-      int vx = baseX + DASH_VAL_X;
+      int x    = baseX + DASH_INDENT;
+      int vx   = baseX + DASH_VAL_X;
       int barX = baseX + DASH_INDENT;
       int barW = pw - 2 * DASH_INDENT;
-      int y = baseY + 6;
+      int y    = baseY + 6;
 
       //--- Header
       CreateLabel("P4_HDR", x, y, "SPM + FIFO", CLR_HEADER, DASH_HEADER_SIZE);
@@ -481,7 +538,7 @@ private:
       CreateLabel("P4_TGT_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Progress
+      //--- Progress percentage
       CreateLabel("P4_PCT_L", x, y, "Ilerleme:", CLR_LABEL);
       CreateLabel("P4_PCT_V", vx, y, "0.0%", CLR_VALUE);
       y += DASH_LINE_H;
@@ -491,27 +548,21 @@ private:
    }
 
    //=================================================================
-   // PANEL UPDATE METHODS
+   // PANEL 1 UPDATE: ANA BILGILER
    //=================================================================
-
-   //--- Update Panel 1
    void UpdatePanel1()
    {
       //--- Account info
-      double balance    = AccountInfoDouble(ACCOUNT_BALANCE);
-      double equity     = AccountInfoDouble(ACCOUNT_EQUITY);
-      double marginLvl  = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
+      double balance   = AccountInfoDouble(ACCOUNT_BALANCE);
+      double equity    = AccountInfoDouble(ACCOUNT_EQUITY);
+      double marginLvl = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
 
-      //--- Balance color
-      color balClr;
-      if(balance < 50.0) balClr = CLR_WARNING;
-      else               balClr = CLR_VALUE;
+      //--- Balance
+      color balClr = (balance < 50.0) ? CLR_WARNING : CLR_VALUE;
       UpdateLabel("P1_BAL_V", StringFormat("$%.2f", balance), balClr);
 
-      //--- Equity color
-      color eqClr;
-      if(equity < balance) eqClr = CLR_NEGATIVE;
-      else                 eqClr = CLR_POSITIVE;
+      //--- Equity
+      color eqClr = (equity < balance) ? CLR_NEGATIVE : CLR_POSITIVE;
       UpdateLabel("P1_EQ_V", StringFormat("$%.2f", equity), eqClr);
 
       //--- Margin level
@@ -529,9 +580,9 @@ private:
       //--- Indicators from signal engine
       if(m_engine != NULL)
       {
-         double rsi = m_engine.GetRSI();
-         double adx = m_engine.GetADX();
-         double atr = m_engine.GetATR();
+         double rsi    = m_engine.GetRSI();
+         double adx    = m_engine.GetADX();
+         double atr    = m_engine.GetATR();
          double plusDI  = m_engine.GetPlusDI();
          double minusDI = m_engine.GetMinusDI();
 
@@ -540,9 +591,7 @@ private:
          UpdateLabel("P1_ATR_V", StringFormat("%.5f", atr), CLR_VALUE);
 
          //--- DI
-         color diClr;
-         if(plusDI > minusDI) diClr = CLR_BUY_DIR;
-         else                diClr = CLR_SELL_DIR;
+         color diClr = (plusDI > minusDI) ? CLR_BUY_DIR : CLR_SELL_DIR;
          UpdateLabel("P1_DI_V", StringFormat("%.1f / %.1f", plusDI, minusDI), diClr);
 
          //--- Trend direction
@@ -560,16 +609,14 @@ private:
       {
          double curSpread = m_spread.GetCurrentSpread();
          double maxSpread = m_spread.GetMaxAllowed();
-         color sprClr;
-         if(curSpread <= maxSpread) sprClr = CLR_POSITIVE;
-         else                      sprClr = CLR_NEGATIVE;
+         color sprClr = (curSpread <= maxSpread) ? CLR_POSITIVE : CLR_NEGATIVE;
          UpdateLabel("P1_SPR_V", StringFormat("%.1f / %.1f", curSpread, maxSpread), sprClr);
       }
 
       //--- Position info
       if(m_posMgr != NULL)
       {
-         bool hasPos = m_posMgr.HasPosition();
+         bool hasPos  = m_posMgr.HasPosition();
          int spmCount = m_posMgr.GetSPMCount();
          int totalPos = hasPos ? (1 + spmCount) : 0;
          UpdateLabel("P1_POS_V", StringFormat("%d (SPM:%d)", totalPos, spmCount), CLR_VALUE);
@@ -583,7 +630,9 @@ private:
       }
    }
 
-   //--- Update Panel 2
+   //=================================================================
+   // PANEL 2 UPDATE: SINYAL SKOR
+   //=================================================================
    void UpdatePanel2()
    {
       if(m_engine == NULL)
@@ -616,18 +665,18 @@ private:
 
       //--- Use dominant breakdown for layer display
       ScoreBreakdown bd;
-      if(isBuyDom)
-         bd = buyBD;
-      else
-         bd = sellBD;
-
       color layerClr;
       if(isBuyDom)
+      {
+         bd = buyBD;
          layerClr = CLR_BUY_DIR;
+      }
       else
+      {
+         bd = sellBD;
          layerClr = CLR_SELL_DIR;
+      }
 
-      //--- Helper colors for inactive layers
       color clrInactive    = CLR_LABEL;
       color clrBarInactive = CLR_PROGRESS_BG;
 
@@ -674,7 +723,9 @@ private:
       UpdateProgressBar("P2_ATRV_BAR", (bd.atrVolatility / 5.0) * 100.0, atrvBarClr);
    }
 
-   //--- Update Panel 3
+   //=================================================================
+   // PANEL 3 UPDATE: TP HEDEFLERI + INDIKATORLER
+   //=================================================================
    void UpdatePanel3()
    {
       if(m_posMgr == NULL)
@@ -732,9 +783,102 @@ private:
       //--- Trend strength
       ENUM_TREND_STRENGTH ts = tp.trendStrength;
       UpdateLabel("P3_TST_V", GetTrendStr(ts), GetTrendColor(ts));
+
+      //--- Indicator values from overlay handles
+      UpdateIndicatorPanel();
    }
 
-   //--- Update Panel 4
+   //=================================================================
+   // UPDATE INDICATOR VALUES IN PANEL 3
+   //=================================================================
+   void UpdateIndicatorPanel()
+   {
+      int digits = (int)SymbolInfoInteger(m_symbol, SYMBOL_DIGITS);
+      double bid = SymbolInfoDouble(m_symbol, SYMBOL_BID);
+
+      //--- Parabolic SAR
+      if(m_hSAR != INVALID_HANDLE)
+      {
+         double sarBuf[1];
+         if(CopyBuffer(m_hSAR, 0, 0, 1, sarBuf) > 0)
+         {
+            double sarVal = sarBuf[0];
+            bool sarBullish = (bid > sarVal);
+            string sarDir = sarBullish ? "YUKARI" : "ASAGI";
+            color sarClr  = sarBullish ? CLR_POSITIVE : CLR_NEGATIVE;
+            UpdateLabel("P3_SAR_V", StringFormat("%s %s", DoubleToString(sarVal, digits), sarDir), sarClr);
+         }
+         else
+         {
+            UpdateLabel("P3_SAR_V", "---", CLR_LABEL);
+         }
+      }
+      else
+      {
+         UpdateLabel("P3_SAR_V", "---", CLR_LABEL);
+      }
+
+      //--- Momentum
+      if(m_hMomentum != INVALID_HANDLE)
+      {
+         double momBuf[1];
+         if(CopyBuffer(m_hMomentum, 0, 0, 1, momBuf) > 0)
+         {
+            double momVal = momBuf[0];
+            bool momBullish = (momVal > 100.0);
+            string momDir = momBullish ? "YUKARI" : "ASAGI";
+            color momClr  = momBullish ? CLR_POSITIVE : CLR_NEGATIVE;
+            UpdateLabel("P3_MOM_V", StringFormat("%.2f %s", momVal, momDir), momClr);
+         }
+         else
+         {
+            UpdateLabel("P3_MOM_V", "---", CLR_LABEL);
+         }
+      }
+      else
+      {
+         UpdateLabel("P3_MOM_V", "---", CLR_LABEL);
+      }
+
+      //--- BB Squeeze detection
+      if(m_hBB != INVALID_HANDLE)
+      {
+         double bbU[10], bbL[10];
+         if(CopyBuffer(m_hBB, 1, 0, 10, bbU) >= 10 &&
+            CopyBuffer(m_hBB, 2, 0, 10, bbL) >= 10)
+         {
+            double currentBW = bbU[9] - bbL[9];
+            double bwSum = 0.0;
+            for(int i = 0; i < 10; i++)
+            {
+               double bw = bbU[i] - bbL[i];
+               if(bw > 0.0) bwSum += bw;
+            }
+            double bwAvg = bwSum / 10.0;
+
+            bool isSqueeze = false;
+            if(bwAvg > 0.0 && currentBW < bwAvg * 0.70)
+               isSqueeze = true;
+
+            if(isSqueeze)
+               UpdateLabel("P3_BSQ_V", "SQUEEZE", CLR_WARNING);
+            else
+               UpdateLabel("P3_BSQ_V", "NORMAL", CLR_VALUE);
+         }
+         else
+         {
+            UpdateLabel("P3_BSQ_V", "---", CLR_LABEL);
+         }
+      }
+      else
+      {
+         UpdateLabel("P3_BSQ_V", "---", CLR_LABEL);
+      }
+   }
+
+   //=================================================================
+   // PANEL 4 UPDATE: SPM + FIFO
+   //=================================================================
    void UpdatePanel4()
    {
       if(m_posMgr == NULL)
@@ -775,9 +919,9 @@ private:
       if(progress > 100.0) progress = 100.0;
 
       color pctClr = CLR_VALUE;
-      if(progress >= 100.0)      pctClr = CLR_POSITIVE;
-      else if(progress >= 50.0)  pctClr = CLR_PROGRESS_FILL;
-      else if(progress > 0.0)    pctClr = CLR_WARNING;
+      if(progress >= 100.0)     pctClr = CLR_POSITIVE;
+      else if(progress >= 50.0) pctClr = CLR_PROGRESS_FILL;
+      else if(progress > 0.0)   pctClr = CLR_WARNING;
 
       UpdateLabel("P4_PCT_V", StringFormat("%.1f%%", progress), pctClr);
 
@@ -790,24 +934,166 @@ private:
       UpdateProgressBar("P4_FIFO_BAR", progress, barClr);
    }
 
+   //=================================================================
+   // CHART OVERLAY: Draw BB lines, SAR dots on chart
+   //=================================================================
+   void DrawIndicatorOverlay()
+   {
+      //--- Throttle: only redraw every IND_OVERLAY_COOLDOWN seconds
+      if(TimeCurrent() - m_lastOverlayDraw < IND_OVERLAY_COOLDOWN)
+         return;
+
+      m_lastOverlayDraw = TimeCurrent();
+
+      //--- Delete old indicator overlay objects
+      ObjectsDeleteAll(m_chartId, "BTFX_IND_", m_subWindow);
+
+      //--- Draw Bollinger Bands overlay (last IND_OVERLAY_BARS bars)
+      DrawBBOverlay();
+
+      //--- Draw Parabolic SAR dots
+      DrawSAROverlay();
+   }
+
+   //=================================================================
+   // DRAW BOLLINGER BANDS OVERLAY (3 lines: upper, middle, lower)
+   //=================================================================
+   void DrawBBOverlay()
+   {
+      if(m_hBB == INVALID_HANDLE)
+         return;
+
+      int bars = IND_OVERLAY_BARS;
+
+      //--- Copy BB buffers: 0=middle, 1=upper, 2=lower
+      double bbMid[];
+      double bbUp[];
+      double bbLo[];
+      ArraySetAsSeries(bbMid, false);
+      ArraySetAsSeries(bbUp, false);
+      ArraySetAsSeries(bbLo, false);
+
+      if(CopyBuffer(m_hBB, 0, 0, bars + 1, bbMid) < bars + 1) return;
+      if(CopyBuffer(m_hBB, 1, 0, bars + 1, bbUp)  < bars + 1) return;
+      if(CopyBuffer(m_hBB, 2, 0, bars + 1, bbLo)  < bars + 1) return;
+
+      //--- Draw trend line segments connecting bar[i] to bar[i+1]
+      //--- Non-series arrays: index 0 = oldest, index bars = most recent (bar 0)
+      for(int i = 0; i < bars; i++)
+      {
+         //--- Map non-series index to bar shift:
+         //--- Non-series index i corresponds to bar shift = bars - i
+         int barShiftCur  = bars - i;
+         int barShiftNext = bars - i - 1;
+
+         datetime timeCur  = iTime(m_symbol, PERIOD_M15, barShiftCur);
+         datetime timeNext = iTime(m_symbol, PERIOD_M15, barShiftNext);
+
+         if(timeCur == 0 || timeNext == 0)
+            continue;
+
+         //--- Upper band (DodgerBlue, STYLE_DOT)
+         string nameU = StringFormat("BTFX_IND_BBU_%d", i);
+         ObjectCreate(m_chartId, nameU, OBJ_TREND, m_subWindow, timeCur, bbUp[i], timeNext, bbUp[i + 1]);
+         ObjectSetInteger(m_chartId, nameU, OBJPROP_COLOR, clrDodgerBlue);
+         ObjectSetInteger(m_chartId, nameU, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSetInteger(m_chartId, nameU, OBJPROP_WIDTH, 1);
+         ObjectSetInteger(m_chartId, nameU, OBJPROP_RAY_RIGHT, false);
+         ObjectSetInteger(m_chartId, nameU, OBJPROP_RAY_LEFT, false);
+         ObjectSetInteger(m_chartId, nameU, OBJPROP_BACK, true);
+         ObjectSetInteger(m_chartId, nameU, OBJPROP_SELECTABLE, false);
+         ObjectSetInteger(m_chartId, nameU, OBJPROP_HIDDEN, true);
+
+         //--- Middle band (Gold, STYLE_SOLID)
+         string nameM = StringFormat("BTFX_IND_BBM_%d", i);
+         ObjectCreate(m_chartId, nameM, OBJ_TREND, m_subWindow, timeCur, bbMid[i], timeNext, bbMid[i + 1]);
+         ObjectSetInteger(m_chartId, nameM, OBJPROP_COLOR, clrGold);
+         ObjectSetInteger(m_chartId, nameM, OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSetInteger(m_chartId, nameM, OBJPROP_WIDTH, 1);
+         ObjectSetInteger(m_chartId, nameM, OBJPROP_RAY_RIGHT, false);
+         ObjectSetInteger(m_chartId, nameM, OBJPROP_RAY_LEFT, false);
+         ObjectSetInteger(m_chartId, nameM, OBJPROP_BACK, true);
+         ObjectSetInteger(m_chartId, nameM, OBJPROP_SELECTABLE, false);
+         ObjectSetInteger(m_chartId, nameM, OBJPROP_HIDDEN, true);
+
+         //--- Lower band (DodgerBlue, STYLE_DOT)
+         string nameL = StringFormat("BTFX_IND_BBL_%d", i);
+         ObjectCreate(m_chartId, nameL, OBJ_TREND, m_subWindow, timeCur, bbLo[i], timeNext, bbLo[i + 1]);
+         ObjectSetInteger(m_chartId, nameL, OBJPROP_COLOR, clrDodgerBlue);
+         ObjectSetInteger(m_chartId, nameL, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSetInteger(m_chartId, nameL, OBJPROP_WIDTH, 1);
+         ObjectSetInteger(m_chartId, nameL, OBJPROP_RAY_RIGHT, false);
+         ObjectSetInteger(m_chartId, nameL, OBJPROP_RAY_LEFT, false);
+         ObjectSetInteger(m_chartId, nameL, OBJPROP_BACK, true);
+         ObjectSetInteger(m_chartId, nameL, OBJPROP_SELECTABLE, false);
+         ObjectSetInteger(m_chartId, nameL, OBJPROP_HIDDEN, true);
+      }
+   }
+
+   //=================================================================
+   // DRAW PARABOLIC SAR DOTS ON CHART
+   //=================================================================
+   void DrawSAROverlay()
+   {
+      if(m_hSAR == INVALID_HANDLE)
+         return;
+
+      int bars = IND_OVERLAY_BARS;
+
+      double sarBuf[];
+      ArraySetAsSeries(sarBuf, false);
+
+      if(CopyBuffer(m_hSAR, 0, 0, bars, sarBuf) < bars)
+         return;
+
+      for(int i = 0; i < bars; i++)
+      {
+         //--- Map non-series index to bar shift
+         int barShift = bars - 1 - i;
+
+         datetime barTime = iTime(m_symbol, PERIOD_M15, barShift);
+         if(barTime == 0)
+            continue;
+
+         double sarVal = sarBuf[i];
+
+         //--- Get bar close to determine SAR position relative to price
+         double closePrice = iClose(m_symbol, PERIOD_M15, barShift);
+         bool isBullish = (closePrice > sarVal);  // SAR below price = bullish
+
+         string name = StringFormat("BTFX_IND_SAR_%d", i);
+         ObjectCreate(m_chartId, name, OBJ_ARROW, m_subWindow, barTime, sarVal);
+         ObjectSetInteger(m_chartId, name, OBJPROP_ARROWCODE, 159);  // Small circle/dot
+         ObjectSetInteger(m_chartId, name, OBJPROP_COLOR, isBullish ? clrLime : clrRed);
+         ObjectSetInteger(m_chartId, name, OBJPROP_WIDTH, 1);
+         ObjectSetInteger(m_chartId, name, OBJPROP_BACK, true);
+         ObjectSetInteger(m_chartId, name, OBJPROP_SELECTABLE, false);
+         ObjectSetInteger(m_chartId, name, OBJPROP_HIDDEN, true);
+      }
+   }
+
 public:
    //+------------------------------------------------------------------+
    //| Constructor                                                       |
    //+------------------------------------------------------------------+
    CChartDashboard()
    {
-      m_engine    = NULL;
-      m_posMgr    = NULL;
-      m_spread    = NULL;
-      m_symbol    = "";
-      m_category  = CAT_UNKNOWN;
-      m_enabled   = false;
-      m_chartId   = 0;
-      m_subWindow = 0;
-      m_panelX    = DASH_PANEL_X;
-      m_panelY    = 30;
-      m_panelW    = DASH_PANEL_W;
-      m_panelH    = 0;
+      m_engine           = NULL;
+      m_posMgr           = NULL;
+      m_spread           = NULL;
+      m_symbol           = "";
+      m_category         = CAT_UNKNOWN;
+      m_enabled          = false;
+      m_chartId          = 0;
+      m_subWindow        = 0;
+      m_panelX           = DASH_PANEL_X;
+      m_panelY           = 30;
+      m_panelW           = DASH_PANEL_W;
+      m_panelH           = 0;
+      m_hSAR             = INVALID_HANDLE;
+      m_hMomentum        = INVALID_HANDLE;
+      m_hBB              = INVALID_HANDLE;
+      m_lastOverlayDraw  = 0;
    }
 
    //+------------------------------------------------------------------+
@@ -819,7 +1105,7 @@ public:
    }
 
    //+------------------------------------------------------------------+
-   //| Initialize - Wire data sources and build all panels               |
+   //| Initialize - Wire data sources, create panels, create indicators  |
    //+------------------------------------------------------------------+
    void Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat,
                    CSignalEngine &engine, CPositionManager &posMgr,
@@ -840,46 +1126,98 @@ public:
          return;
       }
 
-      //--- Create all 4 panels
+      //--- Create indicator handles for chart overlay
+      m_hSAR      = iSAR(m_symbol, PERIOD_M15, 0.02, 0.2);
+      m_hMomentum = iMomentum(m_symbol, PERIOD_M15, 14, PRICE_CLOSE);
+      m_hBB       = iBands(m_symbol, PERIOD_M15, 20, 0, 2.0, PRICE_CLOSE);
+
+      if(m_hSAR == INVALID_HANDLE)
+         Print("[Dashboard] WARNING: SAR handle creation failed");
+      if(m_hMomentum == INVALID_HANDLE)
+         Print("[Dashboard] WARNING: Momentum handle creation failed");
+      if(m_hBB == INVALID_HANDLE)
+         Print("[Dashboard] WARNING: BB handle creation failed");
+
+      //--- Create all 4 panels with new positions and sizes
       int x = m_panelX;
 
-      CreatePanel1(x, 30);    // y=30,   h=265
-      CreatePanel2(x, 305);   // y=305,  h=270
-      CreatePanel3(x, 585);   // y=585,  h=130
-      CreatePanel4(x, 725);   // y=725,  h=175
+      CreatePanel1(x, 30);     // y=30,  h=285
+      CreatePanel2(x, 325);    // y=325, h=290
+      CreatePanel3(x, 625);    // y=625, h=165
+      CreatePanel4(x, 800);    // y=800, h=195
 
       ChartRedraw(m_chartId);
 
-      Print(StringFormat("[Dashboard] %s [%s] Dashboard olusturuldu.",
+      Print(StringFormat("[Dashboard] %s [%s] Dashboard olusturuldu. Panels=4 Overlay=BB+SAR+Mom",
             m_symbol, GetCategoryName(m_category)));
    }
 
    //+------------------------------------------------------------------+
-   //| Update - Refresh all panels (call every tick or on timer)         |
+   //| Update - Refresh all panels + chart overlay (call every tick/timer)|
    //+------------------------------------------------------------------+
    void Update()
    {
       if(!m_enabled)
          return;
 
+      //--- Update dashboard panels
       UpdatePanel1();
       UpdatePanel2();
       UpdatePanel3();
       UpdatePanel4();
 
+      //--- Update chart overlay indicators (throttled to every 2 sec)
+      DrawIndicatorOverlay();
+
       ChartRedraw(m_chartId);
    }
 
    //+------------------------------------------------------------------+
-   //| Destroy - Remove all dashboard objects from chart                 |
+   //| Destroy - Remove ALL dashboard and overlay objects from chart      |
    //+------------------------------------------------------------------+
    void Destroy()
    {
       if(m_chartId == 0)
          m_chartId = ChartID();
 
+      //--- Delete indicator overlay objects first
+      ObjectsDeleteAll(m_chartId, "BTFX_IND_", m_subWindow);
+
+      //--- Delete all dashboard objects
       ObjectsDeleteAll(m_chartId, "BTFX_", m_subWindow);
+
+      //--- Release indicator handles
+      if(m_hSAR != INVALID_HANDLE)
+      {
+         IndicatorRelease(m_hSAR);
+         m_hSAR = INVALID_HANDLE;
+      }
+      if(m_hMomentum != INVALID_HANDLE)
+      {
+         IndicatorRelease(m_hMomentum);
+         m_hMomentum = INVALID_HANDLE;
+      }
+      if(m_hBB != INVALID_HANDLE)
+      {
+         IndicatorRelease(m_hBB);
+         m_hBB = INVALID_HANDLE;
+      }
+
       ChartRedraw(m_chartId);
+   }
+
+   //+------------------------------------------------------------------+
+   //| SetArrowTooltip - Set tooltip text on a named arrow object        |
+   //+------------------------------------------------------------------+
+   void SetArrowTooltip(string arrowName, string tooltipText)
+   {
+      if(m_chartId == 0)
+         m_chartId = ChartID();
+
+      if(ObjectFind(m_chartId, arrowName) >= 0)
+      {
+         ObjectSetString(m_chartId, arrowName, OBJPROP_TOOLTIP, tooltipText);
+      }
    }
 };
 

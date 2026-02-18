@@ -3,15 +3,16 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v1.0.0 - SPM-FIFO                                     |
+//| BytamerFX v1.2.0 - SPM-FIFO                                     |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
+//| Dinamik Lot | Kar Odakli SPM | Chart Overlay Indikator           |
 //| Hesap: 262230423 (Exness)                                        |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "1.10"
-#property description "BytamerFX v1.1.0 - SPM-FIFO Strateji"
-#property description "7 Katmanli Hibrit Sinyal Motoru"
+#property version     "1.20"
+#property description "BytamerFX v1.2.0 - SPM-FIFO Strateji"
+#property description "7 Katmanli Hibrit Sinyal + Kar Odakli SPM"
 #property description "SL=YOK | Asla Zararina Satis Yok"
 #property description "Copyright 2026, By T@MER"
 #property strict
@@ -75,26 +76,20 @@ int OnInit()
    Print(StringFormat("Hesap: %d | Broker: %s", accNo, broker));
    Print(StringFormat("Bakiye: $%.2f | Sembol: %s", balance, _Symbol));
    Print("SL=YOK | Strateji: SPM+FIFO | Net Hedef: $" + DoubleToString(SPM_NetTargetUSD, 2));
+   Print(StringFormat("MinScore=%d | SPM Trigger=$%.1f | SPM Close=$%.1f",
+         SignalMinScore, SPM_TriggerLoss, SPM_CloseProfit));
+   Print(StringFormat("SPM LotBase=%.1f | LotIncrement=%.2f | MaxLayers=%d",
+         SPM_LotBase, SPM_LotIncrement, SPM_MaxLayers));
    Print("================================================");
 
    //--- 2. SEMBOL KATEGORI TESPITI
    g_symMgr.Initialize(_Symbol);
    g_category = g_symMgr.GetCategory();
 
-   string catName;
-   switch(g_category)
-   {
-      case CAT_FOREX:   catName = "FOREX";   break;
-      case CAT_METAL:   catName = "METAL";   break;
-      case CAT_CRYPTO:  catName = "CRYPTO";  break;
-      case CAT_INDICES: catName = "INDEX";   break;
-      case CAT_STOCKS:  catName = "STOCK";   break;
-      case CAT_ENERGY:  catName = "ENERGY";  break;
-      default:          catName = "UNKNOWN"; break;
-   }
+   string catName = GetCategoryStr(g_category);
    Print(StringFormat("Sembol Kategorisi: %s (%s)", _Symbol, catName));
 
-   //--- 3. SPREAD FILTRESI
+   //--- 3. SPREAD FILTRESI (broker default + %15 tolerans - MUTLAK KURAL)
    double defaultSpread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
    g_spreadFilter.Initialize(_Symbol, defaultSpread, MaxSpreadPercent);
 
@@ -248,9 +243,37 @@ void CheckForNewSignal()
    if(TimeCurrent() - g_lastSignalCheck < SignalCooldownSec)
       return;
 
-   //--- Spread kontrolu
+   //--- Spread kontrolu (MUTLAK KURAL: default + %15 uzerinde islem yok)
    if(!g_spreadFilter.IsSpreadOK())
       return;
+
+   //--- Margin kontrolu (yeni islem icin min margin seviyesi)
+   double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
+   if(marginLevel > 0.0 && marginLevel < MinMarginLevel)
+   {
+      static datetime lastMarginWarn = 0;
+      if(TimeCurrent() - lastMarginWarn > 120)
+      {
+         Print(StringFormat("MARGIN YETERSIZ: %.1f%% < %.1f%% - Yeni islem yok",
+               marginLevel, MinMarginLevel));
+         lastMarginWarn = TimeCurrent();
+      }
+      return;
+   }
+
+   //--- Toplam acik hacim kontrolu
+   double totalVolume = GetTotalOpenVolume();
+   if(totalVolume >= MaxTotalVolume)
+   {
+      static datetime lastVolWarn = 0;
+      if(TimeCurrent() - lastVolWarn > 120)
+      {
+         Print(StringFormat("MAX HACIM: %.2f >= %.2f lot - Yeni islem yok",
+               totalVolume, MaxTotalVolume));
+         lastVolWarn = TimeCurrent();
+      }
+      return;
+   }
 
    //--- Sinyal motoru degerlendir
    SignalData sig = g_signalEngine.Evaluate();
@@ -268,8 +291,10 @@ void CheckForNewSignal()
    Print(StringFormat("  RSI=%.1f | ADX=%.1f | ATR=%.5f", sig.rsi, sig.adx, sig.atr));
    Print(StringFormat("  TP1=%.5f | TP2=%.5f | TP3=%.5f", sig.tp1, sig.tp2, sig.tp3));
 
-   //--- Lot hesapla
-   double lot = g_lotCalc.Calculate(AccountInfoDouble(ACCOUNT_BALANCE), sig.atr, sig.score);
+   //--- Dinamik lot hesapla (balance + atr + score + trend + margin)
+   ENUM_TREND_STRENGTH trendStr = g_signalEngine.GetTrendStrength();
+   double lot = g_lotCalc.CalculateDynamic(
+      AccountInfoDouble(ACCOUNT_BALANCE), sig.atr, sig.score, trendStr, marginLevel);
 
    //--- TP hedefi belirle (TP1 default)
    double tp = sig.tp1;
@@ -291,17 +316,7 @@ void CheckForNewSignal()
             dirStr, _Symbol, lot, price, tp, ticket));
 
       //--- Kategori ismi
-      string catName;
-      switch(g_category)
-      {
-         case CAT_FOREX:   catName = "FOREX";   break;
-         case CAT_METAL:   catName = "METAL";   break;
-         case CAT_CRYPTO:  catName = "CRYPTO";  break;
-         case CAT_INDICES: catName = "INDEX";   break;
-         case CAT_STOCKS:  catName = "STOCK";   break;
-         case CAT_ENERGY:  catName = "ENERGY";  break;
-         default:          catName = "UNKNOWN"; break;
-      }
+      string catName = GetCategoryStr(g_category);
 
       //--- Bildirimler
       long accNo = g_security.GetAccountNumber();
@@ -324,8 +339,8 @@ void CheckForNewSignal()
       //--- TP Tracking ayarla
       g_posMgr.SetTPTracking(sig.tp1, sig.tp2, sig.tp3, sig.trendStrength);
 
-      //--- Chart uzerine ok ciz
-      DrawSignalArrow(sig.direction, price);
+      //--- Chart uzerine ok ciz (buyuk ok + tooltip)
+      DrawSignalArrow(sig, lot, price);
    }
    else
    {
@@ -335,9 +350,9 @@ void CheckForNewSignal()
 }
 
 //+------------------------------------------------------------------+
-//| Sinyal oku chart uzerine ciz                                      |
+//| Sinyal oku chart uzerine ciz - Buyuk ok + Tooltip                 |
 //+------------------------------------------------------------------+
-void DrawSignalArrow(ENUM_SIGNAL_DIR dir, double price)
+void DrawSignalArrow(const SignalData &sig, double lot, double price)
 {
    string name = "BTFX_Arrow_" + TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS);
    StringReplace(name, " ", "_");
@@ -346,32 +361,123 @@ void DrawSignalArrow(ENUM_SIGNAL_DIR dir, double price)
 
    int arrowCode;
    color arrowClr;
+   double arrowPrice;
 
-   if(dir == SIGNAL_BUY)
+   if(sig.direction == SIGNAL_BUY)
    {
       arrowCode = 233;  // Up arrow
       arrowClr = clrLime;
+      arrowPrice = price - g_signalEngine.GetATR() * 0.5;  // Mumun altina yerlestir
    }
    else
    {
       arrowCode = 234;  // Down arrow
       arrowClr = clrRed;
+      arrowPrice = price + g_signalEngine.GetATR() * 0.5;  // Mumun ustune yerlestir
    }
 
-   ObjectCreate(0, name, OBJ_ARROW, 0, TimeCurrent(), price);
+   ObjectCreate(0, name, OBJ_ARROW, 0, TimeCurrent(), arrowPrice);
    ObjectSetInteger(0, name, OBJPROP_ARROWCODE, arrowCode);
    ObjectSetInteger(0, name, OBJPROP_COLOR, arrowClr);
    ObjectSetInteger(0, name, OBJPROP_WIDTH, ArrowSize);
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
-   ObjectSetInteger(0, name, OBJPROP_HIDDEN, true);
+   ObjectSetInteger(0, name, OBJPROP_HIDDEN, false);  // Gorunur (tooltip icin)
+
+   //--- TOOLTIP: Mouse ile ok uzerine gelince islem bilgileri goster
+   string dirStr = (sig.direction == SIGNAL_BUY) ? "ALIS (BUY)" : "SATIS (SELL)";
+   string trendStr;
+   switch(sig.trendStrength)
+   {
+      case TREND_STRONG:   trendStr = "GUCLU";  break;
+      case TREND_MODERATE: trendStr = "ORTA";   break;
+      default:             trendStr = "ZAYIF";  break;
+   }
+
+   int digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
+
+   string tooltip = StringFormat(
+      "BytamerFX %s\n"
+      "Yon: %s\n"
+      "Skor: %d/100\n"
+      "Lot: %.2f\n"
+      "Fiyat: %s\n"
+      "TP1: %s\n"
+      "TP2: %s\n"
+      "TP3: %s\n"
+      "SL: YOK (MUTLAK)\n"
+      "ATR: %s\n"
+      "ADX: %.1f\n"
+      "RSI: %.1f\n"
+      "+DI/−DI: %.1f/%.1f\n"
+      "Trend: %s\n"
+      "MACD: %.6f\n"
+      "Stoch: %.1f/%.1f\n"
+      "Zaman: %s",
+      EA_VERSION,
+      dirStr,
+      sig.score,
+      lot,
+      DoubleToString(price, digits),
+      DoubleToString(sig.tp1, digits),
+      DoubleToString(sig.tp2, digits),
+      DoubleToString(sig.tp3, digits),
+      DoubleToString(sig.atr, digits),
+      sig.adx,
+      sig.rsi,
+      sig.plusDI, sig.minusDI,
+      trendStr,
+      sig.macd_main,
+      sig.stoch_k, sig.stoch_d,
+      TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
+
+   ObjectSetString(0, name, OBJPROP_TOOLTIP, tooltip);
 }
 
 //+------------------------------------------------------------------+
-//| ChartEvent handler (opsiyonel gelecek kullanim)                    |
+//| Toplam acik hacim hesapla                                         |
+//+------------------------------------------------------------------+
+double GetTotalOpenVolume()
+{
+   double total = 0.0;
+   int totalPos = PositionsTotal();
+
+   for(int i = 0; i < totalPos; i++)
+   {
+      ulong ticket = PositionGetTicket(i);
+      if(ticket <= 0) continue;
+      if(!PositionSelectByTicket(ticket)) continue;
+      if(PositionGetString(POSITION_SYMBOL) != _Symbol) continue;
+      if(PositionGetInteger(POSITION_MAGIC) != EA_MAGIC) continue;
+
+      total += PositionGetDouble(POSITION_VOLUME);
+   }
+
+   return total;
+}
+
+//+------------------------------------------------------------------+
+//| Kategori string helper                                             |
+//+------------------------------------------------------------------+
+string GetCategoryStr(ENUM_SYMBOL_CATEGORY cat)
+{
+   switch(cat)
+   {
+      case CAT_FOREX:   return "FOREX";
+      case CAT_METAL:   return "METAL";
+      case CAT_CRYPTO:  return "CRYPTO";
+      case CAT_INDICES: return "INDEX";
+      case CAT_STOCKS:  return "STOCK";
+      case CAT_ENERGY:  return "ENERGY";
+      default:          return "UNKNOWN";
+   }
+}
+
+//+------------------------------------------------------------------+
+//| ChartEvent handler                                                 |
 //+------------------------------------------------------------------+
 void OnChartEvent(const int id, const long &lparam, const double &dparam, const string &sparam)
 {
-   // Gelecekte dashboard etkilesimi icin
+   //--- Gelecekte dashboard etkilesimi icin
 }
 
 //+------------------------------------------------------------------+
