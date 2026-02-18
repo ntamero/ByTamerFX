@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.2.1"
-#define EA_VERSION_NUM    "2.21"
+#define EA_VERSION        "2.2.2"
+#define EA_VERSION_NUM    "2.22"
 #define EA_VERSION_NAME   "KazanKazan"
-#define EA_VERSION_FULL   "BytamerFX v2.2.1 - KazanKazan Pro"
+#define EA_VERSION_FULL   "BytamerFX v2.2.2 - KazanKazan Pro"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -326,6 +326,9 @@ struct SymbolProfile
    double tp2Pips;              // Orta trend TP (pips)
    double tp3Pips;              // Guclu trend TP (pips)
 
+   //--- v2.2.2: Min kar esigi (maliyeti kurtarmayan islem KAPATMAZ)
+   double minCloseProfit;          // Min kapatma kari ($) - bunun altinda SPM/DCA/HEDGE kapatilmaz
+
    //--- v2.2.1: Dinamik min lot (kategori bazli)
    double minLotOverride;          // 0 = broker default, >0 = profil override
 
@@ -339,6 +342,7 @@ struct SymbolProfile
    {
       profileName       = "FOREX";
       minLotOverride    = 0.06;       // Forex: min 0.06 lot
+      minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma (maliyet kurtarma)
       spmTriggerLoss    = -3.0;       // Forex: -$3 tetik
       spmCloseProfit    = 3.0;
       fifoNetTarget     = 5.0;
@@ -362,6 +366,7 @@ struct SymbolProfile
    {
       profileName       = "FOREX_JPY";
       minLotOverride    = 0.06;       // JPY: min 0.06 lot
+      minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -3.0;       // JPY: -$3 tetik
       spmCloseProfit    = 3.0;
       fifoNetTarget     = 5.0;
@@ -385,6 +390,7 @@ struct SymbolProfile
    {
       profileName       = "SILVER_XAG";
       minLotOverride    = 0.01;       // XAG: min 0.01 lot
+      minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;       // XAG: -$5 tetik
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -408,6 +414,7 @@ struct SymbolProfile
    {
       profileName       = "GOLD_XAU";
       minLotOverride    = 0.01;       // XAU: min 0.01 lot
+      minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;       // XAU: -$5 tetik
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -431,6 +438,7 @@ struct SymbolProfile
    {
       profileName       = "CRYPTO_BTC";
       minLotOverride    = 0.01;       // BTC: min 0.01 lot
+      minCloseProfit    = 1.5;        // v2.2.2: $1.5 altinda kapatma (BTC spread yuksek)
       spmTriggerLoss    = -5.0;       // BTC: -$5 tetik
       spmCloseProfit    = 5.0;
       fifoNetTarget     = 5.0;
@@ -444,9 +452,9 @@ struct SymbolProfile
       profitTargetPerPos = 3.0;
       hedgeMinSPMCount  = 2;
       hedgeMinLossUSD   = -5.0;       // BTC: -$5 hedge esigi
-      tp1Pips           = 1500.0;     // Zayif trend: 1500 pips
-      tp2Pips           = 2500.0;     // Orta trend: 2500 pips
-      tp3Pips           = 3500.0;     // Guclu trend: 3500 pips
+      tp1Pips           = 15000.0;    // v2.2.2: Zayif trend: 15000 pips ($1.5+ at 0.01 lot)
+      tp2Pips           = 30000.0;    // v2.2.2: Orta trend: 30000 pips ($3+ at 0.01 lot)
+      tp3Pips           = 50000.0;    // v2.2.2: Guclu trend: 50000 pips ($5+ at 0.01 lot)
    }
 
    //--- DIGER KRIPTO (ETH, LTC, XRP vb.)
@@ -454,6 +462,7 @@ struct SymbolProfile
    {
       profileName       = "CRYPTO_ALT";
       minLotOverride    = 0.01;       // Altcoin: min 0.01 lot
+      minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -467,9 +476,9 @@ struct SymbolProfile
       profitTargetPerPos = 2.5;
       hedgeMinSPMCount  = 2;
       hedgeMinLossUSD   = -5.0;
-      tp1Pips           = 500.0;      // Altcoin: 500 pips
-      tp2Pips           = 1000.0;     // 1000 pips
-      tp3Pips           = 1800.0;     // 1800 pips
+      tp1Pips           = 5000.0;     // v2.2.2: Altcoin: 5000 pips (daha genis)
+      tp2Pips           = 10000.0;    // 10000 pips
+      tp3Pips           = 18000.0;    // 18000 pips
    }
 
    //--- ENDEKSLER (US30, NAS100, SPX500 vb.)
@@ -477,6 +486,7 @@ struct SymbolProfile
    {
       profileName       = "INDICES";
       minLotOverride    = 0.03;       // Indices: min 0.03 lot
+      minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -500,6 +510,7 @@ struct SymbolProfile
    {
       profileName       = "ENERGY";
       minLotOverride    = 0.01;       // Energy: min 0.01 lot
+      minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -523,6 +534,7 @@ struct SymbolProfile
    {
       profileName       = "DEFAULT";
       minLotOverride    = 0.0;        // Default: broker default kullan
+      minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = SPM_TriggerLoss;
       spmCloseProfit    = SPM_CloseProfit;
       fifoNetTarget     = SPM_NetTargetUSD;
@@ -546,6 +558,7 @@ struct SymbolProfile
    {
       profileName       = "METAL";
       minLotOverride    = 0.01;       // Metal: min 0.01 lot
+      minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;

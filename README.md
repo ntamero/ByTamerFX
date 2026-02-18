@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v2.2.1** - Professional automated forex trading system with hybrid signal engine.
+**BytamerFX v2.2.2** - Professional automated forex trading system with hybrid signal engine.
 
 > **NO SL** | **Never close at a loss** | **SPM+FIFO Strategy** | **Smart Hedge**
 
@@ -50,6 +50,12 @@
 - **Gradual Closure**: Below 150% only the worst-performing position is closed
 - **Critical Emergency**: Below 120% all positions are closed
 - **Per-instrument** smart management, not account-wide liquidation
+
+### Minimum Profit Protection (v2.2.2)
+- **minCloseProfit**: No SPM/DCA/HEDGE closes below threshold (Forex=$1.0, BTC=$1.5)
+- **Emergency SPM**: When SPM loss exceeds 2x trigger, cooldown is skipped entirely
+- **No Broker TP on ANA**: Main position only closes via FIFO (net >= +$5), not broker TP
+- **ANA Ticket Detection**: Auto-detects when broker closes ANA, properly resets state
 
 ### Lot Calculation - 8-Factor Dynamic Engine
 - Balance-based base lot
@@ -104,7 +110,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5          # Main EA file (v2.2.1)
+├── BytamerFX.mq5          # Main EA file (v2.2.2)
 ├── Config.mqh             # Central configuration + 10 SymbolProfiles
 ├── AccountSecurity.mqh    # Account verification
 ├── SymbolManager.mqh      # Symbol categorization
@@ -131,6 +137,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| v2.2.2 | 2026-02-18 | Min Profit Threshold, Emergency SPM, No Broker TP on ANA |
 | v2.2.1 | 2026-02-18 | SPM SAME-DIR BLOCK fix, Smart Margin, News Filter |
 | v2.2.0 | 2026-02-18 | Universal News Intelligence, Dynamic Lot, Emoji |
 | v2.1.0 | 2026-02-17 | Dynamic Profile System, Pip-Based TP |

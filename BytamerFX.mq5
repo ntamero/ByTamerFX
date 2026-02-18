@@ -3,17 +3,17 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.2.1 - KAZAN-KAZAN Pro                                |
+//| BytamerFX v2.2.2 - KAZAN-KAZAN Pro                                |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
 //| FIFO +$5 Net | DCA | Acil Hedge | Universal News Intelligence    |
 //| Hesap: 262230423 (Exness) | Dinamik Profil + Haber Kontrol       |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.21"
-#property description "BytamerFX v2.2.1 - KazanKazan Pro"
+#property version     "2.22"
+#property description "BytamerFX v2.2.2 - KazanKazan Pro"
 #property description "FIFO +$5 | DCA | Hedge | News Intelligence"
-#property description "SL=YOK | Dinamik Profil | Pip-TP"
+#property description "SL=YOK | Dinamik Profil | Pip-TP | MinProfit"
 #property description "Copyright 2026, By T@MER"
 #property strict
 
@@ -375,10 +375,13 @@ void CheckForNewSignal()
    double lot = g_lotCalc.CalculateDynamic(
       AccountInfoDouble(ACCOUNT_BALANCE), sig.atr, sig.score, trendStr, marginLevel, totalVolume);
 
-   //--- v2.1: TP hedefi trend gucune gore (sig.tp zaten profil bazli ayarli)
-   double tp = sig.tp;   // Trend: WEAK→TP1, MODERATE→TP2, STRONG→TP3
+   //--- v2.2.2: ANA pozisyona BROKER TP KONMAZ
+   //--- ANA SADECE FIFO ile kapanir (net >= +$5)
+   //--- Broker TP koymak -> broker otomatik kapatir -> FIFO bozulur
+   //--- TP tracking internal olarak ManageTPLevels ile yapilir (sadece log)
+   double tp = 0;   // v2.2.2: ANA icin broker TP = YOK
 
-   //--- Islem ac (SL=YOK - MUTLAK)
+   //--- Islem ac (SL=YOK - MUTLAK, TP=YOK - FIFO ILE KAPANIR)
    string comment = StringFormat("BTFX_%s_%d", _Symbol, sig.score);
    if(StringLen(comment) > 25) comment = StringSubstr(comment, 0, 25);
 
