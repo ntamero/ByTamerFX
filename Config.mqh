@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.2.0"
-#define EA_VERSION_NUM    "2.20"
+#define EA_VERSION        "2.2.1"
+#define EA_VERSION_NUM    "2.21"
 #define EA_VERSION_NAME   "KazanKazan"
-#define EA_VERSION_FULL   "BytamerFX v2.2.0 - KazanKazan Pro"
+#define EA_VERSION_FULL   "BytamerFX v2.2.1 - KazanKazan Pro"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -113,7 +113,7 @@ input double   DailyProfitTarget      = 10.0;     // Gunluk kar hedefi ($)
 input int      ProtectionCooldownSec  = 180;      // Koruma sonrasi bekleme (sn)
 input double   MinBalanceToTrade      = 10.0;     // Min bakiye ($)
 input double   MaxTotalVolume         = 2.0;      // Max toplam acik hacim (lot)
-input double   MinMarginLevel         = 200.0;    // Min margin seviyesi (%)
+input double   MinMarginLevel         = 150.0;    // v2.2.1: Min margin seviyesi (%) - 200 cok yuksekti, 3 enstrumanda patliyordu
 
 //=================================================================
 // KAR YONETIMI
@@ -326,6 +326,9 @@ struct SymbolProfile
    double tp2Pips;              // Orta trend TP (pips)
    double tp3Pips;              // Guclu trend TP (pips)
 
+   //--- v2.2.1: Dinamik min lot (kategori bazli)
+   double minLotOverride;          // 0 = broker default, >0 = profil override
+
    //--- v2.1: Profil adi (log icin)
    string profileName;
 
@@ -335,6 +338,7 @@ struct SymbolProfile
    void SetForex()
    {
       profileName       = "FOREX";
+      minLotOverride    = 0.06;       // Forex: min 0.06 lot
       spmTriggerLoss    = -3.0;       // Forex: -$3 tetik
       spmCloseProfit    = 3.0;
       fifoNetTarget     = 5.0;
@@ -357,6 +361,7 @@ struct SymbolProfile
    void SetForexJPY()
    {
       profileName       = "FOREX_JPY";
+      minLotOverride    = 0.06;       // JPY: min 0.06 lot
       spmTriggerLoss    = -3.0;       // JPY: -$3 tetik
       spmCloseProfit    = 3.0;
       fifoNetTarget     = 5.0;
@@ -379,6 +384,7 @@ struct SymbolProfile
    void SetSilver()
    {
       profileName       = "SILVER_XAG";
+      minLotOverride    = 0.01;       // XAG: min 0.01 lot
       spmTriggerLoss    = -5.0;       // XAG: -$5 tetik
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -401,6 +407,7 @@ struct SymbolProfile
    void SetGold()
    {
       profileName       = "GOLD_XAU";
+      minLotOverride    = 0.01;       // XAU: min 0.01 lot
       spmTriggerLoss    = -5.0;       // XAU: -$5 tetik
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -423,6 +430,7 @@ struct SymbolProfile
    void SetCrypto()
    {
       profileName       = "CRYPTO_BTC";
+      minLotOverride    = 0.01;       // BTC: min 0.01 lot
       spmTriggerLoss    = -5.0;       // BTC: -$5 tetik
       spmCloseProfit    = 5.0;
       fifoNetTarget     = 5.0;
@@ -445,6 +453,7 @@ struct SymbolProfile
    void SetCryptoAlt()
    {
       profileName       = "CRYPTO_ALT";
+      minLotOverride    = 0.01;       // Altcoin: min 0.01 lot
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -467,6 +476,7 @@ struct SymbolProfile
    void SetIndices()
    {
       profileName       = "INDICES";
+      minLotOverride    = 0.03;       // Indices: min 0.03 lot
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -489,6 +499,7 @@ struct SymbolProfile
    void SetEnergy()
    {
       profileName       = "ENERGY";
+      minLotOverride    = 0.01;       // Energy: min 0.01 lot
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -511,6 +522,7 @@ struct SymbolProfile
    void SetDefault()
    {
       profileName       = "DEFAULT";
+      minLotOverride    = 0.0;        // Default: broker default kullan
       spmTriggerLoss    = SPM_TriggerLoss;
       spmCloseProfit    = SPM_CloseProfit;
       fifoNetTarget     = SPM_NetTargetUSD;
@@ -533,6 +545,7 @@ struct SymbolProfile
    void SetMetal()
    {
       profileName       = "METAL";
+      minLotOverride    = 0.01;       // Metal: min 0.01 lot
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;

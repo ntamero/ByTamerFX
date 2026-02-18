@@ -483,6 +483,13 @@ public:
          //--- Haber blok zamaninda miyiz?
          if(now >= m_events[i].blockStartTime && now <= m_events[i].blockEndTime)
          {
+            //--- v2.2.1: Sadece bu sembolu etkileyen haberler bloke eder
+            if(!DoesNewsAffectSymbol(m_events[i].currency))
+            {
+               m_events[i].isActive = false;
+               continue;
+            }
+
             if(ShouldBlockTrading(m_events[i].impact))
             {
                m_tradingBlocked = true;
@@ -569,9 +576,11 @@ public:
       return false;
    }
 
-   //--- Aktif haber bilgisi (Dashboard icin)
+   //--- v2.2.1: Aktif haber bilgisi (Dashboard icin)
+   //--- onlyRelevant=true: Sadece bu sembolü etkileyen haberler
    bool GetActiveNewsInfo(string &title, string &currency, ENUM_NEWS_IMPACT &impact,
-                          datetime &eventTime, int &minutesLeft)
+                          datetime &eventTime, int &minutesLeft,
+                          bool onlyRelevant = false)
    {
       datetime now = TimeGMT();
 
@@ -579,6 +588,10 @@ public:
       {
          if(now >= m_events[i].blockStartTime && now <= m_events[i].blockEndTime)
          {
+            //--- v2.2.1: Sembol filtresi
+            if(onlyRelevant && !DoesNewsAffectSymbol(m_events[i].currency))
+               continue;
+
             title       = m_events[i].title;
             currency    = m_events[i].currency;
             impact      = m_events[i].impact;
@@ -590,9 +603,11 @@ public:
       return false;
    }
 
-   //--- Sonraki haber bilgisi (Dashboard icin)
+   //--- v2.2.1: Sonraki haber bilgisi (Dashboard icin)
+   //--- onlyRelevant=true: Sadece bu sembolü etkileyen haberler
    bool GetNextNewsInfo(string &title, string &currency, ENUM_NEWS_IMPACT &impact,
-                        datetime &eventTime, int &minutesLeft)
+                        datetime &eventTime, int &minutesLeft,
+                        bool onlyRelevant = false)
    {
       datetime now = TimeGMT();
       datetime nearest = D'2099.01.01';
@@ -600,6 +615,10 @@ public:
 
       for(int i = 0; i < m_eventCount; i++)
       {
+         //--- v2.2.1: Sembol filtresi
+         if(onlyRelevant && !DoesNewsAffectSymbol(m_events[i].currency))
+            continue;
+
          if(m_events[i].eventTime > now && m_events[i].eventTime < nearest)
          {
             nearest = m_events[i].eventTime;

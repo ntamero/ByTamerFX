@@ -101,6 +101,10 @@ private:
    int                  m_protectionTriggerCount;
    bool                 m_tradingPaused;
 
+   //--- v2.2.1: SPM log cooldown (tick basi spam onleme)
+   datetime             m_lastSPMLogTime;
+   bool                 m_spmDirOverridden;  // SAME-DIR BLOCK sonrasi override flag
+
    //=================================================================
    // PRIVATE METHODS
    //=================================================================
@@ -240,6 +244,8 @@ CPositionManager::CPositionManager()
    m_protectionCooldownUntil = 0;
    m_protectionTriggerCount  = 0;
    m_tradingPaused       = false;
+   m_lastSPMLogTime      = 0;
+   m_spmDirOverridden    = false;
 
    m_profile.SetDefault();
 }
@@ -628,28 +634,76 @@ void CPositionManager::RefreshPositions()
 }
 
 //+------------------------------------------------------------------+
-//| CheckMarginEmergency - SADECE SON CARE (%150 altinda)            |
-//| SPM sistemi kendisi hedge yapar, bu sadece acil durum            |
+//| CheckMarginEmergency - v2.2.1: AKILLI MARGIN YONETIMI           |
+//| %150 altinda: En zarardaki pozisyonu kapat (tum hesabi bosaltma) |
+//| %120 altinda: TUM pozisyonlari kapat (gercek acil)              |
 //+------------------------------------------------------------------+
 bool CPositionManager::CheckMarginEmergency()
 {
    double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
    if(marginLevel == 0.0) return false;
 
-   if(marginLevel < MinMarginLevel)
+   //--- v2.2.1: %120 altinda gercek acil - TUM kapat
+   if(marginLevel < 120.0)
    {
-      PrintFormat("[PM-%s] !!! MARGIN ACIL DURUM !!! Level=%.1f%% < %.1f%%",
-                  m_symbol, marginLevel, MinMarginLevel);
+      PrintFormat("[PM-%s] !!! MARGIN KRITIK !!! Level=%.1f%% < 120%% -> TUM KAPAT",
+                  m_symbol, marginLevel);
 
       if(m_telegram != NULL)
-         m_telegram.SendMessage(StringFormat("MARGIN ACIL %s: %.1f%% - TUM KAPATILDI", m_symbol, marginLevel));
+         m_telegram.SendMessage(StringFormat("MARGIN KRITIK %s: %.1f%% - TUM KAPATILDI", m_symbol, marginLevel));
       if(m_discord != NULL)
-         m_discord.SendMessage(StringFormat("MARGIN ACIL %s: %.1f%% - TUM KAPATILDI", m_symbol, marginLevel));
+         m_discord.SendMessage(StringFormat("MARGIN KRITIK %s: %.1f%% - TUM KAPATILDI", m_symbol, marginLevel));
 
-      CloseAllPositions("MarginAcil_" + DoubleToString(marginLevel, 1) + "%");
-      SetProtectionCooldown("MarginAcil");
+      CloseAllPositions("MarginKritik_" + DoubleToString(marginLevel, 1) + "%");
+      SetProtectionCooldown("MarginKritik");
       ResetFIFO();
       return true;
+   }
+
+   //--- v2.2.1: %150 altinda - SADECE en zarardaki pozisyonu kapat (kademeli)
+   if(marginLevel < MinMarginLevel)
+   {
+      //--- En zarardaki pozisyonu bul
+      int worstIdx = -1;
+      double worstPL = 0.0;
+
+      for(int i = 0; i < m_posCount; i++)
+      {
+         if(m_positions[i].profit < worstPL)
+         {
+            worstPL = m_positions[i].profit;
+            worstIdx = i;
+         }
+      }
+
+      if(worstIdx >= 0)
+      {
+         PrintFormat("[PM-%s] MARGIN UYARI: Level=%.1f%% < %.1f%% -> En zarardaki kapatiliyor: #%llu P/L=$%.2f",
+                     m_symbol, marginLevel, MinMarginLevel,
+                     m_positions[worstIdx].ticket, worstPL);
+
+         if(m_executor != NULL)
+         {
+            bool closed = m_executor.ClosePosition(m_positions[worstIdx].ticket);
+            if(closed)
+            {
+               m_dailyProfit += worstPL;
+
+               if(m_telegram != NULL)
+                  m_telegram.SendMessage(StringFormat("MARGIN %s: %.1f%% - En zarardaki kapatildi: $%.2f",
+                                                      m_symbol, marginLevel, worstPL));
+            }
+         }
+
+         //--- ANA kapandiysa FIFO reset
+         if(m_positions[worstIdx].role == ROLE_MAIN)
+         {
+            m_mainTicket = 0;
+            ResetFIFO();
+         }
+
+         return true;  // Sonraki tick'te tekrar kontrol edilir
+      }
    }
    return false;
 }
@@ -841,7 +895,7 @@ void CPositionManager::ManageSPMSystem()
 }
 
 //+------------------------------------------------------------------+
-//| ManageMainInLoss - v2.0: profil bazli tetik                      |
+//| ManageMainInLoss - v2.2.1: SAME-DIR BLOCK fix + log cooldown    |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
 {
@@ -868,7 +922,11 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
    double totalVol = GetTotalBuyLots() + GetTotalSellLots();
    if(totalVol >= MaxTotalVolume) return;
 
+   //--- v2.2.1: Log cooldown (30sn) - tick basi spam onleme
+   bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);
+
    // v2.0: BUY/SELL katman limiti kontrol
+   m_spmDirOverridden = false;
    ENUM_SIGNAL_DIR spmDir = DetermineSPMDirection(0);
 
    if(spmDir == SIGNAL_NONE)
@@ -878,34 +936,51 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
          spmDir = SIGNAL_SELL;
       else
          spmDir = SIGNAL_BUY;
+      m_spmDirOverridden = true;
    }
 
    // Ayni yon bloklama - ASLA zarardaki yonde ikiye katlama
    if(CheckSameDirectionBlock(spmDir))
    {
-      PrintFormat("[PM-%s] SPM1 SAME-DIR BLOCK! Override: ANA tersine zorunlu.", m_symbol);
+      if(canLog)
+         PrintFormat("[PM-%s] SPM1 SAME-DIR BLOCK! Override: ANA tersine zorunlu.", m_symbol);
       if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
          spmDir = SIGNAL_SELL;
       else
          spmDir = SIGNAL_BUY;
+      m_spmDirOverridden = true;  // v2.2.1: Yon override edildi, bekleme ATLANIYOR
    }
 
    // v2.0: BUY/SELL katman limiti
    if(spmDir == SIGNAL_BUY && GetBuyLayerCount() >= m_profile.spmMaxBuyLayers)
    {
-      PrintFormat("[PM-%s] SPM1: BUY katman limiti (%d/%d)", m_symbol, GetBuyLayerCount(), m_profile.spmMaxBuyLayers);
+      if(canLog)
+      {
+         PrintFormat("[PM-%s] SPM1: BUY katman limiti (%d/%d)", m_symbol, GetBuyLayerCount(), m_profile.spmMaxBuyLayers);
+         m_lastSPMLogTime = TimeCurrent();
+      }
       return;
    }
    if(spmDir == SIGNAL_SELL && GetSellLayerCount() >= m_profile.spmMaxSellLayers)
    {
-      PrintFormat("[PM-%s] SPM1: SELL katman limiti (%d/%d)", m_symbol, GetSellLayerCount(), m_profile.spmMaxSellLayers);
+      if(canLog)
+      {
+         PrintFormat("[PM-%s] SPM1: SELL katman limiti (%d/%d)", m_symbol, GetSellLayerCount(), m_profile.spmMaxSellLayers);
+         m_lastSPMLogTime = TimeCurrent();
+      }
       return;
    }
 
-   // ANA toparlanma bekleme kontrolu
-   if(ShouldWaitForANARecovery(mainIdx))
+   //--- v2.2.1: ANA toparlanma bekleme - SADECE yon override EDILMEDIYSE
+   //--- Yon override edildiyse (SAME-DIR BLOCK sonrasi), SPM zaten ters yonde gidiyor
+   //--- ANA'nin toparlanmasini beklemeye GEREK YOK, hemen ac!
+   if(!m_spmDirOverridden && ShouldWaitForANARecovery(mainIdx))
    {
-      PrintFormat("[PM-%s] SPM1 BEKLE: Trend ANA yonune donuyor, toparlanma bekleniyor.", m_symbol);
+      if(canLog)
+      {
+         PrintFormat("[PM-%s] SPM1 BEKLE: Trend ANA yonune donuyor, toparlanma bekleniyor.", m_symbol);
+         m_lastSPMLogTime = TimeCurrent();
+      }
       return;
    }
 
@@ -915,7 +990,11 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
    // Lot denge kontrolu
    if(!CheckLotBalance(spmDir, spmLot))
    {
-      PrintFormat("[PM-%s] SPM1 LOT DENGE: Tek tarafli risk! Engellendi.", m_symbol);
+      if(canLog)
+      {
+         PrintFormat("[PM-%s] SPM1 LOT DENGE: Tek tarafli risk! Engellendi.", m_symbol);
+         m_lastSPMLogTime = TimeCurrent();
+      }
       return;
    }
 
@@ -927,11 +1006,12 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
 }
 
 //+------------------------------------------------------------------+
-//| ManageActiveSPMs - v2.0: 5+5 yapi                                |
+//| ManageActiveSPMs - v2.2.1: SAME-DIR BLOCK fix + log cooldown    |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageActiveSPMs(int mainIdx)
 {
    int highestLayer = GetHighestLayer();
+   bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);  // v2.2.1: Log cooldown
 
    for(int i = m_posCount - 1; i >= 0; i--)
    {
@@ -945,17 +1025,20 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
       {
          int nextLayer = highestLayer + 1;
 
-         // v2.0: BUY/SELL ayri katman limiti
+         // v2.2.1: BUY/SELL ayri katman limiti + SAME-DIR BLOCK fix
+         bool nextDirOverridden = false;
          ENUM_SIGNAL_DIR nextDir = DetermineSPMDirection(spmLayer);
 
          // Ayni yon bloklama
          if(CheckSameDirectionBlock(nextDir))
          {
-            PrintFormat("[PM-%s] SPM%d SAME-DIR BLOCK! Override: ANA tersine.", m_symbol, nextLayer);
+            if(canLog)
+               PrintFormat("[PM-%s] SPM%d SAME-DIR BLOCK! Override: ANA tersine.", m_symbol, nextLayer);
             if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
                nextDir = SIGNAL_SELL;
             else
                nextDir = SIGNAL_BUY;
+            nextDirOverridden = true;  // v2.2.1: Bekleme atlanacak
          }
 
          // Katman limiti kontrol (5+5 yapi)
@@ -992,10 +1075,14 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
          double totalVol = GetTotalBuyLots() + GetTotalSellLots();
          if(totalVol >= MaxTotalVolume) continue;
 
-         // ANA toparlanma bekleme
-         if(ShouldWaitForANARecovery(mainIdx))
+         //--- v2.2.1: ANA toparlanma bekleme - SADECE yon override EDILMEDIYSE
+         if(!nextDirOverridden && ShouldWaitForANARecovery(mainIdx))
          {
-            PrintFormat("[PM-%s] SPM%d BEKLE: Trend ANA yonune donuyor.", m_symbol, nextLayer);
+            if(canLog)
+            {
+               PrintFormat("[PM-%s] SPM%d BEKLE: Trend ANA yonune donuyor.", m_symbol, nextLayer);
+               m_lastSPMLogTime = TimeCurrent();
+            }
             continue;
          }
 
@@ -1005,7 +1092,11 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
          // Lot denge kontrolu
          if(!CheckLotBalance(nextDir, nextLot))
          {
-            PrintFormat("[PM-%s] SPM%d LOT DENGE: Tek tarafli risk! Engellendi.", m_symbol, nextLayer);
+            if(canLog)
+            {
+               PrintFormat("[PM-%s] SPM%d LOT DENGE: Tek tarafli risk! Engellendi.", m_symbol, nextLayer);
+               m_lastSPMLogTime = TimeCurrent();
+            }
             continue;
          }
 
@@ -1316,9 +1407,10 @@ ENUM_SIGNAL_DIR CPositionManager::DetermineSPMDirection(int parentLayer)
       else if(minusDI > plusDI) sellVotes++;
    }
 
-   //--- Cogunluk karari
-   PrintFormat("[PM-%s] 5-OY SPM%d: BUY=%d SELL=%d",
-               m_symbol, parentLayer + 1, buyVotes, sellVotes);
+   //--- Cogunluk karari (v2.2.1: log cooldown)
+   if(TimeCurrent() - m_lastSPMLogTime >= 30)
+      PrintFormat("[PM-%s] 5-OY SPM%d: BUY=%d SELL=%d",
+                  m_symbol, parentLayer + 1, buyVotes, sellVotes);
 
    if(buyVotes > sellVotes) return SIGNAL_BUY;
    if(sellVotes > buyVotes) return SIGNAL_SELL;
@@ -1353,11 +1445,16 @@ bool CPositionManager::CheckSameDirectionBlock(ENUM_SIGNAL_DIR proposedDir)
 
    if(proposedDir == mainDir && m_positions[mainIdx].profit < 0.0)
    {
-      PrintFormat("[PM-%s] SAME-DIR BLOCK: SPM %s == ANA %s, ANA P/L=$%.2f < 0 -> ENGELLENDI",
-                  m_symbol,
-                  (proposedDir == SIGNAL_BUY) ? "BUY" : "SELL",
-                  (mainDir == SIGNAL_BUY) ? "BUY" : "SELL",
-                  m_positions[mainIdx].profit);
+      //--- v2.2.1: Log cooldown - her tick basina yazma
+      if(TimeCurrent() - m_lastSPMLogTime >= 30)
+      {
+         PrintFormat("[PM-%s] SAME-DIR BLOCK: SPM %s == ANA %s, ANA P/L=$%.2f < 0 -> OVERRIDE TERS YONE",
+                     m_symbol,
+                     (proposedDir == SIGNAL_BUY) ? "BUY" : "SELL",
+                     (mainDir == SIGNAL_BUY) ? "BUY" : "SELL",
+                     m_positions[mainIdx].profit);
+         m_lastSPMLogTime = TimeCurrent();
+      }
       return true;
    }
    return false;
