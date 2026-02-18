@@ -3,16 +3,16 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v1.3.0 - SmartSPM                                      |
+//| BytamerFX v2.0.0 - KAZAN-KAZAN Hedge Sistemi                     |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
-//| 5-Oy SPM Yon | Guclu Hedge Lot | Chart Overlay Indikator         |
+//| FIFO +$5 Net | DCA | Acil Hedge | Kilitlenme Tespit              |
 //| Hesap: 262230423 (Exness)                                        |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "1.30"
-#property description "BytamerFX v1.3.0 - SmartSPM Strateji"
-#property description "5-Oy SPM Yon + Guclu Hedge + Akilli Bekleme"
+#property version     "2.00"
+#property description "BytamerFX v2.0.0 - KazanKazan Hedge"
+#property description "FIFO +$5 | DCA | Acil Hedge | 5+5 SPM"
 #property description "SL=YOK | Asla Zararina Satis Yok"
 #property description "Copyright 2026, By T@MER"
 #property strict
@@ -75,11 +75,13 @@ int OnInit()
    Print(EA_VERSION_FULL);
    Print(StringFormat("Hesap: %d | Broker: %s", accNo, broker));
    Print(StringFormat("Bakiye: $%.2f | Sembol: %s", balance, _Symbol));
-   Print("SL=YOK | Strateji: SPM+FIFO | Net Hedef: $" + DoubleToString(SPM_NetTargetUSD, 2));
+   Print("SL=YOK | Strateji: KAZAN-KAZAN | Net Hedef: $" + DoubleToString(SPM_NetTargetUSD, 2));
    Print(StringFormat("MinScore=%d | SPM Trigger=$%.1f | SPM Close=$%.1f",
          SignalMinScore, SPM_TriggerLoss, SPM_CloseProfit));
-   Print(StringFormat("SPM LotBase=%.1f | LotIncrement=%.2f | MaxLayers=%d",
-         SPM_LotBase, SPM_LotIncrement, SPM_MaxLayers));
+   Print(StringFormat("SPM LotBase=%.1f | LotIncrement=%.2f | MaxBuy=%d MaxSell=%d",
+         SPM_LotBase, SPM_LotIncrement, SPM_MaxBuyLayers, SPM_MaxSellLayers));
+   Print(StringFormat("v2.0: DCA=%d | Hedge=%.0f%% | Deadlock=%dsn",
+         DCA_MaxPerPosition, Hedge_FillPercent * 100.0, Deadlock_TimeoutSec));
    Print("================================================");
 
    //--- 2. SEMBOL KATEGORI TESPITI
