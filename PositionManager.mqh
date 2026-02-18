@@ -556,6 +556,23 @@ void CPositionManager::RefreshPositions()
       m_spmLimitLogged = false;
    }
 
+   //--- v2.2.1: mainTicket hala acik mi kontrol et (TP ile kapanmis olabilir)
+   if(m_mainTicket > 0)
+   {
+      bool mainFound = false;
+      for(int j = 0; j < totalPositions; j++)
+      {
+         ulong tk = PositionGetTicket(j);
+         if(tk == m_mainTicket) { mainFound = true; break; }
+      }
+      if(!mainFound)
+      {
+         PrintFormat("[PM-%s] ANA #%llu artik yok (TP/SL ile kapanmis). Reset.", m_symbol, m_mainTicket);
+         m_mainTicket = 0;
+         ResetFIFO();
+      }
+   }
+
    for(int i = 0; i < totalPositions && m_posCount < MAX_POSITIONS; i++)
    {
       ulong ticket = PositionGetTicket(i);
@@ -612,14 +629,17 @@ void CPositionManager::RefreshPositions()
             if(m_positions[idx].spmLayer <= 0) m_positions[idx].spmLayer = 1;
          }
       }
-      else if(m_mainTicket == 0 && m_posCount == 0)
+      else if(m_mainTicket == 0)
       {
+         //--- v2.2.1: mainTicket yoksa ilk bulunan bilinmeyen pozisyon ANA olur
          m_positions[idx].role = ROLE_MAIN;
          m_positions[idx].spmLayer = 0;
          m_mainTicket = ticket;
+         PrintFormat("[PM-%s] ANA atandi: #%llu (mainTicket yoktu)", m_symbol, ticket);
       }
       else
       {
+         //--- mainTicket var ama bu pozisyon ne? -> SPM olarak ata
          m_positions[idx].role = ROLE_SPM;
          m_positions[idx].spmLayer = 1;
       }
@@ -753,7 +773,8 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
       }
 
       //=== KURAL 2: Trend ANA tersinde, SPM karda -> KARLI KAPAT ===
-      if((role == ROLE_SPM || role == ROLE_DCA || role == ROLE_HEDGE) && profit >= 1.0)
+      //--- v2.2.2: minCloseProfit kontrolu (maliyeti kurtarmayan islem kapatilmaz)
+      if((role == ROLE_SPM || role == ROLE_DCA || role == ROLE_HEDGE) && profit >= MathMax(1.0, m_profile.minCloseProfit))
       {
          int mainIdx = FindMainPosition();
          if(mainIdx >= 0)
@@ -771,7 +792,7 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
             else posDir = SIGNAL_SELL;
 
             // Trend ANA yonune donuyorsa VE pozisyon ana tersinde ise
-            if(trendDir == mainDir && posDir != mainDir && profit >= 1.0)
+            if(trendDir == mainDir && posDir != mainDir && profit >= MathMax(1.0, m_profile.minCloseProfit))
             {
                string roleStr = (role == ROLE_SPM) ? StringFormat("SPM%d", m_positions[i].spmLayer) :
                                 (role == ROLE_DCA) ? "DCA" : "HEDGE";
@@ -790,7 +811,8 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 
       //=== KURAL 3: Mum terse dondu + SPM karda -> KARLI KAPAT ===
       // v2.0: SADECE SPM/DCA/HEDGE icin (ANA'yi kapatmaz)
-      if(newBar && profit >= 1.5 && role != ROLE_MAIN)
+      // v2.2.2: minCloseProfit kontrolu
+      if(newBar && profit >= MathMax(1.5, m_profile.minCloseProfit) && role != ROLE_MAIN)
       {
          ENUM_SIGNAL_DIR candleDir = GetCandleDirection();
          bool candleAgainst = false;
@@ -819,7 +841,8 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 
       //=== KURAL 4: Engulfing formasyonu ile karli kapat ===
       // v2.0: SADECE SPM/DCA/HEDGE icin
-      if(newBar && profit >= 0.80 && role != ROLE_MAIN)
+      // v2.2.2: minCloseProfit kontrolu (0.80 -> minCloseProfit)
+      if(newBar && profit >= m_profile.minCloseProfit && role != ROLE_MAIN)
       {
          int engulfPattern = m_candle.DetectEngulfing();
          bool engulfAgainst = false;
@@ -847,10 +870,11 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 
       //=== KURAL 5: Peak drop %50 -> Karini koru ===
       // v2.0: SADECE SPM/DCA/HEDGE icin (ANA'yi PeakDrop ile kapatmaz)
+      // v2.2.2: minCloseProfit kontrolu - drop sonrasi bile min karin altinda kapatma
       if(role != ROLE_MAIN)
       {
          double peakVal = (i < ArraySize(m_peakProfit)) ? m_peakProfit[i] : profit;
-         if(peakVal >= PeakMinProfit && profit > 0.0)
+         if(peakVal >= PeakMinProfit && profit >= m_profile.minCloseProfit)
          {
             double dropPct = (peakVal - profit) / peakVal * 100.0;
             if(dropPct >= PeakDropPercent)
@@ -1066,7 +1090,25 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
          // Kontroller
          double balance = AccountInfoDouble(ACCOUNT_BALANCE);
          if(balance < MinBalanceToTrade) continue;
-         if(TimeCurrent() < m_lastSPMTime + m_profile.spmCooldownSec) continue;
+
+         //--- v2.2.2: ACIL SPM - zarar 2x tetik asarsa cooldown ATLA
+         //--- Normal: 60sn bekle. Acil: zarar >= 2x tetik ise HEMEN ac!
+         bool isEmergencySPM = (spmProfit <= m_profile.spmTriggerLoss * 2.0);
+         if(!isEmergencySPM && TimeCurrent() < m_lastSPMTime + m_profile.spmCooldownSec)
+         {
+            if(canLog)
+            {
+               int remaining = (int)(m_lastSPMTime + m_profile.spmCooldownSec - TimeCurrent());
+               PrintFormat("[PM-%s] SPM%d COOLDOWN: %ds kaldi (zarar=$%.2f, acil degil)",
+                           m_symbol, nextLayer, remaining, spmProfit);
+               m_lastSPMLogTime = TimeCurrent();
+            }
+            continue;
+         }
+         if(isEmergencySPM && canLog)
+            PrintFormat("[PM-%s] SPM%d ACIL: zarar=$%.2f >= 2x tetik($%.2f) -> COOLDOWN ATLANDI!",
+                        m_symbol, nextLayer, spmProfit, m_profile.spmTriggerLoss * 2.0);
+
          if(IsTradingPaused()) continue;
 
          double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);

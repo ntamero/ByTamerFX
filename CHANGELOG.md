@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v2.2.2] - 2026-02-18
+
+### Critical Fixes
+- **Minimum Profit Threshold**: Added `minCloseProfit` to SymbolProfile. No SPM/DCA/HEDGE position closes below the minimum profit. Prevents trades closing at $0.26-$0.80 that don't cover spread+commission costs. Forex/XAG/XAU=$1.0, BTC=$1.5.
+- **SPM Emergency Cooldown Skip**: When SPM loss exceeds 2x the trigger threshold (e.g., -$10 when trigger is -$5), the cooldown for next SPM layer is skipped entirely. Prevents situations where SPM1 reaches -$10.45 but SPM2 can't open for 60 seconds.
+- **ANA Position Broker TP Removed**: Broker-side TP is no longer set for main (ANA) positions. ANA ONLY closes via FIFO (net >= +$5). Previously, broker would auto-close ANA at TP price, bypassing FIFO logic and resulting in tiny $0.26 profits.
+- **ANA Ticket Detection Fix**: When broker closes ANA via TP/SL, `m_mainTicket` now properly resets. New positions are correctly identified as ANA instead of being misassigned as SPM1.
+- **BTC TP Pips Increased 10x**: BTC TP1: 1500→15000, TP2: 2500→30000, TP3: 3500→50000 pips. At 0.01 lot, old values only yielded ~$0.35 profit. New values yield $1.50/$3.00/$5.00+.
+- **CryptoAlt TP Pips Increased 10x**: Similar adjustment for altcoins: 500→5000, 1000→10000, 1800→18000 pips.
+
+### Changes
+- `Config.mqh`: Added `minCloseProfit` field to SymbolProfile, updated all 10 profiles. Version 2.2.1→2.2.2
+- `PositionManager.mqh`: All 5 profit-close rules now respect `minCloseProfit`. Emergency SPM cooldown skip when loss >= 2x trigger. ANA ticket existence check in `RefreshPositions()`. Role assignment fix when `m_mainTicket == 0`.
+- `BytamerFX.mq5`: ANA broker TP set to 0 (FIFO-only close). Version 2.21→2.22
+
+---
+
 ## [v2.2.1] - 2026-02-18
 
 ### Critical Fixes
