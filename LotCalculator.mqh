@@ -3,6 +3,9 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
+//| BytamerFX - Enhanced Dynamic Lot Calculator                      |
+//| Balance + Score + Trend + Category + ATR + Margin                |
+//+------------------------------------------------------------------+
 #property copyright "Copyright 2026, By T@MER"
 #property link      "https://www.bytamer.com"
 #property strict
@@ -21,6 +24,82 @@ private:
    double               m_maxLot;
    double               m_lotStep;
 
+   //--- Sinyal skoru carpani (daha granular)
+   double GetScoreMultiplier(int score) const
+   {
+      if(score >= 85) return 1.5;    // Cok guclu sinyal
+      if(score >= 70) return 1.3;
+      if(score >= 55) return 1.1;
+      if(score >= 45) return 1.0;    // Standart
+      if(score >= 38) return 0.8;    // Minimum esik, dikkatli
+      return 0.5;                     // Cok zayif, minimum lot
+   }
+
+   //--- Trend gucu carpani
+   double GetTrendMultiplier(ENUM_TREND_STRENGTH trendStr) const
+   {
+      switch(trendStr)
+      {
+         case TREND_STRONG:   return 1.3;
+         case TREND_MODERATE: return 1.0;
+         case TREND_WEAK:     return 0.7;
+      }
+      return 1.0;
+   }
+
+   //--- Kategori risk carpani
+   double GetCategoryMultiplier() const
+   {
+      switch(m_category)
+      {
+         case CAT_FOREX:   return 1.0;
+         case CAT_STOCKS:  return 0.9;
+         case CAT_INDICES: return 0.8;
+         case CAT_METAL:   return 0.7;
+         case CAT_ENERGY:  return 0.6;
+         case CAT_CRYPTO:  return 0.5;
+         default:          return 0.7;
+      }
+   }
+
+   //--- ATR volatilite carpani
+   double GetVolatilityMultiplier(double atr) const
+   {
+      if(atr <= 0) return 1.0;
+
+      double bid = SymbolInfoDouble(m_symbol, SYMBOL_BID);
+      if(bid <= 0) return 1.0;
+
+      double atrPct = (atr / bid) * 100.0;
+
+      if(atrPct > 3.0) return 0.4;   // Extreme volatilite
+      if(atrPct > 2.0) return 0.5;
+      if(atrPct > 1.5) return 0.6;
+      if(atrPct > 1.0) return 0.7;
+      if(atrPct > 0.5) return 0.85;
+      return 1.0;                      // Normal
+   }
+
+   //--- Margin seviye guvenlik carpani
+   double GetMarginMultiplier(double marginLevel) const
+   {
+      if(marginLevel <= 0) return 1.0;  // Margin bilgisi yok veya pozisyon yok
+
+      if(marginLevel < 300)  return 0.5;
+      if(marginLevel < 500)  return 0.7;
+      if(marginLevel < 1000) return 0.85;
+      return 1.0;
+   }
+
+   //--- Lot normalize ve clamp
+   double NormalizeLot(double lot) const
+   {
+      lot = MathFloor(lot / m_lotStep) * m_lotStep;
+      if(lot < m_minLot) lot = m_minLot;
+      if(lot > m_maxLot) lot = m_maxLot;
+      return NormalizeDouble(lot, 2);
+   }
+
 public:
    CLotCalculator() : m_minLot(0.01), m_maxLot(0.5), m_lotStep(0.01) {}
 
@@ -32,59 +111,37 @@ public:
       m_maxLot   = InputMaxLot;
       m_lotStep  = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
       if(m_lotStep <= 0) m_lotStep = 0.01;
-      if(m_minLot <= 0)  m_minLot = 0.01;
+      if(m_minLot  <= 0) m_minLot  = 0.01;
    }
 
-   double Calculate(double balance, double atr, int score)
+   //--- Tam dinamik lot hesaplama (6 faktor)
+   double CalculateDynamic(double balance, double atr, int score,
+                           ENUM_TREND_STRENGTH trendStr, double marginLevel)
    {
       //--- 1. Bakiye bazli temel lot
       double baseLot = (balance / 1000.0) * BaseLotPer1000;
 
-      //--- 2. Sinyal gucu carpani
-      double signalMult = 1.0;
-      if(score >= 80)      signalMult = 1.3;
-      else if(score >= 65) signalMult = 1.0;
-      else if(score >= 50) signalMult = 0.8;
-      else                 signalMult = 0.6;
+      //--- 2-6. Tum carpanlari uygula
+      double scoreMult  = GetScoreMultiplier(score);
+      double trendMult  = GetTrendMultiplier(trendStr);
+      double catMult    = GetCategoryMultiplier();
+      double volMult    = GetVolatilityMultiplier(atr);
+      double marginMult = GetMarginMultiplier(marginLevel);
 
-      //--- 3. Kategori risk carpani
-      double catMult = 1.0;
-      switch(m_category)
-      {
-         case CAT_CRYPTO:  catMult = 0.5; break;   // Crypto cok volatil
-         case CAT_METAL:   catMult = 0.7; break;    // Metal orta-yuksek
-         case CAT_INDICES: catMult = 0.8; break;    // Indeks orta
-         case CAT_ENERGY:  catMult = 0.6; break;    // Enerji yuksek volatilite
-         case CAT_STOCKS:  catMult = 0.9; break;    // Hisse orta-dusuk
-         case CAT_FOREX:   catMult = 1.0; break;    // Forex standart
-         default:          catMult = 0.7; break;
-      }
+      double lot = baseLot * scoreMult * trendMult * catMult * volMult * marginMult;
 
-      //--- 4. Volatilite duzeltmesi (ATR bazli)
-      double volMult = 1.0;
-      if(atr > 0)
-      {
-         double bid = SymbolInfoDouble(m_symbol, SYMBOL_BID);
-         if(bid > 0)
-         {
-            double atrPct = (atr / bid) * 100.0;
-            if(atrPct > 2.0)      volMult = 0.5;   // Cok volatil
-            else if(atrPct > 1.0) volMult = 0.7;
-            else if(atrPct > 0.5) volMult = 0.85;
-            else                  volMult = 1.0;
-         }
-      }
-
-      //--- Final lot hesaplama
-      double lot = baseLot * signalMult * catMult * volMult;
-
-      //--- Normalize et
-      lot = MathFloor(lot / m_lotStep) * m_lotStep;
-      if(lot < m_minLot) lot = m_minLot;
-      if(lot > m_maxLot) lot = m_maxLot;
-
-      return NormalizeDouble(lot, 2);
+      return NormalizeLot(lot);
    }
+
+   //--- Geriye uyumlu basit hesaplama (trend=MODERATE, margin=0)
+   double Calculate(double balance, double atr, int score)
+   {
+      return CalculateDynamic(balance, atr, score, TREND_MODERATE, 0);
+   }
+
+   //--- Getter'lar
+   double GetMinLot() const { return m_minLot;  }
+   double GetMaxLot() const { return m_maxLot;  }
 };
 
 #endif

@@ -17,10 +17,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "1.1.0"
-#define EA_VERSION_NUM    "1.10"
+#define EA_VERSION        "1.2.0"
+#define EA_VERSION_NUM    "1.20"
 #define EA_VERSION_NAME   "SPM-FIFO"
-#define EA_VERSION_FULL   "BytamerFX v1.1.0 - SPM-FIFO"
+#define EA_VERSION_FULL   "BytamerFX v1.2.0 - SPM-FIFO"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -63,27 +63,30 @@ input double   MaxSpreadPercent       = 15.0;
 //=================================================================
 // SINYAL MOTORU
 //=================================================================
-input int      SignalMinScore         = 35;
+input int      SignalMinScore         = 38;        // Daha guvenli sinyal esigi
 input int      SignalCooldownSec      = 120;
 
 //=================================================================
 // SPM + FIFO SISTEMI
 //=================================================================
-input double   SPM_TriggerLoss        = -3.0;     // Ana zararda SPM ac ($)
-input double   SPM_CloseProfit        = 2.0;      // SPM kar hedefi ($)
-input double   SPM_NetTargetUSD       = 5.0;      // FIFO net hedef ($)
-input int      SPM_MaxLayers          = 4;        // Max SPM katmani
-input double   SPM_LotMultiplier      = 1.0;      // SPM lot carpani
-input int      SPM_CooldownSec        = 60;       // SPM acma bekleme (sn)
+input double   SPM_TriggerLoss        = -3.0;     // SPM tetik zarar ($) - ana veya spm -3$ olunca
+input double   SPM_CloseProfit        = 4.0;      // SPM kar hedefi ($) - +4$ olunca kapat
+input double   SPM_NetTargetUSD       = 5.0;      // FIFO net hedef ($) - spm toplami-ana >= +5$
+input int      SPM_MaxLayers          = 6;        // Max SPM katmani (daha esnek)
+input double   SPM_LotBase            = 1.0;      // SPM lot carpani (ana lot * bu)
+input double   SPM_LotIncrement       = 0.1;      // Her katmanda lot artisi (1.0,1.1,1.2...)
+input int      SPM_CooldownSec        = 45;       // SPM acma bekleme (sn)
 
 //=================================================================
 // KORUMA SISTEMI
 //=================================================================
-input double   MaxDrawdownPercent     = 25.0;     // Max DD% - equity duserse TUM kapat
-input double   MaxCycleLossUSD        = -10.0;    // Dongu max zarar ($)
+input double   MaxDrawdownPercent     = 30.0;     // Max DD% - equity duserse son care tum kapat
+input double   MaxCycleLossUSD        = -15.0;    // Dongu max zarar ($)
 input double   DailyProfitTarget      = 10.0;     // Gunluk kar hedefi ($)
-input int      ProtectionCooldownSec  = 300;      // Koruma sonrasi bekleme (sn)
+input int      ProtectionCooldownSec  = 180;      // Koruma sonrasi bekleme (sn)
 input double   MinBalanceToTrade      = 10.0;     // Min bakiye ($) - altinda islem yok
+input double   MaxTotalVolume         = 2.0;      // Max toplam acik hacim (lot)
+input double   MinMarginLevel         = 200.0;    // Min margin seviyesi (%) - altinda yeni islem yok
 
 //=================================================================
 // KAR YONETIMI
@@ -96,7 +99,7 @@ input double   TrailStepUSD           = 0.30;     // Trailing step ($)
 // GORSEL
 //=================================================================
 input bool     EnableDashboard        = true;
-input int      ArrowSize              = 3;
+input int      ArrowSize              = 5;        // Buyuk ok (goze hitap eden)
 
 //=================================================================
 // ENUM TANIMLARI
@@ -265,5 +268,6 @@ struct ScoreBreakdown
 #define SPM_TriggerLossUSD    SPM_TriggerLoss
 #define SPM_CloseProfitUSD    SPM_CloseProfit
 #define SPM_CooldownSeconds   SPM_CooldownSec
+#define SPM_LotMultiplier     SPM_LotBase
 
 #endif
