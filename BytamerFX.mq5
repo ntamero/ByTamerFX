@@ -10,8 +10,8 @@
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.00"
-#property description "BytamerFX v2.0.0 - KazanKazan Hedge"
+#property version     "2.10"
+#property description "BytamerFX v2.1.0 - KazanKazan Dinamik"
 #property description "FIFO +$5 | DCA | Acil Hedge | 5+5 SPM"
 #property description "SL=YOK | Asla Zararina Satis Yok"
 #property description "Copyright 2026, By T@MER"
@@ -80,8 +80,9 @@ int OnInit()
          SignalMinScore, SPM_TriggerLoss, SPM_CloseProfit));
    Print(StringFormat("SPM LotBase=%.1f | LotIncrement=%.2f | MaxBuy=%d MaxSell=%d",
          SPM_LotBase, SPM_LotIncrement, SPM_MaxBuyLayers, SPM_MaxSellLayers));
-   Print(StringFormat("v2.0: DCA=%d | Hedge=%.0f%% | Deadlock=%dsn",
+   Print(StringFormat("v2.1: DCA=%d | Hedge=%.0f%% | Deadlock=%dsn",
          DCA_MaxPerPosition, Hedge_FillPercent * 100.0, Deadlock_TimeoutSec));
+   Print("Dinamik Profil: Sembol bazli TP/SPM/Hedge parametreleri");
    Print("================================================");
 
    //--- 2. SEMBOL KATEGORI TESPITI
@@ -107,6 +108,10 @@ int OnInit()
       Print("!!! SINYAL MOTORU BASARISIZ - EA DEVRE DISI !!!");
       return INIT_FAILED;
    }
+
+   //--- 6b. v2.1: DINAMIK PROFIL → SignalEngine'e aktar (pip bazli TP icin)
+   SymbolProfile signalProfile = GetSymbolProfile(g_category, _Symbol);
+   g_signalEngine.SetProfile(signalProfile);
 
    //--- 7. ISLEM YURUTME
    g_executor.Initialize(_Symbol);
@@ -290,16 +295,18 @@ void CheckForNewSignal()
 
    Print(StringFormat("=== YENI SINYAL: %s | Skor: %d/100 ===",
          (sig.direction == SIGNAL_BUY) ? "BUY" : "SELL", sig.score));
-   Print(StringFormat("  RSI=%.1f | ADX=%.1f | ATR=%.5f", sig.rsi, sig.adx, sig.atr));
-   Print(StringFormat("  TP1=%.5f | TP2=%.5f | TP3=%.5f", sig.tp1, sig.tp2, sig.tp3));
+   string trendName = (sig.trendStrength == TREND_STRONG) ? "GUCLU" :
+                      (sig.trendStrength == TREND_MODERATE) ? "ORTA" : "ZAYIF";
+   Print(StringFormat("  RSI=%.1f | ADX=%.1f | ATR=%.5f | Trend=%s", sig.rsi, sig.adx, sig.atr, trendName));
+   Print(StringFormat("  TP=%.5f (Ana) | TP1=%.5f | TP2=%.5f | TP3=%.5f", sig.tp, sig.tp1, sig.tp2, sig.tp3));
 
    //--- Dinamik lot hesapla (balance + atr + score + trend + margin)
    ENUM_TREND_STRENGTH trendStr = g_signalEngine.GetTrendStrength();
    double lot = g_lotCalc.CalculateDynamic(
       AccountInfoDouble(ACCOUNT_BALANCE), sig.atr, sig.score, trendStr, marginLevel);
 
-   //--- TP hedefi belirle (TP1 default)
-   double tp = sig.tp1;
+   //--- v2.1: TP hedefi trend gucune gore (sig.tp zaten profil bazli ayarli)
+   double tp = sig.tp;   // Trend: WEAK→TP1, MODERATE→TP2, STRONG→TP3
 
    //--- Islem ac (SL=YOK - MUTLAK)
    string comment = StringFormat("BTFX_%s_%d", _Symbol, sig.score);

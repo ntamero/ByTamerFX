@@ -103,6 +103,10 @@ private:
    datetime m_lastSignalTime;
    int      m_cooldownSec;
 
+   //=== v2.1: DINAMIK PROFIL ===
+   SymbolProfile m_profile;
+   bool          m_profileSet;
+
    //=== DATA VALIDITY FLAGS ===
    bool m_dataReady;
 
@@ -113,6 +117,7 @@ public:
    CSignalEngine() :
       m_lastSignalTime(0),
       m_cooldownSec(120),
+      m_profileSet(false),
       m_dataReady(false),
       m_hEmaFast(INVALID_HANDLE),
       m_hEmaMid(INVALID_HANDLE),
@@ -196,6 +201,21 @@ public:
             EnumToString(m_tfEntry), EnumToString(m_tfTrend), EnumToString(m_tfHigher),
             SignalMinScore, m_cooldownSec));
       return true;
+   }
+
+   //+------------------------------------------------------------------+
+   //| SetProfile - v2.1: Dinamik profil ayarla (pip bazli TP icin)     |
+   //| BytamerFX.mq5 Initialize sonrasinda cagirir                      |
+   //+------------------------------------------------------------------+
+   void SetProfile(const SymbolProfile &profile)
+   {
+      m_profile    = profile;
+      m_profileSet = true;
+
+      Print(StringFormat("BHSS Profil: %s | %s | TP1=%.0f | TP2=%.0f | TP3=%.0f pips | Trigger=$%.1f",
+            m_symbol, m_profile.profileName,
+            m_profile.tp1Pips, m_profile.tp2Pips, m_profile.tp3Pips,
+            m_profile.spmTriggerLoss));
    }
 
    //+------------------------------------------------------------------+
@@ -1335,67 +1355,112 @@ private:
    }
 
    //+------------------------------------------------------------------+
-   //| CalculateTPLevels - ATR-based TP with trend strength adaptation   |
+   //| CalculateTPLevels - v2.1: DINAMIK PIP BAZLI TP                   |
+   //| Profil varsa: pip bazli sabit TP (enstruman bazli)               |
+   //| Profil yoksa: ATR bazli fallback (eski sistem)                   |
+   //| Trend gucu: WEAK→TP1 | MODERATE→TP2 | STRONG→TP3                |
    //| SL is always 0 (ABSOLUTE RULE)                                   |
    //+------------------------------------------------------------------+
    void CalculateTPLevels(SignalData &sig)
    {
-      if(m_atr <= 0) return;
-
-      //--- Category multiplier
-      double catMult = 1.0;
-      switch(m_category)
-      {
-         case CAT_FOREX:   catMult = 1.0;  break;
-         case CAT_METAL:   catMult = 0.9;  break;
-         case CAT_CRYPTO:  catMult = 1.25; break;
-         case CAT_INDICES: catMult = 1.0;  break;
-         case CAT_ENERGY:  catMult = 0.85; break;
-         case CAT_STOCKS:  catMult = 1.0;  break;
-         default:          catMult = 1.0;  break;
-      }
-
-      //--- Trend strength adaptation
       ENUM_TREND_STRENGTH strength = GetTrendStrength();
-      double tp1Mult = 1.5, tp2Mult = 2.5, tp3Mult = 4.0;  // Default: MODERATE
-
-      switch(strength)
-      {
-         case TREND_WEAK:
-            tp1Mult = 1.0;  tp2Mult = 1.5;  tp3Mult = 2.5;  // Conservative
-            break;
-         case TREND_MODERATE:
-            tp1Mult = 1.5;  tp2Mult = 2.5;  tp3Mult = 4.0;  // Standard
-            break;
-         case TREND_STRONG:
-            tp1Mult = 2.0;  tp2Mult = 3.5;  tp3Mult = 5.5;  // Aggressive
-            break;
-      }
-
-      double tp1Distance = m_atr * tp1Mult * catMult;
-      double tp2Distance = m_atr * tp2Mult * catMult;
-      double tp3Distance = m_atr * tp3Mult * catMult;
+      sig.trendStrength = strength;
+      sig.sl = 0;  // SL = NONE (ABSOLUTE RULE)
 
       double ask = SymbolInfoDouble(m_symbol, SYMBOL_ASK);
       double bid = SymbolInfoDouble(m_symbol, SYMBOL_BID);
+      double point = SymbolInfoDouble(m_symbol, SYMBOL_POINT);
 
-      if(sig.direction == SIGNAL_BUY)
+      if(point <= 0 || ask <= 0 || bid <= 0) return;
+
+      //=== v2.1: PIP BAZLI DINAMIK TP ===
+      if(m_profileSet && m_profile.tp1Pips > 0)
       {
-         sig.tp1 = ask + tp1Distance;
-         sig.tp2 = ask + tp2Distance;
-         sig.tp3 = ask + tp3Distance;
-         sig.tp  = sig.tp1;
+         //--- Pips → fiyat donusumu: pips * point
+         double tp1Dist = m_profile.tp1Pips * point;
+         double tp2Dist = m_profile.tp2Pips * point;
+         double tp3Dist = m_profile.tp3Pips * point;
+
+         //--- Trend gucune gore ANA TP secimi:
+         //    WEAK → TP1 (konservatif, erken al)
+         //    MODERATE → TP2 (standart)
+         //    STRONG → TP3 (agresif, trendi son damlasina kadar)
+         double mainTPDist = tp1Dist;  // WEAK varsayilan
+         switch(strength)
+         {
+            case TREND_WEAK:     mainTPDist = tp1Dist; break;
+            case TREND_MODERATE: mainTPDist = tp2Dist; break;
+            case TREND_STRONG:   mainTPDist = tp3Dist; break;
+         }
+
+         if(sig.direction == SIGNAL_BUY)
+         {
+            sig.tp1 = ask + tp1Dist;
+            sig.tp2 = ask + tp2Dist;
+            sig.tp3 = ask + tp3Dist;
+            sig.tp  = ask + mainTPDist;   // Trend gucune gore
+         }
+         else
+         {
+            sig.tp1 = bid - tp1Dist;
+            sig.tp2 = bid - tp2Dist;
+            sig.tp3 = bid - tp3Dist;
+            sig.tp  = bid - mainTPDist;   // Trend gucune gore
+         }
+
+         Print(StringFormat("BHSS TP [%s]: Trend=%s | TP=%.5f (%.0f pips) | TP1=%.0f TP2=%.0f TP3=%.0f pips",
+               m_profile.profileName,
+               (strength == TREND_STRONG) ? "GUCLU" : (strength == TREND_MODERATE) ? "ORTA" : "ZAYIF",
+               sig.tp, mainTPDist / point,
+               m_profile.tp1Pips, m_profile.tp2Pips, m_profile.tp3Pips));
       }
       else
       {
-         sig.tp1 = bid - tp1Distance;
-         sig.tp2 = bid - tp2Distance;
-         sig.tp3 = bid - tp3Distance;
-         sig.tp  = sig.tp1;
-      }
+         //=== ATR BAZLI FALLBACK (profil yoksa) ===
+         if(m_atr <= 0) return;
 
-      sig.sl = 0;  // SL = NONE (ABSOLUTE RULE)
-      sig.trendStrength = strength;
+         double catMult = 1.0;
+         switch(m_category)
+         {
+            case CAT_FOREX:   catMult = 1.0;  break;
+            case CAT_METAL:   catMult = 0.9;  break;
+            case CAT_CRYPTO:  catMult = 1.25; break;
+            case CAT_INDICES: catMult = 1.0;  break;
+            case CAT_ENERGY:  catMult = 0.85; break;
+            default:          catMult = 1.0;  break;
+         }
+
+         double tp1Mult = 1.5, tp2Mult = 2.5, tp3Mult = 4.0;
+         switch(strength)
+         {
+            case TREND_WEAK:     tp1Mult = 1.0; tp2Mult = 1.5; tp3Mult = 2.5; break;
+            case TREND_MODERATE: tp1Mult = 1.5; tp2Mult = 2.5; tp3Mult = 4.0; break;
+            case TREND_STRONG:   tp1Mult = 2.0; tp2Mult = 3.5; tp3Mult = 5.5; break;
+         }
+
+         double tp1Distance = m_atr * tp1Mult * catMult;
+         double tp2Distance = m_atr * tp2Mult * catMult;
+         double tp3Distance = m_atr * tp3Mult * catMult;
+
+         if(sig.direction == SIGNAL_BUY)
+         {
+            sig.tp1 = ask + tp1Distance;
+            sig.tp2 = ask + tp2Distance;
+            sig.tp3 = ask + tp3Distance;
+            sig.tp  = sig.tp1;
+         }
+         else
+         {
+            sig.tp1 = bid - tp1Distance;
+            sig.tp2 = bid - tp2Distance;
+            sig.tp3 = bid - tp3Distance;
+            sig.tp  = sig.tp1;
+         }
+
+         Print(StringFormat("BHSS TP [ATR-FALLBACK]: Trend=%s | ATR=%.5f | TP1=%.5f TP2=%.5f TP3=%.5f",
+               (strength == TREND_STRONG) ? "GUCLU" : (strength == TREND_MODERATE) ? "ORTA" : "ZAYIF",
+               m_atr, sig.tp1, sig.tp2, sig.tp3));
+      }
    }
 };
 

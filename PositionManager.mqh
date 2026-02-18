@@ -266,19 +266,21 @@ void CPositionManager::Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat,
    //--- v2.0: Enstruman profili yukle
    m_profile = GetSymbolProfile(m_category, m_symbol);
 
-   PrintFormat("[PM-%s] PositionManager v2.0.0 KazanKazan | Cat=%s | Balance=%.2f",
-               m_symbol, GetCatName(), m_startBalance);
+   PrintFormat("[PM-%s] PositionManager v2.1.0 KazanKazan Dinamik | Cat=%s | Profil=%s | Balance=%.2f",
+               m_symbol, GetCatName(), m_profile.profileName, m_startBalance);
    PrintFormat("[PM-%s] SPM: Trigger=$%.1f | Close=$%.1f | Net=$%.1f | MaxBuy=%d MaxSell=%d",
                m_symbol, m_profile.spmTriggerLoss, m_profile.spmCloseProfit,
                m_profile.fifoNetTarget, m_profile.spmMaxBuyLayers, m_profile.spmMaxSellLayers);
    PrintFormat("[PM-%s] SPM Lot: Base=%.1f | Inc=%.2f | Cap=%.1f | Cooldown=%ds",
                m_symbol, m_profile.spmLotBase, m_profile.spmLotIncrement,
                m_profile.spmLotCap, m_profile.spmCooldownSec);
-   PrintFormat("[PM-%s] v2.0: DCA(dist=%.1f ATR, max=%d) | Hedge(minSPM=%d, minZarar=$%.0f, oran=%.1f, fill=%.0f%%) | Deadlock(%dsn)",
-               m_symbol, m_profile.dcaDistanceATR, DCA_MaxPerPosition,
-               m_profile.hedgeMinSPMCount, m_profile.hedgeMinLossUSD,
+   PrintFormat("[PM-%s] v2.1: TP Pips: TP1=%.0f | TP2=%.0f | TP3=%.0f | Hedge(minSPM=%d, minZarar=$%.0f)",
+               m_symbol, m_profile.tp1Pips, m_profile.tp2Pips, m_profile.tp3Pips,
+               m_profile.hedgeMinSPMCount, m_profile.hedgeMinLossUSD);
+   PrintFormat("[PM-%s] v2.1: DCA(dist=%.1f ATR) | Hedge(oran=%.1f, fill=%.0f%%) | Deadlock(%dsn)",
+               m_symbol, m_profile.dcaDistanceATR,
                Hedge_RatioTrigger, Hedge_FillPercent * 100.0, Deadlock_TimeoutSec);
-   PrintFormat("[PM-%s] v2.0: TERFI=KALDIRILDI | PeakDrop=SADECE_SPM | ANA=SADECE_FIFO",
+   PrintFormat("[PM-%s] KURALLAR: TERFI=YOK | PeakDrop=SADECE_SPM | ANA=SADECE_FIFO | SL=YOK",
                m_symbol);
 
    AdoptExistingPositions();

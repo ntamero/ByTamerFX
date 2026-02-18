@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.0.0"
-#define EA_VERSION_NUM    "2.00"
+#define EA_VERSION        "2.1.0"
+#define EA_VERSION_NUM    "2.10"
 #define EA_VERSION_NAME   "KazanKazan"
-#define EA_VERSION_FULL   "BytamerFX v2.0.0 - KazanKazan Hedge"
+#define EA_VERSION_FULL   "BytamerFX v2.1.0 - KazanKazan Dinamik"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -297,22 +297,212 @@ struct ScoreBreakdown
 //=================================================================
 struct SymbolProfile
 {
-   double spmTriggerLoss;
-   double spmCloseProfit;
-   double fifoNetTarget;
-   int    spmMaxBuyLayers;
-   int    spmMaxSellLayers;
-   double spmLotBase;
-   double spmLotIncrement;
-   double spmLotCap;
-   int    spmCooldownSec;
-   double dcaDistanceATR;
-   double profitTargetPerPos;
-   int    hedgeMinSPMCount;    // v2.0.1: Hedge icin minimum SPM sayisi
-   double hedgeMinLossUSD;     // v2.0.1: Hedge icin minimum toplam zarar ($)
+   //--- SPM / FIFO parametreleri
+   double spmTriggerLoss;       // SPM tetik zarar esigi ($)
+   double spmCloseProfit;       // SPM kar hedefi ($)
+   double fifoNetTarget;        // FIFO net hedef ($)
+   int    spmMaxBuyLayers;      // Max BUY katman
+   int    spmMaxSellLayers;     // Max SELL katman
+   double spmLotBase;           // SPM lot carpani
+   double spmLotIncrement;      // Katman basi lot artisi
+   double spmLotCap;            // Max carpan
+   int    spmCooldownSec;       // SPM arasi bekleme (sn)
+   double dcaDistanceATR;       // DCA mesafesi (ATR carpani)
+   double profitTargetPerPos;   // Pozisyon basi kar hedefi ($)
+   int    hedgeMinSPMCount;     // Hedge icin minimum SPM sayisi
+   double hedgeMinLossUSD;      // Hedge icin minimum toplam zarar ($)
 
+   //--- v2.1: DINAMIK TP DEGERLERI (PIPS olarak)
+   //--- Trend gucune gore: WEAK→TP1, MODERATE→TP2, STRONG→TP3
+   double tp1Pips;              // Zayif trend TP (pips)
+   double tp2Pips;              // Orta trend TP (pips)
+   double tp3Pips;              // Guclu trend TP (pips)
+
+   //--- v2.1: Profil adi (log icin)
+   string profileName;
+
+   //---------- PROFIL AYAR FONKSIYONLARI ----------
+
+   //--- FOREX (EURUSD, GBPUSD vb. - JPY haric)
+   void SetForex()
+   {
+      profileName       = "FOREX";
+      spmTriggerLoss    = -3.0;       // Forex: -$3 tetik
+      spmCloseProfit    = 3.0;
+      fifoNetTarget     = 5.0;
+      spmMaxBuyLayers   = 5;
+      spmMaxSellLayers  = 5;
+      spmLotBase        = 1.5;
+      spmLotIncrement   = 0.2;
+      spmLotCap         = 2.0;
+      spmCooldownSec    = 60;
+      dcaDistanceATR    = 2.0;
+      profitTargetPerPos = 2.0;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -5.0;       // Forex: -$5 hedge esigi
+      tp1Pips           = 30.0;       // Zayif trend: 30 pips
+      tp2Pips           = 60.0;       // Orta trend: 60 pips
+      tp3Pips           = 100.0;      // Guclu trend: 100 pips
+   }
+
+   //--- FOREX JPY pariteler (USDJPY, GBPJPY, EURJPY vb.)
+   void SetForexJPY()
+   {
+      profileName       = "FOREX_JPY";
+      spmTriggerLoss    = -3.0;       // JPY: -$3 tetik
+      spmCloseProfit    = 3.0;
+      fifoNetTarget     = 5.0;
+      spmMaxBuyLayers   = 5;
+      spmMaxSellLayers  = 5;
+      spmLotBase        = 1.5;
+      spmLotIncrement   = 0.2;
+      spmLotCap         = 2.0;
+      spmCooldownSec    = 60;
+      dcaDistanceATR    = 2.0;
+      profitTargetPerPos = 2.0;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -5.0;
+      tp1Pips           = 40.0;       // JPY daha genish: 40 pips
+      tp2Pips           = 80.0;       // 80 pips
+      tp3Pips           = 130.0;      // 130 pips
+   }
+
+   //--- GUMUS (XAG)
+   void SetSilver()
+   {
+      profileName       = "SILVER_XAG";
+      spmTriggerLoss    = -5.0;       // XAG: -$5 tetik
+      spmCloseProfit    = 4.0;
+      fifoNetTarget     = 5.0;
+      spmMaxBuyLayers   = 5;
+      spmMaxSellLayers  = 5;
+      spmLotBase        = 1.5;
+      spmLotIncrement   = 0.2;
+      spmLotCap         = 2.0;
+      spmCooldownSec    = 60;
+      dcaDistanceATR    = 2.0;
+      profitTargetPerPos = 2.0;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -5.0;
+      tp1Pips           = 20.0;       // Zayif trend: 20 pips
+      tp2Pips           = 50.0;       // Orta trend: 50 pips
+      tp3Pips           = 80.0;       // Guclu trend: 80 pips
+   }
+
+   //--- ALTIN (XAU)
+   void SetGold()
+   {
+      profileName       = "GOLD_XAU";
+      spmTriggerLoss    = -5.0;       // XAU: -$5 tetik
+      spmCloseProfit    = 4.0;
+      fifoNetTarget     = 5.0;
+      spmMaxBuyLayers   = 5;
+      spmMaxSellLayers  = 5;
+      spmLotBase        = 1.4;
+      spmLotIncrement   = 0.2;
+      spmLotCap         = 1.9;
+      spmCooldownSec    = 75;
+      dcaDistanceATR    = 2.0;
+      profitTargetPerPos = 2.5;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -5.0;
+      tp1Pips           = 50.0;       // Zayif trend: 50 pips
+      tp2Pips           = 120.0;      // Orta trend: 120 pips
+      tp3Pips           = 200.0;      // Guclu trend: 200 pips
+   }
+
+   //--- BITCOIN (BTC)
+   void SetCrypto()
+   {
+      profileName       = "CRYPTO_BTC";
+      spmTriggerLoss    = -5.0;       // BTC: -$5 tetik
+      spmCloseProfit    = 5.0;
+      fifoNetTarget     = 5.0;
+      spmMaxBuyLayers   = 5;
+      spmMaxSellLayers  = 5;
+      spmLotBase        = 1.3;
+      spmLotIncrement   = 0.2;
+      spmLotCap         = 1.8;
+      spmCooldownSec    = 90;
+      dcaDistanceATR    = 2.5;
+      profitTargetPerPos = 3.0;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -5.0;       // BTC: -$5 hedge esigi
+      tp1Pips           = 1500.0;     // Zayif trend: 1500 pips
+      tp2Pips           = 2500.0;     // Orta trend: 2500 pips
+      tp3Pips           = 3500.0;     // Guclu trend: 3500 pips
+   }
+
+   //--- DIGER KRIPTO (ETH, LTC, XRP vb.)
+   void SetCryptoAlt()
+   {
+      profileName       = "CRYPTO_ALT";
+      spmTriggerLoss    = -5.0;
+      spmCloseProfit    = 4.0;
+      fifoNetTarget     = 5.0;
+      spmMaxBuyLayers   = 5;
+      spmMaxSellLayers  = 5;
+      spmLotBase        = 1.3;
+      spmLotIncrement   = 0.2;
+      spmLotCap         = 1.8;
+      spmCooldownSec    = 90;
+      dcaDistanceATR    = 2.5;
+      profitTargetPerPos = 2.5;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -5.0;
+      tp1Pips           = 500.0;      // Altcoin: 500 pips
+      tp2Pips           = 1000.0;     // 1000 pips
+      tp3Pips           = 1800.0;     // 1800 pips
+   }
+
+   //--- ENDEKSLER (US30, NAS100, SPX500 vb.)
+   void SetIndices()
+   {
+      profileName       = "INDICES";
+      spmTriggerLoss    = -5.0;
+      spmCloseProfit    = 4.0;
+      fifoNetTarget     = 5.0;
+      spmMaxBuyLayers   = 5;
+      spmMaxSellLayers  = 5;
+      spmLotBase        = 1.4;
+      spmLotIncrement   = 0.2;
+      spmLotCap         = 1.9;
+      spmCooldownSec    = 60;
+      dcaDistanceATR    = 2.0;
+      profitTargetPerPos = 2.5;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -5.0;
+      tp1Pips           = 100.0;      // 100 pips
+      tp2Pips           = 250.0;      // 250 pips
+      tp3Pips           = 450.0;      // 450 pips
+   }
+
+   //--- ENERJI (USOIL, NGAS vb.)
+   void SetEnergy()
+   {
+      profileName       = "ENERGY";
+      spmTriggerLoss    = -5.0;
+      spmCloseProfit    = 4.0;
+      fifoNetTarget     = 5.0;
+      spmMaxBuyLayers   = 5;
+      spmMaxSellLayers  = 5;
+      spmLotBase        = 1.4;
+      spmLotIncrement   = 0.2;
+      spmLotCap         = 1.9;
+      spmCooldownSec    = 75;
+      dcaDistanceATR    = 2.0;
+      profitTargetPerPos = 2.5;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -5.0;
+      tp1Pips           = 40.0;       // 40 pips
+      tp2Pips           = 80.0;       // 80 pips
+      tp3Pips           = 140.0;      // 140 pips
+   }
+
+   //--- VARSAYILAN (bilinmeyen enstrumanlar - ATR bazli fallback icin)
    void SetDefault()
    {
+      profileName       = "DEFAULT";
       spmTriggerLoss    = SPM_TriggerLoss;
       spmCloseProfit    = SPM_CloseProfit;
       fifoNetTarget     = SPM_NetTargetUSD;
@@ -324,15 +514,22 @@ struct SymbolProfile
       spmCooldownSec    = SPM_CooldownSec;
       dcaDistanceATR    = DCA_DistanceATR;
       profitTargetPerPos = SPM_CloseProfit;
-      hedgeMinSPMCount  = 2;          // En az 2 SPM olsun
-      hedgeMinLossUSD   = -8.0;       // Min $8 zarar biriksin
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -5.0;
+      tp1Pips           = 30.0;       // Varsayilan: 30 pips
+      tp2Pips           = 60.0;       // 60 pips
+      tp3Pips           = 100.0;      // 100 pips
    }
 
+   //--- METAL (XPT, XPD gibi - XAU/XAG haric)
    void SetMetal()
    {
-      SetDefault();
+      profileName       = "METAL";
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
+      fifoNetTarget     = 5.0;
+      spmMaxBuyLayers   = 5;
+      spmMaxSellLayers  = 5;
       spmLotBase        = 1.5;
       spmLotIncrement   = 0.2;
       spmLotCap         = 2.0;
@@ -340,62 +537,80 @@ struct SymbolProfile
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.0;
       hedgeMinSPMCount  = 2;
-      hedgeMinLossUSD   = -8.0;
-   }
-
-   void SetCrypto()
-   {
-      SetDefault();
-      spmTriggerLoss    = -5.0;
-      spmCloseProfit    = 5.0;
-      spmLotBase        = 1.3;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 1.8;
-      spmCooldownSec    = 90;
-      dcaDistanceATR    = 2.5;
-      profitTargetPerPos = 3.0;
-      hedgeMinSPMCount  = 2;
-      hedgeMinLossUSD   = -10.0;     // Crypto daha volatil, daha yuksek esik
-   }
-
-   void SetGold()
-   {
-      SetDefault();
-      spmTriggerLoss    = -5.0;
-      spmCloseProfit    = 4.0;
-      spmLotBase        = 1.4;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 1.9;
-      spmCooldownSec    = 75;
-      dcaDistanceATR    = 2.0;
-      profitTargetPerPos = 2.5;
-      hedgeMinSPMCount  = 2;
-      hedgeMinLossUSD   = -8.0;
+      hedgeMinLossUSD   = -5.0;
+      tp1Pips           = 30.0;       // 30 pips
+      tp2Pips           = 70.0;       // 70 pips
+      tp3Pips           = 120.0;      // 120 pips
    }
 };
 
 //=================================================================
-// PROFIL SECIM FONKSIYONU
+// PROFIL SECIM FONKSIYONU - v2.1 DINAMIK
+// Oncelik: Sembol bazli > Grup bazli > Kategori bazli > Varsayilan
 //=================================================================
 SymbolProfile GetSymbolProfile(ENUM_SYMBOL_CATEGORY cat, string sym)
 {
    SymbolProfile p;
+   string symUpper = sym;
+   StringToUpper(symUpper);
 
-   // Oncelik: Sembol bazli ozel profil
-   if(StringFind(sym, "XAU") >= 0 || StringFind(sym, "GOLD") >= 0)
+   //--- ONCELIK 1: Sembol bazli ozel profil (tam eslesme)
+
+   // ALTIN (XAU)
+   if(StringFind(symUpper, "XAU") >= 0 || StringFind(symUpper, "GOLD") >= 0)
    {
       p.SetGold();
       return p;
    }
 
-   // Kategori bazli profil
+   // GUMUS (XAG)
+   if(StringFind(symUpper, "XAG") >= 0 || StringFind(symUpper, "SILVER") >= 0)
+   {
+      p.SetSilver();
+      return p;
+   }
+
+   // BITCOIN (BTC)
+   if(StringFind(symUpper, "BTC") >= 0)
+   {
+      p.SetCrypto();
+      return p;
+   }
+
+   // DIGER KRIPTO (ETH, LTC, XRP, DOGE, SOL, ADA, DOT, BNB)
+   if(StringFind(symUpper, "ETH") >= 0 || StringFind(symUpper, "LTC") >= 0 ||
+      StringFind(symUpper, "XRP") >= 0 || StringFind(symUpper, "DOGE") >= 0 ||
+      StringFind(symUpper, "SOL") >= 0 || StringFind(symUpper, "ADA") >= 0 ||
+      StringFind(symUpper, "DOT") >= 0 || StringFind(symUpper, "BNB") >= 0)
+   {
+      p.SetCryptoAlt();
+      return p;
+   }
+
+   //--- ONCELIK 2: JPY ciftleri (ozel pip yapisi)
+   if(StringFind(symUpper, "JPY") >= 0 && cat == CAT_FOREX)
+   {
+      p.SetForexJPY();
+      return p;
+   }
+
+   //--- ONCELIK 3: Kategori bazli profil
    switch(cat)
    {
+      case CAT_FOREX:
+         p.SetForex();
+         break;
       case CAT_METAL:
-         p.SetMetal();
+         p.SetMetal();     // XPT, XPD gibi diger metaller
          break;
       case CAT_CRYPTO:
-         p.SetCrypto();
+         p.SetCryptoAlt(); // Tanimlanmamis kripto
+         break;
+      case CAT_INDICES:
+         p.SetIndices();
+         break;
+      case CAT_ENERGY:
+         p.SetEnergy();
          break;
       default:
          p.SetDefault();
