@@ -10,7 +10,7 @@
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.22"
+#property version     "2.23"
 #property description "BytamerFX v2.2.2 - KazanKazan Pro"
 #property description "FIFO +$5 | DCA | Hedge | News Intelligence"
 #property description "SL=YOK | Dinamik Profil | Pip-TP | MinProfit"
@@ -471,11 +471,11 @@ void DrawSignalArrow(const SignalData &sig, double lot, double price)
    int digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
 
    string tooltip = StringFormat(
-      "%s %s %s\n"
-      "\x25CF %s | Lot: %.2f\n"
-      "\x2714 TP1: %s\n"
-      "\x2714 TP2: %s\n"
-      "\x2605 Skor: %d/100\n"
+      "%s  %s  %s\n"
+      "\x25CF  %s | Lot: %.2f\n"
+      "\x2714  TP1: %s\n"
+      "\x2714  TP2: %s\n"
+      "\x2605  Skor: %d/100\n"
       "%s",
       dirMark, _Symbol, dirStr,
       DoubleToString(price, digits), lot,

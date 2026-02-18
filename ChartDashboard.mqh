@@ -3,7 +3,7 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.2.2 - 4 Panel + Top News Banner + Chart Overlay      |
+//| BytamerFX v2.2.3 - 4 Panel + Top News Banner + Chart Overlay      |
 //| Real-time EA information display with indicator overlays          |
 //| Banner: Tam genislik haber serit (ust)                            |
 //| Panels: ANA BILGILER, SINYAL SKOR, TP+INDIKATOR, SPM+FIFO       |
@@ -220,13 +220,13 @@ private:
    {
       switch(cat)
       {
-         case CAT_FOREX:   return "\x20AC FX";      // € FOREX
-         case CAT_METAL:   return "\x2699 MT";       // ⚙ METAL
-         case CAT_CRYPTO:  return "\x26A1 CR";       // ⚡ CRYPTO
-         case CAT_INDICES: return "\x25B2 IX";       // ▲ INDEX
-         case CAT_STOCKS:  return "\x25A0 ST";       // ■ STOCK
-         case CAT_ENERGY:  return "\x2600 EN";       // ☀ ENERGY
-         default:          return "\x25C6 --";       // ◆ UNKNOWN
+         case CAT_FOREX:   return "\x20AC  FX";      // €  FOREX
+         case CAT_METAL:   return "\x2699  MT";       // ⚙  METAL
+         case CAT_CRYPTO:  return "\x26A1  CR";       // ⚡  CRYPTO
+         case CAT_INDICES: return "\x25B2  IX";       // ▲  INDEX
+         case CAT_STOCKS:  return "\x25A0  ST";       // ■  STOCK
+         case CAT_ENERGY:  return "\x2600  EN";       // ☀  ENERGY
+         default:          return "\x25C6  --";       // ◆  UNKNOWN
       }
    }
 
@@ -273,9 +273,9 @@ private:
    {
       switch(ts)
       {
-         case TREND_STRONG:   return "\x2605 GUCLU";    // ★ GUCLU
-         case TREND_MODERATE: return "\x25CB ORTA";      // ○ ORTA
-         default:             return "\x2744 ZAYIF";     // ❄ ZAYIF
+         case TREND_STRONG:   return "\x2605  GUCLU";    // ★  GUCLU
+         case TREND_MODERATE: return "\x25CB  ORTA";      // ○  ORTA
+         default:             return "\x2744  ZAYIF";     // ❄  ZAYIF
       }
    }
 
@@ -306,71 +306,71 @@ private:
       int y  = baseY + 6;
 
       //--- Header (v2.2.2: BMP Unicode)
-      CreateLabel("P1_HDR", x, y, "\x25A0 ANA BILGILER", CLR_HEADER, DASH_HEADER_SIZE);  // ■
+      CreateLabel("P1_HDR", x, y, "\x25A0  ANA BILGILER", CLR_HEADER, DASH_HEADER_SIZE);  // ■
       y += DASH_LINE_H + 2;
 
       //--- Row 1: Versiyon
-      CreateLabel("P1_VER_L", x, y, "\x25B8 Versiyon:", CLR_LABEL);       // ▸
+      CreateLabel("P1_VER_L", x, y, "\x25B8  Versiyon:", CLR_LABEL);       // ▸
       CreateLabel("P1_VER_V", vx, y, EA_VERSION_FULL, CLR_HEADER);
       y += DASH_LINE_H;
 
       //--- Row 2: Bakiye
-      CreateLabel("P1_BAL_L", x, y, "\x20AC Bakiye:", CLR_LABEL);         // €
+      CreateLabel("P1_BAL_L", x, y, "\x20AC  Bakiye:", CLR_LABEL);         // €
       CreateLabel("P1_BAL_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 3: Varlik
-      CreateLabel("P1_EQ_L", x, y, "\x20AC Varlik:", CLR_LABEL);          // €
+      CreateLabel("P1_EQ_L", x, y, "\x20AC  Varlik:", CLR_LABEL);          // €
       CreateLabel("P1_EQ_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 4: Marjin
-      CreateLabel("P1_MRG_L", x, y, "\x25CF Marjin:", CLR_LABEL);         // ●
+      CreateLabel("P1_MRG_L", x, y, "\x25CF  Marjin:", CLR_LABEL);         // ●
       CreateLabel("P1_MRG_V", vx, y, "0.00%", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 5: Sembol
-      CreateLabel("P1_SYM_L", x, y, GetCategoryEmoji(m_category) + " Sembol:", CLR_LABEL);
+      CreateLabel("P1_SYM_L", x, y, GetCategoryEmoji(m_category) + "  Sembol:", CLR_LABEL);
       CreateLabel("P1_SYM_V", vx, y, m_symbol, CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 6: RSI(14)
-      CreateLabel("P1_RSI_L", x, y, "\x223F RSI(14):", CLR_LABEL);        // ∿ (sine wave)
+      CreateLabel("P1_RSI_L", x, y, "\x223F  RSI(14):", CLR_LABEL);        // ∿
       CreateLabel("P1_RSI_V", vx, y, "0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 7: ADX(14)
-      CreateLabel("P1_ADX_L", x, y, "\x2605 ADX(14):", CLR_LABEL);        // ★
+      CreateLabel("P1_ADX_L", x, y, "\x2605  ADX(14):", CLR_LABEL);        // ★
       CreateLabel("P1_ADX_V", vx, y, "0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 8: ATR(14)
-      CreateLabel("P1_ATR_L", x, y, "\x2248 ATR(14):", CLR_LABEL);        // ≈
+      CreateLabel("P1_ATR_L", x, y, "\x2248  ATR(14):", CLR_LABEL);        // ≈
       CreateLabel("P1_ATR_V", vx, y, "0.00000", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 9: Spread
-      CreateLabel("P1_SPR_L", x, y, "\x2194 Spread:", CLR_LABEL);         // ↔
+      CreateLabel("P1_SPR_L", x, y, "\x2194  Spread:", CLR_LABEL);         // ↔
       CreateLabel("P1_SPR_V", vx, y, "0.0 / 0.0", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 10: Pozisyon
-      CreateLabel("P1_POS_L", x, y, "\x25C6 Pozisyon:", CLR_LABEL);       // ◆
+      CreateLabel("P1_POS_L", x, y, "\x25C6  Pozisyon:", CLR_LABEL);       // ◆
       CreateLabel("P1_POS_V", vx, y, "0 (SPM:0)", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 11: Trend
-      CreateLabel("P1_TRD_L", x, y, "\x2192 Trend:", CLR_LABEL);          // →
+      CreateLabel("P1_TRD_L", x, y, "\x2192  Trend:", CLR_LABEL);          // →
       CreateLabel("P1_TRD_V", vx, y, "---", CLR_LABEL);
       y += DASH_LINE_H;
 
       //--- Row 12: Durum
-      CreateLabel("P1_STS_L", x, y, "\x2713 Durum:", CLR_LABEL);          // ✓
+      CreateLabel("P1_STS_L", x, y, "\x2713  Durum:", CLR_LABEL);          // ✓
       CreateLabel("P1_STS_V", vx, y, "Aktif", CLR_POSITIVE);
       y += DASH_LINE_H;
 
       //--- Row 13: +DI / -DI
-      CreateLabel("P1_DI_L", x, y, "\x2696 +DI/-DI:", CLR_LABEL);        // ⚖
+      CreateLabel("P1_DI_L", x, y, "\x2696  +DI/-DI:", CLR_LABEL);        // ⚖
       CreateLabel("P1_DI_V", vx, y, "0.0 / 0.0", CLR_VALUE);
    }
 
@@ -390,72 +390,72 @@ private:
       int y    = baseY + 6;
 
       //--- Header (v2.2.2: BMP Unicode)
-      CreateLabel("P2_HDR", x, y, "\x25A0 SINYAL SKOR", CLR_HEADER, DASH_HEADER_SIZE);  // ■
+      CreateLabel("P2_HDR", x, y, "\x25A0  SINYAL SKOR", CLR_HEADER, DASH_HEADER_SIZE);  // ■
       y += DASH_LINE_H + 2;
 
       //--- Buy Score
-      CreateLabel("P2_BUY_L", x, y, "\x25B2 ALIS Skor:", CLR_LABEL);    // ▲
+      CreateLabel("P2_BUY_L", x, y, "\x25B2  ALIS Skor:", CLR_LABEL);    // ▲
       CreateLabel("P2_BUY_V", vx, y, "0/100", CLR_BUY_DIR);
       y += DASH_LINE_H;
       CreateProgressBar("P2_BUY_BAR", barX, y, barW, 6, 0.0, CLR_BUY_DIR, CLR_PROGRESS_BG);
       y += 10;
 
       //--- Sell Score
-      CreateLabel("P2_SELL_L", x, y, "\x25BC SATIS Skor:", CLR_LABEL);   // ▼
+      CreateLabel("P2_SELL_L", x, y, "\x25BC  SATIS Skor:", CLR_LABEL);   // ▼
       CreateLabel("P2_SELL_V", vx, y, "0/100", CLR_SELL_DIR);
       y += DASH_LINE_H;
       CreateProgressBar("P2_SELL_BAR", barX, y, barW, 6, 0.0, CLR_SELL_DIR, CLR_PROGRESS_BG);
       y += 12;
 
       //--- Dominant Direction
-      CreateLabel("P2_DIR_L", x, y, "\x2605 Yon:", CLR_LABEL);           // ★
+      CreateLabel("P2_DIR_L", x, y, "\x2605  Yon:", CLR_LABEL);           // ★
       CreateLabel("P2_DIR_V", vx, y, "---", CLR_LABEL);
       y += DASH_LINE_H + 2;
 
       //--- Layer 1: EMA Trend (0/20)
-      CreateLabel("P2_EMA_L", x, y, "\x2460 EMA Trend:", CLR_LABEL);    // ①
+      CreateLabel("P2_EMA_L", x, y, "\x2460  EMA Trend:", CLR_LABEL);    // ①
       CreateLabel("P2_EMA_V", vx, y, "0/20", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_EMA_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 2: MACD Momentum (0/20)
-      CreateLabel("P2_MACD_L", x, y, "\x2461 MACD Mom.:", CLR_LABEL);   // ②
+      CreateLabel("P2_MACD_L", x, y, "\x2461  MACD Mom.:", CLR_LABEL);   // ②
       CreateLabel("P2_MACD_V", vx, y, "0/20", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_MACD_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 3: ADX Strength (0/15)
-      CreateLabel("P2_ADXS_L", x, y, "\x2462 ADX Guc:", CLR_LABEL);    // ③
+      CreateLabel("P2_ADXS_L", x, y, "\x2462  ADX Guc:", CLR_LABEL);    // ③
       CreateLabel("P2_ADXS_V", vx, y, "0/15", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_ADXS_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 4: RSI Level (0/15)
-      CreateLabel("P2_RSIL_L", x, y, "\x2463 RSI Svye:", CLR_LABEL);    // ④
+      CreateLabel("P2_RSIL_L", x, y, "\x2463  RSI Svye:", CLR_LABEL);    // ④
       CreateLabel("P2_RSIL_V", vx, y, "0/15", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_RSIL_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 5: BB Position (0/15)
-      CreateLabel("P2_BB_L", x, y, "\x2464 BB Pozisyn:", CLR_LABEL);    // ⑤
+      CreateLabel("P2_BB_L", x, y, "\x2464  BB Pozisyn:", CLR_LABEL);    // ⑤
       CreateLabel("P2_BB_V", vx, y, "0/15", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_BB_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 6: Stoch Signal (0/10)
-      CreateLabel("P2_STCH_L", x, y, "\x2465 Stoch Sny:", CLR_LABEL);   // ⑥
+      CreateLabel("P2_STCH_L", x, y, "\x2465  Stoch Sny:", CLR_LABEL);   // ⑥
       CreateLabel("P2_STCH_V", vx, y, "0/10", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_STCH_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 7: ATR Volatility (0/5)
-      CreateLabel("P2_ATRV_L", x, y, "\x2466 ATR Volat:", CLR_LABEL);   // ⑦
+      CreateLabel("P2_ATRV_L", x, y, "\x2466  ATR Volat:", CLR_LABEL);   // ⑦
       CreateLabel("P2_ATRV_V", vx, y, "0/5", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_ATRV_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
@@ -475,46 +475,46 @@ private:
       int y  = baseY + 6;
 
       //--- Header (v2.2.2: BMP Unicode)
-      CreateLabel("P3_HDR", x, y, "\x25A0 TP + INDIKATORLER", CLR_HEADER, DASH_HEADER_SIZE);  // ■
+      CreateLabel("P3_HDR", x, y, "\x25A0  TP + INDIKATORLER", CLR_HEADER, DASH_HEADER_SIZE);  // ■
       y += DASH_LINE_H + 2;
 
       //--- TP1
-      CreateLabel("P3_TP1_L", x, y, "\x2714 TP1:", CLR_LABEL);           // ✔
+      CreateLabel("P3_TP1_L", x, y, "\x2714  TP1:", CLR_LABEL);           // ✔
       CreateLabel("P3_TP1_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- TP2
-      CreateLabel("P3_TP2_L", x, y, "\x2714 TP2:", CLR_LABEL);           // ✔
+      CreateLabel("P3_TP2_L", x, y, "\x2714  TP2:", CLR_LABEL);           // ✔
       CreateLabel("P3_TP2_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- TP3
-      CreateLabel("P3_TP3_L", x, y, "\x2605 TP3:", CLR_LABEL);           // ★
+      CreateLabel("P3_TP3_L", x, y, "\x2605  TP3:", CLR_LABEL);           // ★
       CreateLabel("P3_TP3_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- TP Level
-      CreateLabel("P3_LVL_L", x, y, "\x25B8 TP Seviye:", CLR_LABEL);     // ▸
+      CreateLabel("P3_LVL_L", x, y, "\x25B8  TP Seviye:", CLR_LABEL);     // ▸
       CreateLabel("P3_LVL_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Trend Strength
-      CreateLabel("P3_TST_L", x, y, "\x2605 Trend Guc:", CLR_LABEL);     // ★
+      CreateLabel("P3_TST_L", x, y, "\x2605  Trend Guc:", CLR_LABEL);     // ★
       CreateLabel("P3_TST_V", vx, y, "---", CLR_LABEL);
       y += DASH_LINE_H;
 
       //--- Parabolic SAR value + direction
-      CreateLabel("P3_SAR_L", x, y, "\x25CF SAR:", CLR_LABEL);            // ●
+      CreateLabel("P3_SAR_L", x, y, "\x25CF  SAR:", CLR_LABEL);            // ●
       CreateLabel("P3_SAR_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Momentum value + direction
-      CreateLabel("P3_MOM_L", x, y, "\x2192 Mom:", CLR_LABEL);            // →
+      CreateLabel("P3_MOM_L", x, y, "\x2192  Mom:", CLR_LABEL);            // →
       CreateLabel("P3_MOM_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- BB Squeeze status
-      CreateLabel("P3_BSQ_L", x, y, "\x2248 BB:", CLR_LABEL);             // ≈
+      CreateLabel("P3_BSQ_L", x, y, "\x2248  BB:", CLR_LABEL);             // ≈
       CreateLabel("P3_BSQ_V", vx, y, "---", CLR_VALUE);
    }
 
@@ -534,46 +534,46 @@ private:
       int y    = baseY + 6;
 
       //--- Header (v2.2.2: BMP Unicode)
-      CreateLabel("P4_HDR", x, y, "\x25A0 KAZAN-KAZAN v2.2", CLR_HEADER, DASH_HEADER_SIZE);  // ■
+      CreateLabel("P4_HDR", x, y, "\x25A0  KAZAN-KAZAN v2.2", CLR_HEADER, DASH_HEADER_SIZE);  // ■
       y += DASH_LINE_H + 2;
 
       //--- Main P/L
-      CreateLabel("P4_MAIN_L", x, y, "\x20AC Ana P/L:", CLR_LABEL);       // €
+      CreateLabel("P4_MAIN_L", x, y, "\x20AC  Ana P/L:", CLR_LABEL);       // €
       CreateLabel("P4_MAIN_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- v2.0: BUY/SELL katmanlari
-      CreateLabel("P4_BSLY_L", x, y, "\x2696 BUY/SELL:", CLR_LABEL);     // ⚖
+      CreateLabel("P4_BSLY_L", x, y, "\x2696  BUY/SELL:", CLR_LABEL);     // ⚖
       CreateLabel("P4_BSLY_V", vx, y, "0/0", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Active SPM + DCA + Hedge
-      CreateLabel("P4_ASPM_L", x, y, "\x25C6 SPM/DCA/HG:", CLR_LABEL);   // ◆
+      CreateLabel("P4_ASPM_L", x, y, "\x25C6  SPM/DCA/HG:", CLR_LABEL);   // ◆
       CreateLabel("P4_ASPM_V", vx, y, "0/0/0", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Closed SPM Profit (kasa)
-      CreateLabel("P4_CSPM_L", x, y, "\x2713 Kasa:", CLR_LABEL);          // ✓
+      CreateLabel("P4_CSPM_L", x, y, "\x2713  Kasa:", CLR_LABEL);          // ✓
       CreateLabel("P4_CSPM_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Open SPM Profit / Loss
-      CreateLabel("P4_OSPM_L", x, y, "\x25CB Acik P/L:", CLR_LABEL);      // ○
+      CreateLabel("P4_OSPM_L", x, y, "\x25CB  Acik P/L:", CLR_LABEL);      // ○
       CreateLabel("P4_OSPM_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- FIFO Net
-      CreateLabel("P4_NET_L", x, y, "\x21D2 FIFO Net:", CLR_LABEL);       // ⇒
+      CreateLabel("P4_NET_L", x, y, "\x21D2  FIFO Net:", CLR_LABEL);       // ⇒
       CreateLabel("P4_NET_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Target
-      CreateLabel("P4_TGT_L", x, y, "\x25CF Hedef:", CLR_LABEL);          // ●
+      CreateLabel("P4_TGT_L", x, y, "\x25CF  Hedef:", CLR_LABEL);          // ●
       CreateLabel("P4_TGT_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Progress percentage
-      CreateLabel("P4_PCT_L", x, y, "\x25B8 Ilerleme:", CLR_LABEL);       // ▸
+      CreateLabel("P4_PCT_L", x, y, "\x25B8  Ilerleme:", CLR_LABEL);       // ▸
       CreateLabel("P4_PCT_V", vx, y, "0.0%", CLR_VALUE);
       y += DASH_LINE_H;
 
@@ -631,11 +631,11 @@ private:
          //--- Trend direction (v2.2.2)
          ENUM_SIGNAL_DIR trend = m_engine.GetCurrentTrend();
          if(trend == SIGNAL_BUY)
-            UpdateLabel("P1_TRD_V", "\x25B2 YUKARI (BUY)", CLR_BUY_DIR);
+            UpdateLabel("P1_TRD_V", "\x25B2  YUKARI (BUY)", CLR_BUY_DIR);
          else if(trend == SIGNAL_SELL)
-            UpdateLabel("P1_TRD_V", "\x25BC ASAGI (SELL)", CLR_SELL_DIR);
+            UpdateLabel("P1_TRD_V", "\x25BC  ASAGI (SELL)", CLR_SELL_DIR);
          else
-            UpdateLabel("P1_TRD_V", "\x2194 YATAY", CLR_LABEL);
+            UpdateLabel("P1_TRD_V", "\x2194  YATAY", CLR_LABEL);
       }
 
       //--- Spread
@@ -658,9 +658,9 @@ private:
          //--- Trading status (v2.2.2)
          bool paused = m_posMgr.IsTradingPaused();
          if(paused)
-            UpdateLabel("P1_STS_V", "\x2718 DURDURULDU", CLR_NEGATIVE);
+            UpdateLabel("P1_STS_V", "\x2718  DURDURULDU", CLR_NEGATIVE);
          else
-            UpdateLabel("P1_STS_V", "\x2713 Aktif", CLR_POSITIVE);
+            UpdateLabel("P1_STS_V", "\x2713  Aktif", CLR_POSITIVE);
       }
    }
 
@@ -691,11 +691,11 @@ private:
       //--- Dominant direction (v2.2.2)
       bool isBuyDom = (buyBD.totalScore >= sellBD.totalScore);
       if(buyBD.totalScore == 0 && sellBD.totalScore == 0)
-         UpdateLabel("P2_DIR_V", "\x25C6 BELIRSIZ", CLR_LABEL);
+         UpdateLabel("P2_DIR_V", "\x25C6  BELIRSIZ", CLR_LABEL);
       else if(isBuyDom)
-         UpdateLabel("P2_DIR_V", StringFormat("\x25B2 ALIS [%d]", buyBD.totalScore), CLR_BUY_DIR);
+         UpdateLabel("P2_DIR_V", StringFormat("\x25B2  ALIS [%d]", buyBD.totalScore), CLR_BUY_DIR);
       else
-         UpdateLabel("P2_DIR_V", StringFormat("\x25BC SATIS [%d]", sellBD.totalScore), CLR_SELL_DIR);
+         UpdateLabel("P2_DIR_V", StringFormat("\x25BC  SATIS [%d]", sellBD.totalScore), CLR_SELL_DIR);
 
       //--- Use dominant breakdown for layer display
       ScoreBreakdown bd;
@@ -838,7 +838,7 @@ private:
          {
             double sarVal = sarBuf[0];
             bool sarBullish = (bid > sarVal);
-            string sarDir = sarBullish ? "\x25B2 YUKARI" : "\x25BC ASAGI";
+            string sarDir = sarBullish ? "\x25B2  YUKARI" : "\x25BC  ASAGI";
             color sarClr  = sarBullish ? CLR_POSITIVE : CLR_NEGATIVE;
             UpdateLabel("P3_SAR_V", StringFormat("%s %s", DoubleToString(sarVal, digits), sarDir), sarClr);
          }
@@ -860,7 +860,7 @@ private:
          {
             double momVal = momBuf[0];
             bool momBullish = (momVal > 100.0);
-            string momDir = momBullish ? "\x25B2 YUKARI" : "\x25BC ASAGI";
+            string momDir = momBullish ? "\x25B2  YUKARI" : "\x25BC  ASAGI";
             color momClr  = momBullish ? CLR_POSITIVE : CLR_NEGATIVE;
             UpdateLabel("P3_MOM_V", StringFormat("%.2f %s", momVal, momDir), momClr);
          }
@@ -895,9 +895,9 @@ private:
                isSqueeze = true;
 
             if(isSqueeze)
-               UpdateLabel("P3_BSQ_V", "\x26A0 SQUEEZE", CLR_WARNING);
+               UpdateLabel("P3_BSQ_V", "\x26A0  SQUEEZE", CLR_WARNING);
             else
-               UpdateLabel("P3_BSQ_V", "\x2713 NORMAL", CLR_VALUE);
+               UpdateLabel("P3_BSQ_V", "\x2713  NORMAL", CLR_VALUE);
          }
          else
          {
@@ -1001,7 +1001,7 @@ private:
       int y = 3;
 
       //--- Sol: "HABER:" etiketi (v2.2.2)
-      CreateLabel("NB_LBL", 8, y, "\x26A0 HABER:", CLR_HEADER, 10, "Consolas");
+      CreateLabel("NB_LBL", 8, y, "\x26A0  HABER:", CLR_HEADER, 10, "Consolas");
 
       //--- Haber basligi (etiketten sonra)
       CreateLabel("NB_TITLE", 80, y, "---", CLR_VALUE, 10, "Consolas");
@@ -1065,25 +1065,25 @@ private:
          switch(impact)
          {
             case NEWS_CRITICAL:
-               statText = "\x2718 KRITIK - ISLEM BLOKE";
+               statText = "\x2718  KRITIK - ISLEM BLOKE";
                statClr = CLR_NEWS_CRITICAL;
                bannerBorder = CLR_NEWS_CRITICAL;
                bannerBg = CLR_NEWS_BG_CRIT;
                break;
             case NEWS_HIGH:
-               statText = "\x26A0 YUKSEK - ISLEM BLOKE";
+               statText = "\x26A0  YUKSEK - ISLEM BLOKE";
                statClr = CLR_NEWS_HIGH;
                bannerBorder = CLR_NEWS_HIGH;
                bannerBg = CLR_NEWS_BG_HIGH;
                break;
             case NEWS_MEDIUM:
-               statText = "\x25CF ORTA - UYARI";
+               statText = "\x25CF  ORTA - UYARI";
                statClr = CLR_NEWS_MEDIUM;
                bannerBorder = CLR_NEWS_MEDIUM;
                bannerBg = CLR_NEWS_BG_MED;
                break;
             default:
-               statText = "\x2713 DUSUK";
+               statText = "\x2713  DUSUK";
                statClr = CLR_NEWS_LOW;
                break;
          }
