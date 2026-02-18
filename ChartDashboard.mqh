@@ -505,7 +505,7 @@ private:
       int y    = baseY + 6;
 
       //--- Header
-      CreateLabel("P4_HDR", x, y, "SPM + FIFO", CLR_HEADER, DASH_HEADER_SIZE);
+      CreateLabel("P4_HDR", x, y, "KAZAN-KAZAN v2.0", CLR_HEADER, DASH_HEADER_SIZE);
       y += DASH_LINE_H + 2;
 
       //--- Main P/L
@@ -513,18 +513,23 @@ private:
       CreateLabel("P4_MAIN_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Active SPM
-      CreateLabel("P4_ASPM_L", x, y, "Aktif SPM:", CLR_LABEL);
-      CreateLabel("P4_ASPM_V", vx, y, "0 / Katman:0", CLR_VALUE);
+      //--- v2.0: BUY/SELL katmanlari
+      CreateLabel("P4_BSLY_L", x, y, "BUY/SELL:", CLR_LABEL);
+      CreateLabel("P4_BSLY_V", vx, y, "0/0", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Closed SPM Profit
-      CreateLabel("P4_CSPM_L", x, y, "SPM Kapal.:", CLR_LABEL);
+      //--- Active SPM + DCA + Hedge
+      CreateLabel("P4_ASPM_L", x, y, "SPM/DCA/HG:", CLR_LABEL);
+      CreateLabel("P4_ASPM_V", vx, y, "0/0/0", CLR_VALUE);
+      y += DASH_LINE_H;
+
+      //--- Closed SPM Profit (kasa)
+      CreateLabel("P4_CSPM_L", x, y, "Kasa:", CLR_LABEL);
       CreateLabel("P4_CSPM_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Open SPM Profit
-      CreateLabel("P4_OSPM_L", x, y, "SPM Acik:", CLR_LABEL);
+      //--- Open SPM Profit / Loss
+      CreateLabel("P4_OSPM_L", x, y, "Acik P/L:", CLR_LABEL);
       CreateLabel("P4_OSPM_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
@@ -889,19 +894,25 @@ private:
       //--- Main P/L
       UpdateLabel("P4_MAIN_V", StringFormat("$%.2f", fifo.mainLoss), ColorBySign(fifo.mainLoss));
 
-      //--- Active SPM count + layers
-      UpdateLabel("P4_ASPM_V",
-                  StringFormat("%d / Katman:%d", fifo.activeSPMCount, fifo.spmLayerCount),
+      //--- v2.0: BUY/SELL katmanlari
+      UpdateLabel("P4_BSLY_V",
+                  StringFormat("B:%d / S:%d", fifo.buyLayerCount, fifo.sellLayerCount),
                   CLR_VALUE);
 
-      //--- Closed SPM profit
+      //--- Active SPM + DCA + Hedge count
+      UpdateLabel("P4_ASPM_V",
+                  StringFormat("%d/%d/%d", fifo.activeSPMCount, fifo.activeDCACount, fifo.activeHedgeCount),
+                  CLR_VALUE);
+
+      //--- Closed SPM profit (kasa)
       UpdateLabel("P4_CSPM_V",
                   StringFormat("$%.2f (%d)", fifo.closedProfitTotal, fifo.closedCount),
                   ColorBySign(fifo.closedProfitTotal));
 
-      //--- Open SPM profit
-      UpdateLabel("P4_OSPM_V", StringFormat("$%.2f", fifo.openSPMProfit),
-                  ColorBySign(fifo.openSPMProfit));
+      //--- Open SPM profit + loss
+      double openTotal = fifo.openSPMProfit + fifo.openSPMLoss;
+      UpdateLabel("P4_OSPM_V", StringFormat("$%.2f", openTotal),
+                  ColorBySign(openTotal));
 
       //--- Net result
       color netClr = ColorBySign(fifo.netResult);
