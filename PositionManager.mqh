@@ -750,8 +750,9 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 
       //=== KURAL 1: SPM/DCA/HEDGE karda -> HEMEN KAPAT ===
       // Profil bazli kar hedefi kullan
-      double closeTarget = m_profile.spmCloseProfit;
-      if(role == ROLE_DCA) closeTarget = m_profile.profitTargetPerPos;
+      // v2.2.2: minCloseProfit guvenlik esigi - closeTarget ASLA min'den dusuk olamaz
+      double closeTarget = MathMax(m_profile.spmCloseProfit, m_profile.minCloseProfit);
+      if(role == ROLE_DCA) closeTarget = MathMax(m_profile.profitTargetPerPos, m_profile.minCloseProfit);
 
       if((role == ROLE_SPM || role == ROLE_DCA || role == ROLE_HEDGE) && profit >= closeTarget)
       {
@@ -764,6 +765,7 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
          m_spmClosedProfitTotal += profit;
          m_spmClosedCount++;
          m_totalCashedProfit += profit;
+         m_dailyProfit += profit;   // v2.2.2: dailyProfit tutarliligi
 
          PrintFormat("[PM-%s] FIFO: +$%.2f -> Toplam=$%.2f (Sayi=%d) | Kasa=$%.2f",
                      m_symbol, profit, m_spmClosedProfitTotal, m_spmClosedCount, m_totalCashedProfit);
@@ -792,7 +794,8 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
             else posDir = SIGNAL_SELL;
 
             // Trend ANA yonune donuyorsa VE pozisyon ana tersinde ise
-            if(trendDir == mainDir && posDir != mainDir && profit >= MathMax(1.0, m_profile.minCloseProfit))
+            // (profit kontrolu dis if'te zaten yapildi)
+            if(trendDir == mainDir && posDir != mainDir)
             {
                string roleStr = (role == ROLE_SPM) ? StringFormat("SPM%d", m_positions[i].spmLayer) :
                                 (role == ROLE_DCA) ? "DCA" : "HEDGE";
@@ -802,6 +805,7 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
                m_spmClosedProfitTotal += profit;
                m_spmClosedCount++;
                m_totalCashedProfit += profit;
+               m_dailyProfit += profit;   // v2.2.2: dailyProfit tutarliligi
 
                ClosePosWithNotification(i, StringFormat("TrendDonus_%s_Kar_%.2f", roleStr, profit));
                continue;
@@ -862,6 +866,7 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
             m_spmClosedProfitTotal += profit;
             m_spmClosedCount++;
             m_totalCashedProfit += profit;
+            m_dailyProfit += profit;   // v2.2.2: dailyProfit tutarliligi
 
             ClosePosWithNotification(i, "Engulfing_Kar_" + DoubleToString(profit, 2));
             continue;
@@ -887,6 +892,7 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
                m_spmClosedProfitTotal += profit;
                m_spmClosedCount++;
                m_totalCashedProfit += profit;
+               m_dailyProfit += profit;   // v2.2.2: dailyProfit tutarliligi
 
                ClosePosWithNotification(i, StringFormat("PeakDrop_%.0f%%", dropPct));
                continue;
@@ -1609,7 +1615,11 @@ void CPositionManager::CheckFIFOTarget()
    // Tum pozisyonlari kapat
    CloseAllPositions("FIFO_Net=" + DoubleToString(net, 2));
 
-   m_totalCashedProfit += net;
+   //--- v2.2.2: Cift sayma duzeltmesi
+   //--- m_spmClosedProfitTotal zaten m_totalCashedProfit'e eklenmis (ManageKarliPozisyonlar'da)
+   //--- Sadece acik pozisyon P/L + ANA P/L eklenmeli (bunlar henuz kasaya eklenmemisti)
+   double newCashIn = openProfit + openLoss + mainProfit;
+   m_totalCashedProfit += newCashIn;
    m_dailyProfit += net;
 
    // FIFO sifirla
