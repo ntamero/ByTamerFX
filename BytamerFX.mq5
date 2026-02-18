@@ -465,52 +465,24 @@ void DrawSignalArrow(const SignalData &sig, double lot, double price)
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_HIDDEN, false);  // Gorunur (tooltip icin)
 
-   //--- TOOLTIP: Mouse ile ok uzerine gelince islem bilgileri goster
-   string dirStr = (sig.direction == SIGNAL_BUY) ? "ALIS (BUY)" : "SATIS (SELL)";
-   string trendStr;
-   switch(sig.trendStrength)
-   {
-      case TREND_STRONG:   trendStr = "GUCLU";  break;
-      case TREND_MODERATE: trendStr = "ORTA";   break;
-      default:             trendStr = "ZAYIF";  break;
-   }
-
+   //--- TOOLTIP: v2.2.2 - Kompakt, emojili, BUY/SELL renkli
+   string dirEmoji = (sig.direction == SIGNAL_BUY) ? "\x2B06" : "\x2B07";       // ⬆ ⬇
+   string dirStr   = (sig.direction == SIGNAL_BUY) ? "ALIS (BUY)" : "SATIS (SELL)";
    int digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
 
    string tooltip = StringFormat(
-      "BytamerFX %s\n"
-      "Yon: %s\n"
-      "Skor: %d/100\n"
-      "Lot: %.2f\n"
-      "Fiyat: %s\n"
-      "TP1: %s\n"
-      "TP2: %s\n"
-      "TP3: %s\n"
-      "SL: YOK (MUTLAK)\n"
-      "ATR: %s\n"
-      "ADX: %.1f\n"
-      "RSI: %.1f\n"
-      "+DI/−DI: %.1f/%.1f\n"
-      "Trend: %s\n"
-      "MACD: %.6f\n"
-      "Stoch: %.1f/%.1f\n"
-      "Zaman: %s",
-      EA_VERSION,
-      dirStr,
-      sig.score,
-      lot,
-      DoubleToString(price, digits),
+      "%s %s %s\n"
+      "\x1F4CD %s | Lot: %.2f\n"
+      "\x2705 TP1: %s\n"
+      "\x2705 TP2: %s\n"
+      "\x1F3AF Skor: %d/100\n"
+      "\x1F552 %s",
+      dirEmoji, _Symbol, dirStr,
+      DoubleToString(price, digits), lot,
       DoubleToString(sig.tp1, digits),
       DoubleToString(sig.tp2, digits),
-      DoubleToString(sig.tp3, digits),
-      DoubleToString(sig.atr, digits),
-      sig.adx,
-      sig.rsi,
-      sig.plusDI, sig.minusDI,
-      trendStr,
-      sig.macd_main,
-      sig.stoch_k, sig.stoch_d,
-      TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
+      sig.score,
+      TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES));
 
    ObjectSetString(0, name, OBJPROP_TOOLTIP, tooltip);
 }

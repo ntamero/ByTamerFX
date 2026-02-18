@@ -3,11 +3,12 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.2.1 - 4 Panel + Top News Banner + Chart Overlay      |
+//| BytamerFX v2.2.2 - 4 Panel + Top News Banner + Chart Overlay      |
 //| Real-time EA information display with indicator overlays          |
 //| Banner: Tam genislik haber serit (ust)                            |
 //| Panels: ANA BILGILER, SINYAL SKOR, TP+INDIKATOR, SPM+FIFO       |
 //| Overlay: Bollinger Bands, Parabolic SAR, Momentum                |
+//| v2.2.2: Emoji + Renkli Dashboard + Tooltip                       |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, By T@MER"
 #property link      "https://www.bytamer.com"
@@ -213,19 +214,36 @@ private:
    }
 
    //=================================================================
-   // HELPER: Category name
+   // HELPER: Category name with emoji (v2.2.2)
    //=================================================================
    string GetCategoryName(ENUM_SYMBOL_CATEGORY cat)
    {
       switch(cat)
       {
-         case CAT_FOREX:   return "FOREX";
-         case CAT_METAL:   return "METAL";
-         case CAT_CRYPTO:  return "CRYPTO";
-         case CAT_INDICES: return "INDEX";
-         case CAT_STOCKS:  return "STOCK";
-         case CAT_ENERGY:  return "ENERGY";
-         default:          return "UNKNOWN";
+         case CAT_FOREX:   return "\x1F4B1 FOREX";       // 💱
+         case CAT_METAL:   return "\x2699 METAL";         // ⚙
+         case CAT_CRYPTO:  return "\x26A1 CRYPTO";        // ⚡
+         case CAT_INDICES: return "\x1F4CA INDEX";        // 📊
+         case CAT_STOCKS:  return "\x1F3E2 STOCK";        // 🏢
+         case CAT_ENERGY:  return "\x26FD ENERGY";        // ⛽
+         default:          return "\x2753 UNKNOWN";       // ❓
+      }
+   }
+
+   //=================================================================
+   // HELPER: Category emoji only (v2.2.2)
+   //=================================================================
+   string GetCategoryEmoji(ENUM_SYMBOL_CATEGORY cat)
+   {
+      switch(cat)
+      {
+         case CAT_FOREX:   return "\x1F4B1";   // 💱
+         case CAT_METAL:   return "\x2699";     // ⚙
+         case CAT_CRYPTO:  return "\x26A1";     // ⚡
+         case CAT_INDICES: return "\x1F4CA";    // 📊
+         case CAT_STOCKS:  return "\x1F3E2";    // 🏢
+         case CAT_ENERGY:  return "\x26FD";     // ⛽
+         default:          return "\x2753";     // ❓
       }
    }
 
@@ -249,15 +267,15 @@ private:
    }
 
    //=================================================================
-   // HELPER: Trend strength string
+   // HELPER: Trend strength string with emoji (v2.2.2)
    //=================================================================
    string GetTrendStr(ENUM_TREND_STRENGTH ts)
    {
       switch(ts)
       {
-         case TREND_STRONG:   return "GUCLU";
-         case TREND_MODERATE: return "ORTA";
-         default:             return "ZAYIF";
+         case TREND_STRONG:   return "\x1F525 GUCLU";    // 🔥
+         case TREND_MODERATE: return "\x26A0 ORTA";      // ⚠
+         default:             return "\x2744 ZAYIF";     // ❄
       }
    }
 
@@ -287,72 +305,72 @@ private:
       int vx = baseX + DASH_VAL_X;
       int y  = baseY + 6;
 
-      //--- Header
-      CreateLabel("P1_HDR", x, y, "ANA BILGILER", CLR_HEADER, DASH_HEADER_SIZE);
+      //--- Header (v2.2.2: emoji)
+      CreateLabel("P1_HDR", x, y, "\x1F4CB ANA BILGILER", CLR_HEADER, DASH_HEADER_SIZE);
       y += DASH_LINE_H + 2;
 
       //--- Row 1: Versiyon
-      CreateLabel("P1_VER_L", x, y, "Versiyon:", CLR_LABEL);
+      CreateLabel("P1_VER_L", x, y, "\x1F680 Versiyon:", CLR_LABEL);
       CreateLabel("P1_VER_V", vx, y, EA_VERSION_FULL, CLR_HEADER);
       y += DASH_LINE_H;
 
       //--- Row 2: Bakiye
-      CreateLabel("P1_BAL_L", x, y, "Bakiye:", CLR_LABEL);
+      CreateLabel("P1_BAL_L", x, y, "\x1F4B0 Bakiye:", CLR_LABEL);
       CreateLabel("P1_BAL_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 3: Varlik
-      CreateLabel("P1_EQ_L", x, y, "Varlik:", CLR_LABEL);
+      CreateLabel("P1_EQ_L", x, y, "\x1F4B5 Varlik:", CLR_LABEL);
       CreateLabel("P1_EQ_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 4: Marjin
-      CreateLabel("P1_MRG_L", x, y, "Marjin:", CLR_LABEL);
+      CreateLabel("P1_MRG_L", x, y, "\x1F6E1 Marjin:", CLR_LABEL);
       CreateLabel("P1_MRG_V", vx, y, "0.00%", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 5: Sembol
-      CreateLabel("P1_SYM_L", x, y, "Sembol:", CLR_LABEL);
+      CreateLabel("P1_SYM_L", x, y, GetCategoryEmoji(m_category) + " Sembol:", CLR_LABEL);
       CreateLabel("P1_SYM_V", vx, y, m_symbol, CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 6: RSI(14)
-      CreateLabel("P1_RSI_L", x, y, "RSI(14):", CLR_LABEL);
+      CreateLabel("P1_RSI_L", x, y, "\x1F4C9 RSI(14):", CLR_LABEL);
       CreateLabel("P1_RSI_V", vx, y, "0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 7: ADX(14)
-      CreateLabel("P1_ADX_L", x, y, "ADX(14):", CLR_LABEL);
+      CreateLabel("P1_ADX_L", x, y, "\x1F4AA ADX(14):", CLR_LABEL);
       CreateLabel("P1_ADX_V", vx, y, "0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 8: ATR(14)
-      CreateLabel("P1_ATR_L", x, y, "ATR(14):", CLR_LABEL);
+      CreateLabel("P1_ATR_L", x, y, "\x1F30A ATR(14):", CLR_LABEL);
       CreateLabel("P1_ATR_V", vx, y, "0.00000", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 9: Spread
-      CreateLabel("P1_SPR_L", x, y, "Spread:", CLR_LABEL);
+      CreateLabel("P1_SPR_L", x, y, "\x2194 Spread:", CLR_LABEL);
       CreateLabel("P1_SPR_V", vx, y, "0.0 / 0.0", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 10: Pozisyon
-      CreateLabel("P1_POS_L", x, y, "Pozisyon:", CLR_LABEL);
+      CreateLabel("P1_POS_L", x, y, "\x1F4C8 Pozisyon:", CLR_LABEL);
       CreateLabel("P1_POS_V", vx, y, "0 (SPM:0)", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Row 11: Trend
-      CreateLabel("P1_TRD_L", x, y, "Trend:", CLR_LABEL);
+      CreateLabel("P1_TRD_L", x, y, "\x27A1 Trend:", CLR_LABEL);
       CreateLabel("P1_TRD_V", vx, y, "---", CLR_LABEL);
       y += DASH_LINE_H;
 
       //--- Row 12: Durum
-      CreateLabel("P1_STS_L", x, y, "Durum:", CLR_LABEL);
+      CreateLabel("P1_STS_L", x, y, "\x2705 Durum:", CLR_LABEL);
       CreateLabel("P1_STS_V", vx, y, "Aktif", CLR_POSITIVE);
       y += DASH_LINE_H;
 
       //--- Row 13: +DI / -DI
-      CreateLabel("P1_DI_L", x, y, "+DI / -DI:", CLR_LABEL);
+      CreateLabel("P1_DI_L", x, y, "\x2696 +DI/-DI:", CLR_LABEL);
       CreateLabel("P1_DI_V", vx, y, "0.0 / 0.0", CLR_VALUE);
    }
 
@@ -371,73 +389,73 @@ private:
       int barW = pw - 2 * DASH_INDENT;
       int y    = baseY + 6;
 
-      //--- Header
-      CreateLabel("P2_HDR", x, y, "SINYAL SKOR", CLR_HEADER, DASH_HEADER_SIZE);
+      //--- Header (v2.2.2: emoji)
+      CreateLabel("P2_HDR", x, y, "\x1F3AF SINYAL SKOR", CLR_HEADER, DASH_HEADER_SIZE);  // 🎯
       y += DASH_LINE_H + 2;
 
       //--- Buy Score
-      CreateLabel("P2_BUY_L", x, y, "ALIS Skor:", CLR_LABEL);
+      CreateLabel("P2_BUY_L", x, y, "\x2B06 ALIS Skor:", CLR_LABEL);   // ⬆
       CreateLabel("P2_BUY_V", vx, y, "0/100", CLR_BUY_DIR);
       y += DASH_LINE_H;
       CreateProgressBar("P2_BUY_BAR", barX, y, barW, 6, 0.0, CLR_BUY_DIR, CLR_PROGRESS_BG);
       y += 10;
 
       //--- Sell Score
-      CreateLabel("P2_SELL_L", x, y, "SATIS Skor:", CLR_LABEL);
+      CreateLabel("P2_SELL_L", x, y, "\x2B07 SATIS Skor:", CLR_LABEL);  // ⬇
       CreateLabel("P2_SELL_V", vx, y, "0/100", CLR_SELL_DIR);
       y += DASH_LINE_H;
       CreateProgressBar("P2_SELL_BAR", barX, y, barW, 6, 0.0, CLR_SELL_DIR, CLR_PROGRESS_BG);
       y += 12;
 
       //--- Dominant Direction
-      CreateLabel("P2_DIR_L", x, y, "Yon:", CLR_LABEL);
+      CreateLabel("P2_DIR_L", x, y, "\x1F3C6 Yon:", CLR_LABEL);  // 🏆
       CreateLabel("P2_DIR_V", vx, y, "---", CLR_LABEL);
       y += DASH_LINE_H + 2;
 
       //--- Layer 1: EMA Trend (0/20)
-      CreateLabel("P2_EMA_L", x, y, "EMA Trend:", CLR_LABEL);
+      CreateLabel("P2_EMA_L", x, y, "\x1F4C8 EMA Trend:", CLR_LABEL);  // 📈
       CreateLabel("P2_EMA_V", vx, y, "0/20", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_EMA_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 2: MACD Momentum (0/20)
-      CreateLabel("P2_MACD_L", x, y, "MACD Mom.:", CLR_LABEL);
+      CreateLabel("P2_MACD_L", x, y, "\x1F4A8 MACD Mom.:", CLR_LABEL);  // 💨
       CreateLabel("P2_MACD_V", vx, y, "0/20", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_MACD_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 3: ADX Strength (0/15)
-      CreateLabel("P2_ADXS_L", x, y, "ADX Guc:", CLR_LABEL);
+      CreateLabel("P2_ADXS_L", x, y, "\x1F4AA ADX Guc:", CLR_LABEL);  // 💪
       CreateLabel("P2_ADXS_V", vx, y, "0/15", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_ADXS_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 4: RSI Level (0/15)
-      CreateLabel("P2_RSIL_L", x, y, "RSI Svye:", CLR_LABEL);
+      CreateLabel("P2_RSIL_L", x, y, "\x1F4C9 RSI Svye:", CLR_LABEL);  // 📉
       CreateLabel("P2_RSIL_V", vx, y, "0/15", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_RSIL_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 5: BB Position (0/15)
-      CreateLabel("P2_BB_L", x, y, "BB Pozisyn:", CLR_LABEL);
+      CreateLabel("P2_BB_L", x, y, "\x1F30A BB Pozisyn:", CLR_LABEL);  // 🌊
       CreateLabel("P2_BB_V", vx, y, "0/15", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_BB_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 6: Stoch Signal (0/10)
-      CreateLabel("P2_STCH_L", x, y, "Stoch Sny:", CLR_LABEL);
+      CreateLabel("P2_STCH_L", x, y, "\x1F504 Stoch Sny:", CLR_LABEL);  // 🔄
       CreateLabel("P2_STCH_V", vx, y, "0/10", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_STCH_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
       y += 8;
 
       //--- Layer 7: ATR Volatility (0/5)
-      CreateLabel("P2_ATRV_L", x, y, "ATR Volat:", CLR_LABEL);
+      CreateLabel("P2_ATRV_L", x, y, "\x26A1 ATR Volat:", CLR_LABEL);  // ⚡
       CreateLabel("P2_ATRV_V", vx, y, "0/5", CLR_VALUE);
       y += DASH_LINE_H;
       CreateProgressBar("P2_ATRV_BAR", barX, y, barW, 4, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
@@ -456,47 +474,47 @@ private:
       int vx = baseX + DASH_VAL_X;
       int y  = baseY + 6;
 
-      //--- Header
-      CreateLabel("P3_HDR", x, y, "TP + INDIKATORLER", CLR_HEADER, DASH_HEADER_SIZE);
+      //--- Header (v2.2.2: emoji)
+      CreateLabel("P3_HDR", x, y, "\x1F3AF TP + INDIKATORLER", CLR_HEADER, DASH_HEADER_SIZE);  // 🎯
       y += DASH_LINE_H + 2;
 
       //--- TP1
-      CreateLabel("P3_TP1_L", x, y, "TP1:", CLR_LABEL);
+      CreateLabel("P3_TP1_L", x, y, "\x2705 TP1:", CLR_LABEL);  // ✅
       CreateLabel("P3_TP1_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- TP2
-      CreateLabel("P3_TP2_L", x, y, "TP2:", CLR_LABEL);
+      CreateLabel("P3_TP2_L", x, y, "\x2705 TP2:", CLR_LABEL);  // ✅
       CreateLabel("P3_TP2_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- TP3
-      CreateLabel("P3_TP3_L", x, y, "TP3:", CLR_LABEL);
+      CreateLabel("P3_TP3_L", x, y, "\x1F451 TP3:", CLR_LABEL);  // 👑
       CreateLabel("P3_TP3_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- TP Level
-      CreateLabel("P3_LVL_L", x, y, "TP Seviye:", CLR_LABEL);
+      CreateLabel("P3_LVL_L", x, y, "\x1F4CD TP Seviye:", CLR_LABEL);  // 📍
       CreateLabel("P3_LVL_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Trend Strength
-      CreateLabel("P3_TST_L", x, y, "Trend Guc:", CLR_LABEL);
+      CreateLabel("P3_TST_L", x, y, "\x1F525 Trend Guc:", CLR_LABEL);  // 🔥
       CreateLabel("P3_TST_V", vx, y, "---", CLR_LABEL);
       y += DASH_LINE_H;
 
       //--- Parabolic SAR value + direction
-      CreateLabel("P3_SAR_L", x, y, "SAR:", CLR_LABEL);
+      CreateLabel("P3_SAR_L", x, y, "\x1F6F0 SAR:", CLR_LABEL);  // 🛰
       CreateLabel("P3_SAR_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Momentum value + direction
-      CreateLabel("P3_MOM_L", x, y, "Mom:", CLR_LABEL);
+      CreateLabel("P3_MOM_L", x, y, "\x1F680 Mom:", CLR_LABEL);  // 🚀
       CreateLabel("P3_MOM_V", vx, y, "---", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- BB Squeeze status
-      CreateLabel("P3_BSQ_L", x, y, "BB:", CLR_LABEL);
+      CreateLabel("P3_BSQ_L", x, y, "\x1F30A BB:", CLR_LABEL);  // 🌊
       CreateLabel("P3_BSQ_V", vx, y, "---", CLR_VALUE);
    }
 
@@ -515,47 +533,47 @@ private:
       int barW = pw - 2 * DASH_INDENT;
       int y    = baseY + 6;
 
-      //--- Header
-      CreateLabel("P4_HDR", x, y, "KAZAN-KAZAN v2.2", CLR_HEADER, DASH_HEADER_SIZE);
+      //--- Header (v2.2.2: emoji)
+      CreateLabel("P4_HDR", x, y, "\x1F3C6 KAZAN-KAZAN v2.2", CLR_HEADER, DASH_HEADER_SIZE);  // 🏆
       y += DASH_LINE_H + 2;
 
       //--- Main P/L
-      CreateLabel("P4_MAIN_L", x, y, "Ana P/L:", CLR_LABEL);
+      CreateLabel("P4_MAIN_L", x, y, "\x1F4B0 Ana P/L:", CLR_LABEL);  // 💰
       CreateLabel("P4_MAIN_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- v2.0: BUY/SELL katmanlari
-      CreateLabel("P4_BSLY_L", x, y, "BUY/SELL:", CLR_LABEL);
+      CreateLabel("P4_BSLY_L", x, y, "\x2696 BUY/SELL:", CLR_LABEL);  // ⚖
       CreateLabel("P4_BSLY_V", vx, y, "0/0", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Active SPM + DCA + Hedge
-      CreateLabel("P4_ASPM_L", x, y, "SPM/DCA/HG:", CLR_LABEL);
+      CreateLabel("P4_ASPM_L", x, y, "\x1F6E1 SPM/DCA/HG:", CLR_LABEL);  // 🛡
       CreateLabel("P4_ASPM_V", vx, y, "0/0/0", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Closed SPM Profit (kasa)
-      CreateLabel("P4_CSPM_L", x, y, "Kasa:", CLR_LABEL);
+      CreateLabel("P4_CSPM_L", x, y, "\x1F4B5 Kasa:", CLR_LABEL);  // 💵
       CreateLabel("P4_CSPM_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Open SPM Profit / Loss
-      CreateLabel("P4_OSPM_L", x, y, "Acik P/L:", CLR_LABEL);
+      CreateLabel("P4_OSPM_L", x, y, "\x1F4CA Acik P/L:", CLR_LABEL);  // 📊
       CreateLabel("P4_OSPM_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- FIFO Net
-      CreateLabel("P4_NET_L", x, y, "FIFO Net:", CLR_LABEL);
+      CreateLabel("P4_NET_L", x, y, "\x1F4B8 FIFO Net:", CLR_LABEL);  // 💸
       CreateLabel("P4_NET_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Target
-      CreateLabel("P4_TGT_L", x, y, "Hedef:", CLR_LABEL);
+      CreateLabel("P4_TGT_L", x, y, "\x1F3AF Hedef:", CLR_LABEL);  // 🎯
       CreateLabel("P4_TGT_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
       //--- Progress percentage
-      CreateLabel("P4_PCT_L", x, y, "Ilerleme:", CLR_LABEL);
+      CreateLabel("P4_PCT_L", x, y, "\x23F3 Ilerleme:", CLR_LABEL);  // ⏳
       CreateLabel("P4_PCT_V", vx, y, "0.0%", CLR_VALUE);
       y += DASH_LINE_H;
 
@@ -610,14 +628,14 @@ private:
          color diClr = (plusDI > minusDI) ? CLR_BUY_DIR : CLR_SELL_DIR;
          UpdateLabel("P1_DI_V", StringFormat("%.1f / %.1f", plusDI, minusDI), diClr);
 
-         //--- Trend direction
+         //--- Trend direction (v2.2.2: emoji)
          ENUM_SIGNAL_DIR trend = m_engine.GetCurrentTrend();
          if(trend == SIGNAL_BUY)
-            UpdateLabel("P1_TRD_V", ">> YUKARI (BUY)", CLR_BUY_DIR);
+            UpdateLabel("P1_TRD_V", "\x2B06 YUKARI (BUY)", CLR_BUY_DIR);     // ⬆
          else if(trend == SIGNAL_SELL)
-            UpdateLabel("P1_TRD_V", "<< ASAGI (SELL)", CLR_SELL_DIR);
+            UpdateLabel("P1_TRD_V", "\x2B07 ASAGI (SELL)", CLR_SELL_DIR);     // ⬇
          else
-            UpdateLabel("P1_TRD_V", "-- YATAY --", CLR_LABEL);
+            UpdateLabel("P1_TRD_V", "\x2194 YATAY", CLR_LABEL);              // ↔
       }
 
       //--- Spread
@@ -637,12 +655,12 @@ private:
          int totalPos = hasPos ? (1 + spmCount) : 0;
          UpdateLabel("P1_POS_V", StringFormat("%d (SPM:%d)", totalPos, spmCount), CLR_VALUE);
 
-         //--- Trading status
+         //--- Trading status (v2.2.2: emoji)
          bool paused = m_posMgr.IsTradingPaused();
          if(paused)
-            UpdateLabel("P1_STS_V", "DURDURULDU", CLR_NEGATIVE);
+            UpdateLabel("P1_STS_V", "\x1F6D1 DURDURULDU", CLR_NEGATIVE);   // 🛑
          else
-            UpdateLabel("P1_STS_V", "Aktif", CLR_POSITIVE);
+            UpdateLabel("P1_STS_V", "\x2705 Aktif", CLR_POSITIVE);         // ✅
       }
    }
 
@@ -670,14 +688,14 @@ private:
       double sellPct = (sellBD.totalScore / 100.0) * 100.0;
       UpdateProgressBar("P2_SELL_BAR", sellPct, CLR_SELL_DIR);
 
-      //--- Dominant direction
+      //--- Dominant direction (v2.2.2: emoji)
       bool isBuyDom = (buyBD.totalScore >= sellBD.totalScore);
       if(buyBD.totalScore == 0 && sellBD.totalScore == 0)
-         UpdateLabel("P2_DIR_V", "--- BELIRSIZ ---", CLR_LABEL);
+         UpdateLabel("P2_DIR_V", "\x2753 BELIRSIZ", CLR_LABEL);                                    // ❓
       else if(isBuyDom)
-         UpdateLabel("P2_DIR_V", StringFormat(">> ALIS [%d]", buyBD.totalScore), CLR_BUY_DIR);
+         UpdateLabel("P2_DIR_V", StringFormat("\x2B06 ALIS [%d]", buyBD.totalScore), CLR_BUY_DIR);   // ⬆
       else
-         UpdateLabel("P2_DIR_V", StringFormat("<< SATIS [%d]", sellBD.totalScore), CLR_SELL_DIR);
+         UpdateLabel("P2_DIR_V", StringFormat("\x2B07 SATIS [%d]", sellBD.totalScore), CLR_SELL_DIR); // ⬇
 
       //--- Use dominant breakdown for layer display
       ScoreBreakdown bd;
@@ -820,7 +838,7 @@ private:
          {
             double sarVal = sarBuf[0];
             bool sarBullish = (bid > sarVal);
-            string sarDir = sarBullish ? "YUKARI" : "ASAGI";
+            string sarDir = sarBullish ? "\x2B06 YUKARI" : "\x2B07 ASAGI";  // ⬆ ⬇
             color sarClr  = sarBullish ? CLR_POSITIVE : CLR_NEGATIVE;
             UpdateLabel("P3_SAR_V", StringFormat("%s %s", DoubleToString(sarVal, digits), sarDir), sarClr);
          }
@@ -842,7 +860,7 @@ private:
          {
             double momVal = momBuf[0];
             bool momBullish = (momVal > 100.0);
-            string momDir = momBullish ? "YUKARI" : "ASAGI";
+            string momDir = momBullish ? "\x1F680 YUKARI" : "\x1F4A5 ASAGI";  // 🚀 💥
             color momClr  = momBullish ? CLR_POSITIVE : CLR_NEGATIVE;
             UpdateLabel("P3_MOM_V", StringFormat("%.2f %s", momVal, momDir), momClr);
          }
@@ -877,9 +895,9 @@ private:
                isSqueeze = true;
 
             if(isSqueeze)
-               UpdateLabel("P3_BSQ_V", "SQUEEZE", CLR_WARNING);
+               UpdateLabel("P3_BSQ_V", "\x1F4A5 SQUEEZE", CLR_WARNING);   // 💥
             else
-               UpdateLabel("P3_BSQ_V", "NORMAL", CLR_VALUE);
+               UpdateLabel("P3_BSQ_V", "\x2705 NORMAL", CLR_VALUE);       // ✅
          }
          else
          {
@@ -982,8 +1000,8 @@ private:
 
       int y = 3;
 
-      //--- Sol: "HABER:" etiketi
-      CreateLabel("NB_LBL", 8, y, "HABER:", CLR_HEADER, 10, "Consolas");
+      //--- Sol: "HABER:" etiketi (v2.2.2: emoji)
+      CreateLabel("NB_LBL", 8, y, "\x1F4E2 HABER:", CLR_HEADER, 10, "Consolas");  // 📢
 
       //--- Haber basligi (etiketten sonra)
       CreateLabel("NB_TITLE", 80, y, "---", CLR_VALUE, 10, "Consolas");
@@ -1047,25 +1065,25 @@ private:
          switch(impact)
          {
             case NEWS_CRITICAL:
-               statText = "!! KRITIK - ISLEM BLOKE !!";
+               statText = "\x1F6A8 KRITIK - ISLEM BLOKE \x1F6A8";   // 🚨
                statClr = CLR_NEWS_CRITICAL;
                bannerBorder = CLR_NEWS_CRITICAL;
                bannerBg = CLR_NEWS_BG_CRIT;
                break;
             case NEWS_HIGH:
-               statText = "! YUKSEK - ISLEM BLOKE !";
+               statText = "\x26A0 YUKSEK - ISLEM BLOKE";              // ⚠
                statClr = CLR_NEWS_HIGH;
                bannerBorder = CLR_NEWS_HIGH;
                bannerBg = CLR_NEWS_BG_HIGH;
                break;
             case NEWS_MEDIUM:
-               statText = "ORTA - UYARI";
+               statText = "\x1F514 ORTA - UYARI";                     // 🔔
                statClr = CLR_NEWS_MEDIUM;
                bannerBorder = CLR_NEWS_MEDIUM;
                bannerBg = CLR_NEWS_BG_MED;
                break;
             default:
-               statText = "DUSUK";
+               statText = "\x2705 DUSUK";                             // ✅
                statClr = CLR_NEWS_LOW;
                break;
          }
