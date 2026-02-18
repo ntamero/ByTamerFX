@@ -17,10 +17,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "1.2.0"
-#define EA_VERSION_NUM    "1.20"
-#define EA_VERSION_NAME   "SPM-FIFO"
-#define EA_VERSION_FULL   "BytamerFX v1.2.0 - SPM-FIFO"
+#define EA_VERSION        "1.3.0"
+#define EA_VERSION_NUM    "1.30"
+#define EA_VERSION_NAME   "SmartSPM"
+#define EA_VERSION_FULL   "BytamerFX v1.3.0 - SmartSPM"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -73,9 +73,11 @@ input double   SPM_TriggerLoss        = -3.0;     // SPM tetik zarar ($) - ana v
 input double   SPM_CloseProfit        = 4.0;      // SPM kar hedefi ($) - +4$ olunca kapat
 input double   SPM_NetTargetUSD       = 5.0;      // FIFO net hedef ($) - spm toplami-ana >= +5$
 input int      SPM_MaxLayers          = 6;        // Max SPM katmani (daha esnek)
-input double   SPM_LotBase            = 1.0;      // SPM lot carpani (ana lot * bu)
-input double   SPM_LotIncrement       = 0.1;      // Her katmanda lot artisi (1.0,1.1,1.2...)
+input double   SPM_LotBase            = 1.5;      // SPM lot carpani (ana lot * bu) - guclu hedge
+input double   SPM_LotIncrement       = 0.3;      // Her katmanda lot artisi (1.5,1.8,2.1...)
+input double   SPM_LotCap             = 2.2;      // Max SPM lot carpan siniri
 input int      SPM_CooldownSec        = 45;       // SPM acma bekleme (sn)
+input int      SPM_WaitMaxSec         = 180;      // ANA toparlanma bekleme suresi (sn)
 
 //=================================================================
 // KORUMA SISTEMI
@@ -269,5 +271,6 @@ struct ScoreBreakdown
 #define SPM_CloseProfitUSD    SPM_CloseProfit
 #define SPM_CooldownSeconds   SPM_CooldownSec
 #define SPM_LotMultiplier     SPM_LotBase
+#define SPM_WaitMaxSeconds    SPM_WaitMaxSec
 
 #endif

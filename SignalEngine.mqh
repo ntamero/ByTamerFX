@@ -408,6 +408,7 @@ public:
    double         GetADX()             const { return m_adx; }
    double         GetPlusDI()          const { return m_plusDI; }
    double         GetMinusDI()         const { return m_minusDI; }
+   double         GetMACDHist()        const { return m_macdHist; }
    ScoreBreakdown GetBreakdown()       const { return m_lastBreakdown; }
    ScoreBreakdown GetBuyBreakdown()    const { return m_buyBreakdown; }
    ScoreBreakdown GetSellBreakdown()   const { return m_sellBreakdown; }
