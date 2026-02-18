@@ -121,12 +121,48 @@ public:
    }
 
    //========================================
-   // GENEL MESAJ (basit embed)
+   // GENEL MESAJ (basit embed) - v2.2: balance/equity eklenir
    //========================================
    void SendMessage(string text)
    {
       if(!m_enabled) return;
-      SendEmbed(EA_VERSION_FULL, text, 3447003, ":warning: BytamerFX | @ByT@MER");
+
+      double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+      double equity  = AccountInfoDouble(ACCOUNT_EQUITY);
+
+      //--- Icon ve renk secimi
+      int clr = 3447003;  // Varsayilan mavi
+      string icon = ":zap:";
+      if(StringFind(text, "KAPAT") >= 0)
+      {
+         if(StringFind(text, "$-") >= 0)
+         { clr = 15158332; icon = ":red_circle:"; }
+         else
+         { clr = 3066993; icon = ":green_circle:"; }
+      }
+      else if(StringFind(text, "HEDGE") >= 0)
+      { clr = 15105570; icon = ":shield:"; }
+      else if(StringFind(text, "MARGIN") >= 0 || StringFind(text, "KILITLENME") >= 0)
+      { clr = 15158332; icon = ":warning:"; }
+      else if(StringFind(text, "TP") >= 0)
+      { clr = 3066993; icon = ":dart:"; }
+      else if(StringFind(text, "FIFO") >= 0)
+      { clr = 3066993; icon = ":star:"; }
+
+      string desc = icon + " " + text + "\\n\\n";
+      desc += ":moneybag: **Bak:** `$" + DoubleToString(balance, 2) + "`";
+      desc += " | **Var:** `$" + DoubleToString(equity, 2) + "`";
+
+      SendEmbed(EA_VERSION_FULL, desc, clr, ":warning: BytamerFX | @ByT@MER");
+   }
+
+   //========================================
+   // v2.2: HABER UYARI MESAJI
+   //========================================
+   void SendNewsAlert(string desc, int clr)
+   {
+      if(!m_enabled) return;
+      SendEmbed(EA_VERSION_FULL + " - HABER", desc, clr, ":newspaper: BytamerFX News | @ByT@MER");
    }
 
 private:

@@ -169,10 +169,55 @@ public:
 
    //========================================
    // GENEL MESAJ (public - PositionManager icin)
+   // v2.2: Otomatik emoji + balance/equity eklenir
    //========================================
    void SendMessage(string text)
    {
-      SendMsg(text);
+      if(!m_enabled) return;
+
+      double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+      double equity  = AccountInfoDouble(ACCOUNT_EQUITY);
+
+      //--- Otomatik icon secimi (mesaj icerigine gore)
+      string icon = m_bolt;  // Varsayilan
+      if(StringFind(text, "KAPAT") >= 0)
+      {
+         // Karda mi zararda mi?
+         if(StringFind(text, "$-") >= 0 || StringFind(text, "ZARAR") >= 0)
+            icon = m_redCircle;
+         else
+            icon = m_greenCircle;
+      }
+      else if(StringFind(text, "SPM") >= 0 || StringFind(text, "ANA") >= 0)
+         icon = m_chart;
+      else if(StringFind(text, "DCA") >= 0)
+         icon = m_money;
+      else if(StringFind(text, "HEDGE") >= 0)
+         icon = m_shield;
+      else if(StringFind(text, "TP") >= 0)
+         icon = m_target;
+      else if(StringFind(text, "TERFI") >= 0)
+         icon = m_sparkle;
+      else if(StringFind(text, "FIFO") >= 0)
+         icon = m_star;
+      else if(StringFind(text, "MARGIN") >= 0 || StringFind(text, "KILITLENME") >= 0)
+         icon = m_warning + " " + m_fire;
+
+      //--- Mesaj formatla
+      string msg = "";
+      msg += icon + " " + text + "\n";
+      msg += m_moneybag + " <b>Bak:</b> <code>$" + DoubleToString(balance, 2) + "</code>";
+      msg += " | <b>Var:</b> <code>$" + DoubleToString(equity, 2) + "</code>";
+
+      SendMsg(msg);
+   }
+
+   //========================================
+   // v2.2: HABER UYARI MESAJI (NewsManager formatli)
+   //========================================
+   void SendNewsAlert(string formattedMsg)
+   {
+      SendMsg(formattedMsg);
    }
 
 private:

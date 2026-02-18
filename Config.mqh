@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.1.0"
-#define EA_VERSION_NUM    "2.10"
+#define EA_VERSION        "2.2.0"
+#define EA_VERSION_NUM    "2.20"
 #define EA_VERSION_NAME   "KazanKazan"
-#define EA_VERSION_FULL   "BytamerFX v2.1.0 - KazanKazan Dinamik"
+#define EA_VERSION_FULL   "BytamerFX v2.2.0 - KazanKazan Pro"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -123,6 +123,14 @@ input double   TrailActivateUSD       = 1.0;      // Trailing aktif ($)
 input double   TrailStepUSD           = 0.30;     // Trailing step ($)
 input double   PeakDropPercent        = 50.0;     // v2.0: %40→%50 SPM icin peak drop esigi
 input double   PeakMinProfit          = 1.0;      // Peak drop icin min kar ($)
+
+//=================================================================
+// v2.2: HABER SISTEMI (UNIVERSAL NEWS INTELLIGENCE)
+//=================================================================
+input bool     EnableNewsFilter       = true;       // Haber filtresi aktif
+input int      NewsBlockBeforeMin     = 20;         // Haber oncesi blok (dakika)
+input int      NewsBlockAfterMin      = 5;          // Haber sonrasi blok (dakika)
+input int      NewsAlertBeforeMin     = 30;         // Haber oncesi bildirim (dakika)
 
 //=================================================================
 // GORSEL
