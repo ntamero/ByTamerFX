@@ -1275,19 +1275,10 @@ void CPositionManager::ManageEmergencyHedge()
    double losingPnL = MathMin(buyPnL, sellPnL);  // en cok zarardaki taraf
    if(losingPnL > m_profile.hedgeMinLossUSD) return;  // Yeterince zarar yok (BTC:-$10, XAG:-$8)
 
-   // Hangi taraf buyuk + zarardaki?
-   bool zarar_taraf_buyuk = false;
-
-   if(totalBuyLot > totalSellLot && buyPnL < 0.0)
-      zarar_taraf_buyuk = true;
-   else if(totalSellLot > totalBuyLot && sellPnL < 0.0)
-      zarar_taraf_buyuk = true;
-
-   if(!zarar_taraf_buyuk)
-   {
-      // Karli taraf buyuk → dogal akis, hedge gerekmiyor
-      return;
-   }
+   // v2.2.4: Toplam net zarar kontrolu - zarar_taraf_buyuk sarti kaldirildi
+   // Oran > 2.0 VE toplam zarar yeterli ise dengeye getir
+   double totalPnL = buyPnL + sellPnL;
+   if(totalPnL >= 0.0) return;  // Toplam karda ise hedge gerekmiyor
 
    // Hedge: Eksik tarafta pozisyon ac (karsi yon)
    double fark = MathAbs(totalBuyLot - totalSellLot);
@@ -1329,8 +1320,8 @@ void CPositionManager::ManageEmergencyHedge()
 }
 
 //+------------------------------------------------------------------+
-//| CheckDeadlock - v2.0 YENI: Kilitlenme Tespit + Cikis             |
-//| SPM acilamiyor + net degisim < $0.50 → 5dk sonra tum kapat      |
+//| CheckDeadlock - v2.2.4: Sadece LOG + bildirim, ASLA kapatma yok  |
+//| SPM acilamiyor + net degisim < $0.50 → uyari ver, pozisyon koru  |
 //+------------------------------------------------------------------+
 void CPositionManager::CheckDeadlock()
 {
@@ -1367,31 +1358,24 @@ void CPositionManager::CheckDeadlock()
    if(netChange < Deadlock_MinChange)
    {
       // Net neredeyse degismedi → POTANSIYEL KILITLENME
-      // Zarar kontrolu: bakiyenin %15'inden fazla mi?
       double lossRatio = MathAbs(currentNet) / MathMax(balance, 1.0);
 
       if(currentNet < 0.0 && lossRatio > Deadlock_MaxLossRatio)
       {
-         PrintFormat("[PM-%s] !!! KILITLENME TESPIT !!! Sure=%dsn Net=$%.2f Degisim=$%.2f < $%.2f Zarar=%.1f%%",
+         // v2.2.4: SADECE UYARI - ASLA ZARARDA KAPATMA YOK
+         PrintFormat("[PM-%s] KILITLENME UYARI: Sure=%dsn Net=$%.2f Degisim=$%.2f < $%.2f Zarar=%.1f%% - POZISYON KORUNUYOR",
                      m_symbol, elapsed, currentNet, netChange, Deadlock_MinChange, lossRatio * 100.0);
 
          if(m_telegram != NULL)
-            m_telegram.SendMessage(StringFormat("KILITLENME %s: Net=$%.2f Zarar=%.1f%% - TUM KAPATILDI",
+            m_telegram.SendMessage(StringFormat("KILITLENME UYARI %s: Net=$%.2f Zarar=%.1f%% - Pozisyon korunuyor",
                                    m_symbol, currentNet, lossRatio * 100.0));
          if(m_discord != NULL)
-            m_discord.SendMessage(StringFormat("KILITLENME %s: Net=$%.2f Zarar=%.1f%% - TUM KAPATILDI",
+            m_discord.SendMessage(StringFormat("KILITLENME UYARI %s: Net=$%.2f Zarar=%.1f%% - Pozisyon korunuyor",
                                   m_symbol, currentNet, lossRatio * 100.0));
-
-         CloseAllPositions("Kilitlenme_Net=" + DoubleToString(currentNet, 2));
-         m_deadlockCooldownUntil = TimeCurrent() + Deadlock_CooldownSec;
-         m_deadlockActive = false;
-         ResetFIFO();
-         SetProtectionCooldown("Kilitlenme");
-         return;
       }
    }
 
-   // Degisim yeterli → kilitlenme yok, tracker'i sifirla
+   // Tracker sifirla, yeniden izlemeye basla
    m_deadlockCheckStart = TimeCurrent();
    m_deadlockLastNet = currentNet;
 }
@@ -1674,16 +1658,12 @@ bool CPositionManager::CheckLotBalance(ENUM_SIGNAL_DIR newDir, double newLot)
       return false;
    }
 
-   // 2.5:1 oran limiti - iki tarafli risk onleme
+   // 4.0:1 oran limiti - v2.2.4: 2.5→4.0 daha fazla SPM katmani icin
    if(proposedBuy > 0 && proposedSell > 0)
    {
       double ratio = MathMax(proposedBuy, proposedSell) / MathMin(proposedBuy, proposedSell);
-      if(ratio > 2.5)
-      {
-         PrintFormat("[PM-%s] LOT DENGE UYARI: BUY=%.2f SELL=%.2f Oran=%.1f > 2.5",
-                     m_symbol, proposedBuy, proposedSell, ratio);
+      if(ratio > 4.0)
          return false;
-      }
    }
 
    // Toplam hacim kontrolu

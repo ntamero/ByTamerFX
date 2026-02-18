@@ -4,6 +4,34 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v2.2.4] - 2026-02-18
+
+### Critical Fixes
+- **Deadlock Kapatma Kaldirildi**: CheckDeadlock artik pozisyon KAPATMIYOR. Sadece log + Telegram/Discord uyari gonderiyor. Kilitlenme durumunda pozisyon korunur, yeniden izleme baslar.
+- **LOT DENGE Limiti Genisletildi**: Oran limiti 2.5:1 → 4.0:1. Daha fazla SPM katmani acilabilir, kilitlenmeye girme riski azalir.
+- **EmergencyHedge Kosulu Gevsedi**: `zarar_taraf_buyuk` sarti kaldirildi. Artik toplam net zarar < 0 VE lot orani > 2.0 ise hedge tetiklenir. ANA kucuk lot ile zarardayken bile hedge acilir.
+- **LOT DENGE Log Spam Giderildi**: CheckLotBalance fonksiyonundan PrintFormat kaldirildi.
+
+### Changes
+- `PositionManager.mqh`: CheckDeadlock sadece uyari, CheckLotBalance 4.0 limit, ManageEmergencyHedge basitlestirildi
+- `Config.mqh`: Versiyon 2.2.3 → 2.2.4
+- `BytamerFX.mq5`: Versiyon 2.23 → 2.24
+- `ChartDashboard.mqh`: Header guncelleme
+
+---
+
+## [v2.2.3] - 2026-02-18
+
+### Fixes
+- **Emoji-Yazi Bosluk**: Tum dashboard panellerinde emoji ile yazi arasina cift bosluk eklendi
+- **BMP Unicode**: Dashboard simgeleri BMP Unicode araligi (U+0000-U+FFFF) ile degistirildi
+
+### Changes
+- `ChartDashboard.mqh`: Tum panel etiketleri ve deger stringlerinde cift bosluk
+- `BytamerFX.mq5`: Tooltip BMP Unicode guncelleme
+
+---
+
 ## [v2.2.2] - 2026-02-18
 
 ### Critical Fixes
