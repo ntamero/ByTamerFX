@@ -465,19 +465,19 @@ void DrawSignalArrow(const SignalData &sig, double lot, double price)
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_HIDDEN, false);  // Gorunur (tooltip icin)
 
-   //--- TOOLTIP: v2.2.2 - Kompakt, emojili, BUY/SELL renkli
-   string dirEmoji = (sig.direction == SIGNAL_BUY) ? "\x2B06" : "\x2B07";       // ⬆ ⬇
-   string dirStr   = (sig.direction == SIGNAL_BUY) ? "ALIS (BUY)" : "SATIS (SELL)";
+   //--- TOOLTIP: v2.2.2 - Kompakt, ASCII
+   string dirMark = (sig.direction == SIGNAL_BUY) ? ">>" : "<<";
+   string dirStr  = (sig.direction == SIGNAL_BUY) ? "ALIS (BUY)" : "SATIS (SELL)";
    int digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
 
    string tooltip = StringFormat(
       "%s %s %s\n"
-      "\x1F4CD %s | Lot: %.2f\n"
-      "\x2705 TP1: %s\n"
-      "\x2705 TP2: %s\n"
-      "\x1F3AF Skor: %d/100\n"
-      "\x1F552 %s",
-      dirEmoji, _Symbol, dirStr,
+      "@ %s | Lot: %.2f\n"
+      "[1] TP1: %s\n"
+      "[2] TP2: %s\n"
+      "Skor: %d/100\n"
+      "%s",
+      dirMark, _Symbol, dirStr,
       DoubleToString(price, digits), lot,
       DoubleToString(sig.tp1, digits),
       DoubleToString(sig.tp2, digits),
