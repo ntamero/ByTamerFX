@@ -3,8 +3,9 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v1.2.0 - 4 Panel Chart Dashboard + Chart Overlay       |
+//| BytamerFX v2.2.1 - 4 Panel + Top News Banner + Chart Overlay      |
 //| Real-time EA information display with indicator overlays          |
+//| Banner: Tam genislik haber serit (ust)                            |
 //| Panels: ANA BILGILER, SINYAL SKOR, TP+INDIKATOR, SPM+FIFO       |
 //| Overlay: Bollinger Bands, Parabolic SAR, Momentum                |
 //+------------------------------------------------------------------+
@@ -30,9 +31,9 @@
 #define CLR_NEWS_HIGH       C'255,140,0'
 #define CLR_NEWS_MEDIUM     C'255,220,0'
 #define CLR_NEWS_LOW        C'100,200,100'
-#define CLR_NEWS_BG_CRIT    C'60,10,10'
-#define CLR_NEWS_BG_HIGH    C'60,30,0'
-#define CLR_NEWS_BG_MED     C'50,45,10'
+#define CLR_NEWS_BG_CRIT    C'140,15,15'       // v2.2.1: Daha parlak kirmizi zemin
+#define CLR_NEWS_BG_HIGH    C'140,60,0'        // v2.2.1: Daha parlak turuncu zemin
+#define CLR_NEWS_BG_MED     C'120,100,10'      // v2.2.1: Daha parlak sari zemin
 #define CLR_NEWS_BG_NORM    C'25,25,35'
 #define CLR_HEADER          C'0,200,255'
 #define CLR_LABEL           C'180,180,200'
@@ -53,7 +54,7 @@
 #define DASH_HEADER_SIZE    10
 #define DASH_PANEL_W        300
 #define DASH_PANEL_X        10
-#define DASH_LINE_H         17
+#define DASH_LINE_H         16
 #define DASH_INDENT         10
 #define DASH_VAL_X          155
 
@@ -274,12 +275,12 @@ private:
    }
 
    //=================================================================
-   // PANEL 1 CREATION: ANA BILGILER  (y=30, h=285)
+   // PANEL 1 CREATION: ANA BILGILER  (y=25, h=235)
    //=================================================================
    void CreatePanel1(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 285;
+      int ph = 235;
       CreatePanel("P1", baseX, baseY, pw, ph);
 
       int x  = baseX + DASH_INDENT;
@@ -356,12 +357,12 @@ private:
    }
 
    //=================================================================
-   // PANEL 2 CREATION: SINYAL SKOR  (y=325, h=290)
+   // PANEL 2 CREATION: SINYAL SKOR  (y=265, h=255)
    //=================================================================
    void CreatePanel2(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 290;
+      int ph = 255;
       CreatePanel("P2", baseX, baseY, pw, ph);
 
       int x    = baseX + DASH_INDENT;
@@ -443,12 +444,12 @@ private:
    }
 
    //=================================================================
-   // PANEL 3 CREATION: TP HEDEFLERI + INDIKATORLER  (y=625, h=165)
+   // PANEL 3 CREATION: TP HEDEFLERI + INDIKATORLER  (y=525, h=140)
    //=================================================================
    void CreatePanel3(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 165;
+      int ph = 140;
       CreatePanel("P3", baseX, baseY, pw, ph);
 
       int x  = baseX + DASH_INDENT;
@@ -500,12 +501,12 @@ private:
    }
 
    //=================================================================
-   // PANEL 4 CREATION: SPM + FIFO  (y=800, h=195)
+   // PANEL 4 CREATION: SPM + FIFO  (y=670, h=170)
    //=================================================================
    void CreatePanel4(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 195;
+      int ph = 170;
       CreatePanel("P4", baseX, baseY, pw, ph);
 
       int x    = baseX + DASH_INDENT;
@@ -956,49 +957,74 @@ private:
    }
 
    //=================================================================
-   // PANEL 5 CREATION: HABER BILGI CUBUKLARI (y=1005, h=100)
+   // NEWS BANNER: Tam genislik ust serit (y=0, h=24, tum chart genisligi)
    //=================================================================
-   void CreatePanel5(int baseX, int baseY)
+   void CreateNewsBanner()
    {
-      int pw = DASH_PANEL_W;
-      int ph = 100;
-      CreatePanel("P5", baseX, baseY, pw, ph);
+      //--- Chart genisligini al
+      int chartW = (int)ChartGetInteger(m_chartId, CHART_WIDTH_IN_PIXELS);
+      if(chartW < 800) chartW = 1920;
 
-      int x  = baseX + DASH_INDENT;
-      int vx = baseX + DASH_VAL_X;
-      int y  = baseY + 6;
+      //--- Banner arkaplan (tam genislik)
+      string bgName = "BTFX_NB_BG";
+      ObjectCreate(m_chartId, bgName, OBJ_RECTANGLE_LABEL, m_subWindow, 0, 0);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_XDISTANCE, 0);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_YDISTANCE, 0);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_XSIZE, chartW);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_YSIZE, 24);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_BGCOLOR, CLR_PANEL_BG);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_BORDER_COLOR, CLR_PANEL_BORDER);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_CORNER, CORNER_LEFT_UPPER);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_BACK, false);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_HIDDEN, true);
 
-      //--- Header
-      CreateLabel("P5_HDR", x, y, "HABER DURUMU", CLR_HEADER, DASH_HEADER_SIZE);
-      y += DASH_LINE_H + 2;
+      int y = 3;
 
-      //--- Haber basligi
-      CreateLabel("P5_TITLE_L", x, y, "Haber:", CLR_LABEL);
-      CreateLabel("P5_TITLE_V", vx, y, "---", CLR_VALUE);
-      y += DASH_LINE_H;
+      //--- Sol: "HABER:" etiketi
+      CreateLabel("NB_LBL", 8, y, "HABER:", CLR_HEADER, 10, "Consolas");
 
-      //--- Para/Durum
-      CreateLabel("P5_STAT_L", x, y, "Durum:", CLR_LABEL);
-      CreateLabel("P5_STAT_V", vx, y, "Normal", CLR_POSITIVE);
-      y += DASH_LINE_H;
+      //--- Haber basligi (etiketten sonra)
+      CreateLabel("NB_TITLE", 80, y, "---", CLR_VALUE, 10, "Consolas");
 
-      //--- Kalan sure
-      CreateLabel("P5_TIME_L", x, y, "Kalan:", CLR_LABEL);
-      CreateLabel("P5_TIME_V", vx, y, "---", CLR_VALUE);
+      //--- Orta: Durum bilgisi
+      CreateLabel("NB_STAT", 450, y, "Normal", CLR_POSITIVE, 10, "Consolas");
+
+      //--- Sag: Kalan sure
+      CreateLabel("NB_TIME", 700, y, "---", CLR_VALUE, 10, "Consolas");
+
+      //--- Sag uc: Saat
+      CreateLabel("NB_CLOCK", 900, y, "00:00", CLR_LABEL, 10, "Consolas");
    }
 
    //=================================================================
-   // PANEL 5 UPDATE: HABER DURUMU
+   // NEWS BANNER UPDATE: Tam genislik ust serit guncelleme
    //=================================================================
-   void UpdatePanel5()
+   void UpdateNewsBanner()
    {
       if(m_news == NULL)
       {
-         UpdateLabel("P5_TITLE_V", "Modul yok", CLR_LABEL);
-         UpdateLabel("P5_STAT_V", "---", CLR_LABEL);
-         UpdateLabel("P5_TIME_V", "---", CLR_LABEL);
+         //--- Haber modulu yok - banner'i gizle (transparan yap)
+         SetBannerColor(CLR_PANEL_BG, CLR_PANEL_BORDER);
+         UpdateLabel("NB_TITLE", "Haber modulu yok", CLR_LABEL);
+         UpdateLabel("NB_STAT", "---", CLR_LABEL);
+         UpdateLabel("NB_TIME", "---", CLR_LABEL);
+         UpdateLabel("NB_CLOCK", TimeToString(TimeCurrent(), TIME_MINUTES), CLR_LABEL);
          return;
       }
+
+      //--- Chart genisligini dinamik guncelle (pencere boyutu degisebilir)
+      int chartW = (int)ChartGetInteger(m_chartId, CHART_WIDTH_IN_PIXELS);
+      if(chartW < 800) chartW = 1920;
+      ObjectSetInteger(m_chartId, "BTFX_NB_BG", OBJPROP_XSIZE, chartW);
+
+      //--- Saat bilgisini her zaman guncelle
+      UpdateLabel("NB_CLOCK", TimeToString(TimeCurrent(), TIME_MINUTES), CLR_LABEL);
+
+      //--- Kalan sure label'i chartW'ye gore pozisyonla
+      ObjectSetInteger(m_chartId, "BTFX_NB_TIME", OBJPROP_XDISTANCE, chartW - 200);
+      ObjectSetInteger(m_chartId, "BTFX_NB_CLOCK", OBJPROP_XDISTANCE, chartW - 55);
 
       string title, currency;
       ENUM_NEWS_IMPACT impact;
@@ -1006,37 +1032,37 @@ private:
       int minutesLeft;
 
       //--- Aktif haber varsa (blok zamanindayiz)
-      if(m_news.GetActiveNewsInfo(title, currency, impact, eventTime, minutesLeft))
+      if(m_news.GetActiveNewsInfo(title, currency, impact, eventTime, minutesLeft, true))
       {
-         //--- Haber basligi (kisalt)
-         if(StringLen(title) > 20) title = StringSubstr(title, 0, 20) + "..";
-         UpdateLabel("P5_TITLE_V", title, CLR_VALUE);
+         //--- Haber basligi (genis alan - 50 karakter)
+         if(StringLen(title) > 50) title = StringSubstr(title, 0, 50) + "..";
+         UpdateLabel("NB_TITLE", title, CLR_VALUE);
 
-         //--- Durum + renk (impact'e gore)
+         //--- Impact'e gore renk ve durum
          color statClr = CLR_VALUE;
-         color borderClr = CLR_PANEL_BORDER;
-         color bgClr = CLR_PANEL_BG;
+         color bannerBg = CLR_PANEL_BG;
+         color bannerBorder = CLR_PANEL_BORDER;
          string statText = "";
 
          switch(impact)
          {
             case NEWS_CRITICAL:
-               statText = "KRITIK - BLOK";
+               statText = "!! KRITIK - ISLEM BLOKE !!";
                statClr = CLR_NEWS_CRITICAL;
-               borderClr = CLR_NEWS_CRITICAL;
-               bgClr = CLR_NEWS_BG_CRIT;
+               bannerBorder = CLR_NEWS_CRITICAL;
+               bannerBg = CLR_NEWS_BG_CRIT;
                break;
             case NEWS_HIGH:
-               statText = "YUKSEK - BLOK";
+               statText = "! YUKSEK - ISLEM BLOKE !";
                statClr = CLR_NEWS_HIGH;
-               borderClr = CLR_NEWS_HIGH;
-               bgClr = CLR_NEWS_BG_HIGH;
+               bannerBorder = CLR_NEWS_HIGH;
+               bannerBg = CLR_NEWS_BG_HIGH;
                break;
             case NEWS_MEDIUM:
                statText = "ORTA - UYARI";
                statClr = CLR_NEWS_MEDIUM;
-               borderClr = CLR_NEWS_MEDIUM;
-               bgClr = CLR_NEWS_BG_MED;
+               bannerBorder = CLR_NEWS_MEDIUM;
+               bannerBg = CLR_NEWS_BG_MED;
                break;
             default:
                statText = "DUSUK";
@@ -1045,41 +1071,48 @@ private:
          }
 
          statText += " [" + currency + "]";
-         UpdateLabel("P5_STAT_V", statText, statClr);
+         UpdateLabel("NB_STAT", statText, statClr);
 
-         //--- Panel cerceve rengi degistir
-         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BORDER_COLOR, borderClr);
-         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BGCOLOR, bgClr);
+         //--- Banner rengi degistir
+         SetBannerColor(bannerBg, bannerBorder);
 
          //--- Kalan sure
          if(minutesLeft > 0)
-            UpdateLabel("P5_TIME_V", StringFormat("-%d dk (bekleniyor)", minutesLeft), CLR_WARNING);
+            UpdateLabel("NB_TIME", StringFormat("-%d dk (bekleniyor)", minutesLeft), CLR_WARNING);
          else
-            UpdateLabel("P5_TIME_V", StringFormat("+%d dk (aktif)", -minutesLeft), CLR_NEGATIVE);
+            UpdateLabel("NB_TIME", StringFormat("+%d dk (aktif)", -minutesLeft), CLR_NEGATIVE);
       }
       //--- Aktif haber yok, sonrakine bak
-      else if(m_news.GetNextNewsInfo(title, currency, impact, eventTime, minutesLeft))
+      else if(m_news.GetNextNewsInfo(title, currency, impact, eventTime, minutesLeft, true))
       {
-         if(StringLen(title) > 20) title = StringSubstr(title, 0, 20) + "..";
-         UpdateLabel("P5_TITLE_V", title, CLR_LABEL);
+         if(StringLen(title) > 50) title = StringSubstr(title, 0, 50) + "..";
+         UpdateLabel("NB_TITLE", title, CLR_LABEL);
 
          string impactStr = CNewsManager::GetImpactStr(impact);
-         UpdateLabel("P5_STAT_V", "Normal [" + impactStr + " " + currency + "]", CLR_POSITIVE);
-         UpdateLabel("P5_TIME_V", StringFormat("%d dk sonra", minutesLeft), CLR_VALUE);
+         UpdateLabel("NB_STAT", "Sonraki: " + impactStr + " [" + currency + "]", CLR_POSITIVE);
+         UpdateLabel("NB_TIME", StringFormat("%d dk sonra", minutesLeft), CLR_VALUE);
 
-         //--- Normal panel rengi
-         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BORDER_COLOR, CLR_PANEL_BORDER);
-         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BGCOLOR, CLR_PANEL_BG);
+         //--- Normal banner rengi
+         SetBannerColor(CLR_PANEL_BG, CLR_PANEL_BORDER);
       }
       else
       {
-         UpdateLabel("P5_TITLE_V", "Haber yok (24s)", CLR_LABEL);
-         UpdateLabel("P5_STAT_V", "Normal", CLR_POSITIVE);
-         UpdateLabel("P5_TIME_V", "---", CLR_LABEL);
+         UpdateLabel("NB_TITLE", "Haber yok (24 saat)", CLR_LABEL);
+         UpdateLabel("NB_STAT", "Normal", CLR_POSITIVE);
+         UpdateLabel("NB_TIME", "---", CLR_LABEL);
 
-         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BORDER_COLOR, CLR_PANEL_BORDER);
-         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BGCOLOR, CLR_PANEL_BG);
+         SetBannerColor(CLR_PANEL_BG, CLR_PANEL_BORDER);
       }
+   }
+
+   //=================================================================
+   // HELPER: Banner renk degistirme
+   //=================================================================
+   void SetBannerColor(color bgClr, color borderClr)
+   {
+      ObjectSetInteger(m_chartId, "BTFX_NB_BG", OBJPROP_BGCOLOR, bgClr);
+      ObjectSetInteger(m_chartId, "BTFX_NB_BG", OBJPROP_BORDER_COLOR, borderClr);
+      ObjectSetInteger(m_chartId, "BTFX_NB_BG", OBJPROP_WIDTH, 2);  // v2.2.1: Kalin cerceve
    }
 
    //=================================================================
@@ -1236,7 +1269,7 @@ public:
       m_chartId          = 0;
       m_subWindow        = 0;
       m_panelX           = DASH_PANEL_X;
-      m_panelY           = 30;
+      m_panelY           = 25;
       m_panelW           = DASH_PANEL_W;
       m_panelH           = 0;
       m_hSAR             = INVALID_HANDLE;
@@ -1289,18 +1322,22 @@ public:
       if(m_hBB == INVALID_HANDLE)
          Print("[Dashboard] WARNING: BB handle creation failed");
 
-      //--- Create all 4 panels with new positions and sizes
-      int x = m_panelX;
+      //--- v2.2.1: Ust haber banner'i (tam genislik serit - y=0, h=24)
+      if(m_news != NULL)
+         CreateNewsBanner();
 
-      CreatePanel1(x, 30);      // y=30,  h=285
-      CreatePanel2(x, 325);     // y=325, h=290
-      CreatePanel3(x, 625);     // y=625, h=165
-      CreatePanel4(x, 800);     // y=800, h=195
-      CreatePanel5(x, 1005);    // y=1005, h=100 (v2.2: Haber paneli)
+      //--- 4 Panel (banner altinda, y=28'den baslar)
+      int x = m_panelX;
+      int topY = (m_news != NULL) ? 28 : 5;  // Banner varsa 28'den, yoksa 5'ten
+
+      CreatePanel1(x, topY);                  // h=235
+      CreatePanel2(x, topY + 240);            // h=255
+      CreatePanel3(x, topY + 500);            // h=140
+      CreatePanel4(x, topY + 645);            // h=170
 
       ChartRedraw(m_chartId);
 
-      Print(StringFormat("[Dashboard] %s [%s] Dashboard olusturuldu. Panels=5 Overlay=BB+SAR+Mom | News=%s",
+      Print(StringFormat("[Dashboard] %s [%s] Dashboard olusturuldu. Panels=4+Banner Overlay=BB+SAR+Mom | News=%s",
             m_symbol, GetCategoryName(m_category), (m_news != NULL) ? "AKTIF" : "YOK"));
    }
 
@@ -1317,7 +1354,7 @@ public:
       UpdatePanel2();
       UpdatePanel3();
       UpdatePanel4();
-      UpdatePanel5();    // v2.2: Haber paneli
+      UpdateNewsBanner();    // v2.2.1: Ust haber banner'i
 
       //--- Update chart overlay indicators (throttled to every 2 sec)
       DrawIndicatorOverlay();

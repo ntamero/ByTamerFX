@@ -139,7 +139,7 @@ public:
    CLotCalculator() : m_minLot(0.01), m_maxLot(0.5), m_lotStep(0.01),
                       m_contractSize(0), m_tickValue(0) {}
 
-   void Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat)
+   void Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat, double profileMinLot = 0.0)
    {
       m_symbol       = symbol;
       m_category     = cat;
@@ -151,6 +151,15 @@ public:
 
       if(m_lotStep <= 0) m_lotStep = 0.01;
       if(m_minLot  <= 0) m_minLot  = 0.01;
+
+      //--- v2.2.1: Profil bazli min lot override
+      double brokerMin = m_minLot;
+      if(profileMinLot > 0.0 && profileMinLot >= brokerMin)
+      {
+         m_minLot = profileMinLot;
+         PrintFormat("[LOT-%s] MinLot profil override: %.2f (broker min: %.2f)",
+                     symbol, m_minLot, brokerMin);
+      }
 
       PrintFormat("[LOT-%s] Broker: MinLot=%.2f MaxLot=%.2f Step=%.2f Contract=%.0f TickVal=%.4f",
                   symbol, m_minLot, m_maxLot, m_lotStep, m_contractSize, m_tickValue);

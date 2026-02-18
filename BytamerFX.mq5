@@ -3,15 +3,15 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.2.0 - KAZAN-KAZAN Pro                                |
+//| BytamerFX v2.2.1 - KAZAN-KAZAN Pro                                |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
 //| FIFO +$5 Net | DCA | Acil Hedge | Universal News Intelligence    |
 //| Hesap: 262230423 (Exness) | Dinamik Profil + Haber Kontrol       |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.20"
-#property description "BytamerFX v2.2.0 - KazanKazan Pro"
+#property version     "2.21"
+#property description "BytamerFX v2.2.1 - KazanKazan Pro"
 #property description "FIFO +$5 | DCA | Hedge | News Intelligence"
 #property description "SL=YOK | Dinamik Profil | Pip-TP"
 #property description "Copyright 2026, By T@MER"
@@ -102,8 +102,11 @@ int OnInit()
    //--- 4. MUM ANALIZORU
    g_candle.Initialize(_Symbol, PERIOD_M15);
 
-   //--- 5. LOT HESAPLAYICI
-   g_lotCalc.Initialize(_Symbol, g_category);
+   //--- 5b. v2.1: DINAMIK PROFIL (erken yukle - lotcalc icin gerekli)
+   SymbolProfile signalProfile = GetSymbolProfile(g_category, _Symbol);
+
+   //--- 5. LOT HESAPLAYICI (v2.2.1: profil min lot ile)
+   g_lotCalc.Initialize(_Symbol, g_category, signalProfile.minLotOverride);
 
    //--- 6. SINYAL MOTORU
    if(!g_signalEngine.Initialize(_Symbol, g_category))
@@ -113,7 +116,6 @@ int OnInit()
    }
 
    //--- 6b. v2.1: DINAMIK PROFIL → SignalEngine'e aktar (pip bazli TP icin)
-   SymbolProfile signalProfile = GetSymbolProfile(g_category, _Symbol);
    g_signalEngine.SetProfile(signalProfile);
 
    //--- 7. ISLEM YURUTME
