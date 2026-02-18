@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v2.2.4** - Professional automated forex trading system with hybrid signal engine.
+**BytamerFX v2.2.5** - Professional automated forex trading system with hybrid signal engine.
 
 > **NO SL** | **Never close at a loss** | **SPM+FIFO Strategy** | **Smart Hedge**
 
@@ -137,6 +137,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| v2.2.5 | 2026-02-18 | SPM lot carpanlari duzeltildi: 1.0x, 1.1x, 1.2x (margin koruma) |
 | v2.2.4 | 2026-02-18 | Deadlock kapatma kaldirildi, LOT DENGE 4.0, EmergencyHedge gevsedi |
 | v2.2.3 | 2026-02-18 | BMP Unicode Dashboard, Emoji-yazi bosluk |
 | v2.2.2 | 2026-02-18 | Min Profit Threshold, Emergency SPM, No Broker TP on ANA |

@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.2.4"
-#define EA_VERSION_NUM    "2.24"
+#define EA_VERSION        "2.2.5"
+#define EA_VERSION_NUM    "2.25"
 #define EA_VERSION_NAME   "KazanKazan"
-#define EA_VERSION_FULL   "BytamerFX v2.2.4 - KazanKazan Pro"
+#define EA_VERSION_FULL   "BytamerFX v2.2.5 - KazanKazan Pro"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -75,9 +75,9 @@ input double   SPM_CloseProfit        = 4.0;      // SPM kar hedefi ($)
 input double   SPM_NetTargetUSD       = 5.0;      // FIFO net hedef ($) - toplam net >= +5$
 input int      SPM_MaxBuyLayers       = 5;        // v2.0: Max BUY katman (5+5 yapi)
 input int      SPM_MaxSellLayers      = 5;        // v2.0: Max SELL katman
-input double   SPM_LotBase            = 1.5;      // SPM lot carpani
-input double   SPM_LotIncrement       = 0.2;      // v2.0: 0.3→0.2 daha yumusak artis
-input double   SPM_LotCap             = 2.0;      // v2.0: 2.2→2.0 max carpan
+input double   SPM_LotBase            = 1.0;      // v2.2.5: SPM lot carpani (1.0x = ANA ile ayni)
+input double   SPM_LotIncrement       = 0.1;      // v2.2.5: Katman basi +0.1x artis
+input double   SPM_LotCap             = 1.5;      // v2.2.5: Max carpan 1.5x
 input int      SPM_CooldownSec        = 60;       // v2.0: 45→60 SPM arasi bekleme (dropdown)
 input int      SPM_WaitMaxSec         = 180;      // ANA toparlanma bekleme suresi (sn)
 
@@ -348,9 +348,9 @@ struct SymbolProfile
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;
       spmMaxSellLayers  = 5;
-      spmLotBase        = 1.5;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 2.0;
+      spmLotBase        = 1.0;        // v2.2.5: 1.0x (ANA ile ayni)
+      spmLotIncrement   = 0.1;        // v2.2.5: +0.1x artis
+      spmLotCap         = 1.5;        // v2.2.5: max 1.5x
       spmCooldownSec    = 60;
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.0;
@@ -372,9 +372,9 @@ struct SymbolProfile
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;
       spmMaxSellLayers  = 5;
-      spmLotBase        = 1.5;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 2.0;
+      spmLotBase        = 1.0;        // v2.2.5: 1.0x
+      spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
+      spmLotCap         = 1.5;        // v2.2.5: max 1.5x
       spmCooldownSec    = 60;
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.0;
@@ -396,9 +396,9 @@ struct SymbolProfile
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;
       spmMaxSellLayers  = 5;
-      spmLotBase        = 1.5;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 2.0;
+      spmLotBase        = 1.0;        // v2.2.5: 1.0x
+      spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
+      spmLotCap         = 1.5;        // v2.2.5: max 1.5x
       spmCooldownSec    = 60;
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.0;
@@ -420,9 +420,9 @@ struct SymbolProfile
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;
       spmMaxSellLayers  = 5;
-      spmLotBase        = 1.4;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 1.9;
+      spmLotBase        = 1.0;        // v2.2.5: 1.0x
+      spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
+      spmLotCap         = 1.5;        // v2.2.5: max 1.5x
       spmCooldownSec    = 75;
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.5;
@@ -444,9 +444,9 @@ struct SymbolProfile
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;
       spmMaxSellLayers  = 5;
-      spmLotBase        = 1.3;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 1.8;
+      spmLotBase        = 1.0;        // v2.2.5: 1.0x
+      spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
+      spmLotCap         = 1.5;        // v2.2.5: max 1.5x
       spmCooldownSec    = 90;
       dcaDistanceATR    = 2.5;
       profitTargetPerPos = 3.0;
@@ -468,9 +468,9 @@ struct SymbolProfile
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;
       spmMaxSellLayers  = 5;
-      spmLotBase        = 1.3;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 1.8;
+      spmLotBase        = 1.0;        // v2.2.5: 1.0x
+      spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
+      spmLotCap         = 1.5;        // v2.2.5: max 1.5x
       spmCooldownSec    = 90;
       dcaDistanceATR    = 2.5;
       profitTargetPerPos = 2.5;
@@ -492,9 +492,9 @@ struct SymbolProfile
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;
       spmMaxSellLayers  = 5;
-      spmLotBase        = 1.4;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 1.9;
+      spmLotBase        = 1.0;        // v2.2.5: 1.0x
+      spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
+      spmLotCap         = 1.5;        // v2.2.5: max 1.5x
       spmCooldownSec    = 60;
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.5;
@@ -516,9 +516,9 @@ struct SymbolProfile
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;
       spmMaxSellLayers  = 5;
-      spmLotBase        = 1.4;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 1.9;
+      spmLotBase        = 1.0;        // v2.2.5: 1.0x
+      spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
+      spmLotCap         = 1.5;        // v2.2.5: max 1.5x
       spmCooldownSec    = 75;
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.5;
@@ -564,9 +564,9 @@ struct SymbolProfile
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;
       spmMaxSellLayers  = 5;
-      spmLotBase        = 1.5;
-      spmLotIncrement   = 0.2;
-      spmLotCap         = 2.0;
+      spmLotBase        = 1.0;        // v2.2.5: 1.0x
+      spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
+      spmLotCap         = 1.5;        // v2.2.5: max 1.5x
       spmCooldownSec    = 60;
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.0;

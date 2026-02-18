@@ -10,8 +10,8 @@
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.24"
-#property description "BytamerFX v2.2.4 - KazanKazan Pro"
+#property version     "2.25"
+#property description "BytamerFX v2.2.5 - KazanKazan Pro"
 #property description "FIFO +$5 | DCA | Hedge | News Intelligence"
 #property description "SL=YOK | Dinamik Profil | Pip-TP | MinProfit"
 #property description "Copyright 2026, By T@MER"
