@@ -274,8 +274,9 @@ void CPositionManager::Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat,
    PrintFormat("[PM-%s] SPM Lot: Base=%.1f | Inc=%.2f | Cap=%.1f | Cooldown=%ds",
                m_symbol, m_profile.spmLotBase, m_profile.spmLotIncrement,
                m_profile.spmLotCap, m_profile.spmCooldownSec);
-   PrintFormat("[PM-%s] v2.0: DCA(dist=%.1f ATR, max=%d) | Hedge(oran=%.1f, fill=%.0f%%) | Deadlock(%dsn)",
+   PrintFormat("[PM-%s] v2.0: DCA(dist=%.1f ATR, max=%d) | Hedge(minSPM=%d, minZarar=$%.0f, oran=%.1f, fill=%.0f%%) | Deadlock(%dsn)",
                m_symbol, m_profile.dcaDistanceATR, DCA_MaxPerPosition,
+               m_profile.hedgeMinSPMCount, m_profile.hedgeMinLossUSD,
                Hedge_RatioTrigger, Hedge_FillPercent * 100.0, Deadlock_TimeoutSec);
    PrintFormat("[PM-%s] v2.0: TERFI=KALDIRILDI | PeakDrop=SADECE_SPM | ANA=SADECE_FIFO",
                m_symbol);
@@ -1086,8 +1087,12 @@ void CPositionManager::ManageDCA()
 }
 
 //+------------------------------------------------------------------+
-//| ManageEmergencyHedge - v2.0 YENI: Acil Hedge Mekanizmasi         |
-//| Lot oran > 2.0 VE zarardaki taraf buyukse -> karsi hedge ac      |
+//| ManageEmergencyHedge - v2.0.1: Guclendirilmis Acil Hedge         |
+//| KOSULLAR:                                                         |
+//|  1. En az 2 SPM aktif olmali (tek pozisyonda hedge SACMA)         |
+//|  2. Iki tarafta da pozisyon olmali (oran hesabi anlamli olsun)    |
+//|  3. Lot oran > 2.0 VE zarardaki taraf buyukse                    |
+//|  4. Toplam zarar > SPM tetik esigi (anlamli zarar biriktikten)   |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageEmergencyHedge()
 {
@@ -1095,20 +1100,27 @@ void CPositionManager::ManageEmergencyHedge()
    if(TimeCurrent() < m_lastHedgeTime + Hedge_CooldownSec) return;
    if(IsTradingPaused()) return;
 
+   //--- KOSUL 1: En az N SPM aktif olmali (profil bazli)
+   // Tek pozisyon veya ANA+1SPM durumunda hedge gereksiz
+   // SPM sistemi kendi isini yapiyor, hedge sadece CIDDI dengesizlikte devreye girer
+   int activeSPMs = GetActiveSPMCount();
+   if(activeSPMs < m_profile.hedgeMinSPMCount) return;
+
    double totalBuyLot = GetTotalBuyLots();
    double totalSellLot = GetTotalSellLots();
 
-   // En az bir tarafta pozisyon olmali
-   if(totalBuyLot <= 0.0 && totalSellLot <= 0.0) return;
+   //--- KOSUL 2: Iki tarafta da pozisyon olmali
+   // Tek tarafta pozisyon varken oran hesabi anlamsiz (0.01/0 = sonsuz)
+   if(totalBuyLot <= 0.0 || totalSellLot <= 0.0) return;
 
    double maxSide = MathMax(totalBuyLot, totalSellLot);
-   double minSide = MathMax(MathMin(totalBuyLot, totalSellLot), 0.001);  // 0'a bolme engeli
+   double minSide = MathMin(totalBuyLot, totalSellLot);
    double ratio = maxSide / minSide;
 
-   // Oran tetigi
+   //--- KOSUL 3: Oran tetigi
    if(ratio <= Hedge_RatioTrigger) return;
 
-   // Hangi taraf buyuk + zarardaki?
+   //--- KOSUL 4: Toplam zarar kontrolu - anlamli zarar biriktikten sonra
    double buyPnL = 0.0, sellPnL = 0.0;
    for(int i = 0; i < m_posCount; i++)
    {
@@ -1118,6 +1130,11 @@ void CPositionManager::ManageEmergencyHedge()
          sellPnL += m_positions[i].profit;
    }
 
+   // Zarardaki tarafin toplam zarari yeterince buyuk olmali (profil bazli)
+   double losingPnL = MathMin(buyPnL, sellPnL);  // en cok zarardaki taraf
+   if(losingPnL > m_profile.hedgeMinLossUSD) return;  // Yeterince zarar yok (BTC:-$10, XAG:-$8)
+
+   // Hangi taraf buyuk + zarardaki?
    bool zarar_taraf_buyuk = false;
 
    if(totalBuyLot > totalSellLot && buyPnL < 0.0)

@@ -308,6 +308,8 @@ struct SymbolProfile
    int    spmCooldownSec;
    double dcaDistanceATR;
    double profitTargetPerPos;
+   int    hedgeMinSPMCount;    // v2.0.1: Hedge icin minimum SPM sayisi
+   double hedgeMinLossUSD;     // v2.0.1: Hedge icin minimum toplam zarar ($)
 
    void SetDefault()
    {
@@ -322,6 +324,8 @@ struct SymbolProfile
       spmCooldownSec    = SPM_CooldownSec;
       dcaDistanceATR    = DCA_DistanceATR;
       profitTargetPerPos = SPM_CloseProfit;
+      hedgeMinSPMCount  = 2;          // En az 2 SPM olsun
+      hedgeMinLossUSD   = -8.0;       // Min $8 zarar biriksin
    }
 
    void SetMetal()
@@ -335,6 +339,8 @@ struct SymbolProfile
       spmCooldownSec    = 60;
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.0;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -8.0;
    }
 
    void SetCrypto()
@@ -348,6 +354,8 @@ struct SymbolProfile
       spmCooldownSec    = 90;
       dcaDistanceATR    = 2.5;
       profitTargetPerPos = 3.0;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -10.0;     // Crypto daha volatil, daha yuksek esik
    }
 
    void SetGold()
@@ -361,6 +369,8 @@ struct SymbolProfile
       spmCooldownSec    = 75;
       dcaDistanceATR    = 2.0;
       profitTargetPerPos = 2.5;
+      hedgeMinSPMCount  = 2;
+      hedgeMinLossUSD   = -8.0;
    }
 };
 
