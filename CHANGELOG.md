@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v2.2.5] - 2026-02-18
+
+### Critical Fixes
+- **SPM Lot Carpanlari Duzeltildi**: Tum profillerde spmLotBase 1.5→1.0, spmLotIncrement 0.2→0.1, spmLotCap 2.0→1.5
+- SPM artik: 1.0x, 1.1x, 1.2x, 1.3x, 1.4x, 1.5x seklinde gidiyor (onceki: 1.5x, 1.7x, 1.9x - COKLU MARGIN RISKI)
+- Ornek: ANA 0.06 lot ise SPM1=0.06, SPM2=0.07, SPM3=0.07 (onceki: 0.09, 0.10, 0.11)
+
+### Changes
+- `Config.mqh`: 10 profilin hepsi guncellendi + input default degerleri
+
+---
+
 ## [v2.2.4] - 2026-02-18
 
 ### Critical Fixes
