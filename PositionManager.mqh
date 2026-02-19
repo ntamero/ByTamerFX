@@ -840,9 +840,8 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
          if(profit > m_peakProfit[i])
             m_peakProfit[i] = profit;
 
-      // ANA SPM varken → FIFO ile kapanir (CheckFIFOTarget), burasi ATLA
-      if(role == ROLE_MAIN && GetActiveSPMCount() > 0)
-         continue;
+      // v2.3.1: ANA SPM varken de AKILLI KAPATMA aktif
+      // (Eski: continue ile atlaniyordu → ANA karda iken FIFO kapatamiyordu → hesap tasfiye)
 
       //--- Kar hedefi belirle (role bazli)
       double closeTarget = 0.0;
@@ -1033,15 +1032,32 @@ void CPositionManager::SmartClosePosition(int idx, ENUM_POS_ROLE role, double pr
    //--- Pozisyonu kapat
    ClosePosWithNotification(idx, reason);
 
-   //--- ANA ise: reset + 30sn bekleme
+   //--- ANA ise: Terfi veya 30sn bekleme
    if(role == ROLE_MAIN)
    {
       m_mainTicket = 0;
-      ResetFIFO();
-      // 30sn sabit bekleme → sinyal+trend+mum kontrolu ile yeni islem
-      m_protectionCooldownUntil = TimeCurrent() + 30;
-      m_tradingPaused = true;
-      PrintFormat("[PM-%s] KAR SONRASI 30sn BEKLEME", m_symbol);
+
+      // SPM var mi? → Terfi (en eski SPM → yeni ANA)
+      RefreshPositions();
+      int activeSPMs = GetActiveSPMCount();
+      if(activeSPMs > 0)
+      {
+         PromoteOldestSPM();
+         // FIFO kasasina ANA kari ekle (SPM'ler devam edecek)
+         m_spmClosedProfitTotal += profit;
+         m_spmClosedCount++;
+         PrintFormat("[PM-%s] ANA KAR -> TERFI! Kasa=$%.2f SPM=%d devam",
+                     m_symbol, m_spmClosedProfitTotal, activeSPMs);
+         // 30sn bekleme YOK - SPM yonetimi devam etmeli
+      }
+      else
+      {
+         // SPM yok → tam reset + 30sn bekleme
+         ResetFIFO();
+         m_protectionCooldownUntil = TimeCurrent() + 30;
+         m_tradingPaused = true;
+         PrintFormat("[PM-%s] KAR SONRASI 30sn BEKLEME", m_symbol);
+      }
    }
 }
 
