@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v2.2.6] - 2026-02-19
+
+### Critical Fixes
+- **HEDGE PeakDrop Muafiyeti**: HEDGE pozisyonlari artik PeakDrop ile KAPATILMIYOR. PeakDrop sadece SPM/DCA icin gecerli. HEDGE margin korumasi sagladigi icin erken kapatilmasi margin cokusu yaratiyordu.
+- **SPM Katman Limiti 5→3**: Tum profillerde maxSpmLayers 5→3 dusuruldu. 5 SPM yigilmasi kucuk hesaplarda margin patlamasina neden oluyordu.
+- **MarginKritik Sonrasi Toparlanma Modu**: MarginKritik tetiklendikten sonra EA yeni islem ACMIYOR. Bakiye crash oncesinin %50'sine ulasana veya 24 saat gecene kadar bekler. $13 ile islem devam edip $1'e dusme onlendi.
+
+### Root Cause
+- 19 Subat 06:34: XAGUSDm'de 5 SPM SELL yigildi, HEDGE BUY PeakDrop ile erken kapandi, margin korumasi kalkti, 7 saniyede $105→$13 dustu. EA $13 ile devam etti→$1.18.
+
+### Changes
+- `PositionManager.mqh`: PeakDrop role kosulu (HEDGE muaf), IsInRecoveryMode(), CheckMarginEmergency recovery
+- `Config.mqh`: maxSpmLayers 5→3 (tum profiller), versiyon 2.2.6
+- `BytamerFX.mq5`: IsInRecoveryMode() kontrolu, versiyon 2.26
+- `ChartDashboard.mqh`: Versiyon header 2.2.6
+
+---
+
 ## [v2.2.5] - 2026-02-18
 
 ### Critical Fixes
