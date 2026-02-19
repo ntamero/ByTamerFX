@@ -333,6 +333,9 @@ struct SymbolProfile
    double tp2Pips;              // Orta trend TP (pips)
    double tp3Pips;              // Guclu trend TP (pips)
 
+   //--- v2.3.0: ANA kar hedefi (SPM yokken ANA kapat esigi)
+   double anaCloseProfit;          // ANA tek basina karda iken bu hedefe ulasinca kapat ($)
+
    //--- v2.2.2: Min kar esigi (maliyeti kurtarmayan islem KAPATMAZ)
    double minCloseProfit;          // Min kapatma kari ($) - bunun altinda SPM/DCA/HEDGE kapatilmaz
 
@@ -350,6 +353,7 @@ struct SymbolProfile
       profileName       = "FOREX";
       minLotOverride    = 0.06;       // Forex: min 0.06 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma (maliyet kurtarma)
+      anaCloseProfit    = 4.0;        // v2.3.0: ANA +$4 → kapat
       spmTriggerLoss    = -3.0;       // Forex: -$3 tetik
       spmCloseProfit    = 3.0;
       fifoNetTarget     = 5.0;
@@ -374,6 +378,7 @@ struct SymbolProfile
       profileName       = "FOREX_JPY";
       minLotOverride    = 0.06;       // JPY: min 0.06 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
+      anaCloseProfit    = 4.0;        // v2.3.0: ANA +$4 → kapat
       spmTriggerLoss    = -3.0;       // JPY: -$3 tetik
       spmCloseProfit    = 3.0;
       fifoNetTarget     = 5.0;
@@ -398,6 +403,7 @@ struct SymbolProfile
       profileName       = "SILVER_XAG";
       minLotOverride    = 0.01;       // XAG: min 0.01 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
+      anaCloseProfit    = 5.0;        // v2.3.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;       // XAG: -$5 tetik
       spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
@@ -422,6 +428,7 @@ struct SymbolProfile
       profileName       = "GOLD_XAU";
       minLotOverride    = 0.01;       // XAU: min 0.01 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
+      anaCloseProfit    = 5.0;        // v2.3.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;       // XAU: -$5 tetik
       spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
@@ -446,6 +453,7 @@ struct SymbolProfile
       profileName       = "CRYPTO_BTC";
       minLotOverride    = 0.01;       // BTC: min 0.01 lot
       minCloseProfit    = 1.5;        // v2.2.2: $1.5 altinda kapatma (BTC spread yuksek)
+      anaCloseProfit    = 5.0;        // v2.3.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;       // BTC: -$5 tetik
       spmCloseProfit    = 5.0;
       fifoNetTarget     = 5.0;
@@ -470,6 +478,7 @@ struct SymbolProfile
       profileName       = "CRYPTO_ALT";
       minLotOverride    = 0.01;       // Altcoin: min 0.01 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
+      anaCloseProfit    = 5.0;        // v2.3.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
@@ -494,6 +503,7 @@ struct SymbolProfile
       profileName       = "INDICES";
       minLotOverride    = 0.03;       // Indices: min 0.03 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
+      anaCloseProfit    = 5.0;        // v2.3.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
@@ -518,6 +528,7 @@ struct SymbolProfile
       profileName       = "ENERGY";
       minLotOverride    = 0.01;       // Energy: min 0.01 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
+      anaCloseProfit    = 5.0;        // v2.3.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
@@ -542,6 +553,7 @@ struct SymbolProfile
       profileName       = "DEFAULT";
       minLotOverride    = 0.0;        // Default: broker default kullan
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
+      anaCloseProfit    = 5.0;        // v2.3.0: ANA +$5 → kapat
       spmTriggerLoss    = SPM_TriggerLoss;
       spmCloseProfit    = SPM_CloseProfit;
       fifoNetTarget     = SPM_NetTargetUSD;
@@ -566,6 +578,7 @@ struct SymbolProfile
       profileName       = "METAL";
       minLotOverride    = 0.01;       // Metal: min 0.01 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
+      anaCloseProfit    = 5.0;        // v2.3.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;

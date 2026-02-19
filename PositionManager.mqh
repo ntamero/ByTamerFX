@@ -823,6 +823,28 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
          if(profit > m_peakProfit[i])
             m_peakProfit[i] = profit;
 
+      //=== KURAL 0: ANA tek basina karda -> profil hedefinde KAPAT ===
+      // v2.3.0: ANA SPM yokken kar hedefine ulasinca hemen kapat
+      // Geri cekilmelerde kar realize edilir, kasaya konur
+      if(role == ROLE_MAIN && profit >= m_profile.anaCloseProfit && GetActiveSPMCount() == 0)
+      {
+         PrintFormat("[PM-%s] ANA KAR HEDEF: $%.2f >= $%.2f -> KAPAT (SPM=0)",
+                     m_symbol, profit, m_profile.anaCloseProfit);
+
+         m_totalCashedProfit += profit;
+         m_dailyProfit += profit;
+
+         if(m_telegram != NULL)
+            m_telegram.SendMessage(StringFormat("ANA KAR %s: $%.2f -> KAPATILDI", m_symbol, profit));
+         if(m_discord != NULL)
+            m_discord.SendMessage(StringFormat("ANA KAR %s: $%.2f -> KAPATILDI", m_symbol, profit));
+
+         ClosePosWithNotification(i, "AnaKar_" + DoubleToString(profit, 2));
+         m_mainTicket = 0;
+         ResetFIFO();
+         return;  // ANA kapandi, yeni sinyal bekle
+      }
+
       //=== KURAL 1: SPM/DCA/HEDGE karda -> HEMEN KAPAT ===
       // Profil bazli kar hedefi kullan
       // v2.2.2: minCloseProfit guvenlik esigi - closeTarget ASLA min'den dusuk olamaz
