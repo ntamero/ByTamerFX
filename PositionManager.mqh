@@ -17,7 +17,7 @@
 //|  5. SPM yon: SPM1=ANA tersi, SPM2=SPM1 tersi, SPM3+=5-oy       |
 //|  6. SPM tetik: -$5 | SPM kar: $5 | FIFO net hedef: +$5          |
 //|  7. DCA: Zarardaki SPM icin maliyet ortalama (max 1 per pozisyon)|
-//|  8. Acil Hedge: Grup P/L <= -$40, lot=zarar_lot*1.2, SPM BYPASS |
+//|  8. Acil Hedge: DEVRE DISI (v2.4.3)                              |
 //|  9. Kilitlenme: Log + bildirim (kapatma YOK)                    |
 //| 10. TERFI: ANA kapaninca en eski SPM -> ANA, dongu devam         |
 //| 11. Enstruman bazli parametreler (SymbolProfile)                 |
@@ -722,87 +722,41 @@ void CPositionManager::RefreshPositions()
 }
 
 //+------------------------------------------------------------------+
-//| CheckMarginEmergency - v2.2.1: AKILLI MARGIN YONETIMI           |
-//| %150 altinda: En zarardaki pozisyonu kapat (tum hesabi bosaltma) |
-//| %120 altinda: TUM pozisyonlari kapat (gercek acil)              |
+//| CheckMarginEmergency - v2.4.3: KAPATMA YOK                      |
+//| Sistem OTOMASYON calisacak - margin ne olursa olsun             |
+//| HICBIR pozisyon margin sebebiyle KAPATILMAZ                     |
+//| Sadece LOG + bildirim (broker stop out yaparsa yapar)            |
+//| Dusuk margin'de yeni islem acilmasini ENGELLE (koruma)           |
 //+------------------------------------------------------------------+
 bool CPositionManager::CheckMarginEmergency()
 {
+   // v2.4.3: KAPATMA YOK - Sadece loglama + yeni islem engelleme
+   // Kullanici talebi: "kapatmak yok, sistem otomasyon calisacak"
+   // Broker stop out yaparsa yapar, EA pozisyon KAPATMAZ
+
    double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
    if(marginLevel == 0.0) return false;
 
-   //--- v2.2.1: %120 altinda gercek acil - TUM kapat
-   if(marginLevel < 120.0)
-   {
-      PrintFormat("[PM-%s] !!! MARGIN KRITIK !!! Level=%.1f%% < 120%% -> TUM KAPAT",
-                  m_symbol, marginLevel);
-
-      if(m_telegram != NULL)
-         m_telegram.SendMessage(StringFormat("MARGIN KRITIK %s: %.1f%% - TUM KAPATILDI", m_symbol, marginLevel));
-      if(m_discord != NULL)
-         m_discord.SendMessage(StringFormat("MARGIN KRITIK %s: %.1f%% - TUM KAPATILDI", m_symbol, marginLevel));
-
-      CloseAllPositions("MarginKritik_" + DoubleToString(marginLevel, 1) + "%");
-      SetProtectionCooldown("MarginKritik");
-      ResetFIFO();
-
-      // v2.2.6: Toparlanma modu - MarginKritik sonrasi yeni islem engelle
-      double balance = AccountInfoDouble(ACCOUNT_BALANCE);
-      m_recoveryMode = true;
-      m_preCrashBalance = balance;
-      m_recoveryModeStart = TimeCurrent();
-      PrintFormat("[PM-%s] TOPARLANMA MODU: Bakiye=$%.2f - Yeni islem icin min $%.2f gerekli",
-                  m_symbol, balance, balance * 2.0);
-
-      return true;
-   }
-
-   //--- v2.2.1: %150 altinda - SADECE en zarardaki pozisyonu kapat (kademeli)
+   //--- Dusuk margin uyarisi (60sn'de 1 kez)
    if(marginLevel < MinMarginLevel)
    {
-      //--- En zarardaki pozisyonu bul
-      int worstIdx = -1;
-      double worstPL = 0.0;
-
-      for(int i = 0; i < m_posCount; i++)
+      static datetime lastWarnTime = 0;
+      if(TimeCurrent() - lastWarnTime > 60)
       {
-         if(m_positions[i].profit < worstPL)
-         {
-            worstPL = m_positions[i].profit;
-            worstIdx = i;
-         }
+         PrintFormat("[PM-%s] MARGIN UYARI: Level=%.1f%% < %.1f%% -> Yeni islem ENGELLENDI (kapatma YOK)",
+                     m_symbol, marginLevel, MinMarginLevel);
+
+         if(m_telegram != NULL)
+            m_telegram.SendMessage(StringFormat("MARGIN %s: %.1f%% - Yeni islem engellendi (kapatma yok)",
+                                                m_symbol, marginLevel));
+
+         lastWarnTime = TimeCurrent();
       }
-
-      if(worstIdx >= 0)
-      {
-         PrintFormat("[PM-%s] MARGIN UYARI: Level=%.1f%% < %.1f%% -> En zarardaki kapatiliyor: #%llu P/L=$%.2f",
-                     m_symbol, marginLevel, MinMarginLevel,
-                     m_positions[worstIdx].ticket, worstPL);
-
-         if(m_executor != NULL)
-         {
-            bool closed = m_executor.ClosePosition(m_positions[worstIdx].ticket);
-            if(closed)
-            {
-               m_dailyProfit += worstPL;
-
-               if(m_telegram != NULL)
-                  m_telegram.SendMessage(StringFormat("MARGIN %s: %.1f%% - En zarardaki kapatildi: $%.2f",
-                                                      m_symbol, marginLevel, worstPL));
-            }
-         }
-
-         //--- ANA kapandiysa FIFO reset
-         if(m_positions[worstIdx].role == ROLE_MAIN)
-         {
-            m_mainTicket = 0;
-            ResetFIFO();
-         }
-
-         return true;  // Sonraki tick'te tekrar kontrol edilir
-      }
+      // KAPATMA YOK - sadece yeni islem acilmasini engelle
+      // IsTradingPaused() veya margin kontrol ile zaten engellenir
    }
-   return false;
+
+   return false;  // ASLA true donme - hic pozisyon kapatilmaz
 }
 
 //+------------------------------------------------------------------+
@@ -1350,101 +1304,12 @@ void CPositionManager::ManageDCA()
 //+------------------------------------------------------------------+
 void CPositionManager::ManageEmergencyHedge()
 {
-   // Cooldown
-   if(TimeCurrent() < m_lastHedgeTime + Hedge_CooldownSec) return;
-   if(IsTradingPaused()) return;
-
-   // v2.4.0: Grup toplam P/L + SELL/BUY zarar karsilastirmasi
-   double groupPnL = 0.0;
-   double losingLots = 0.0;
-   double buyLossTotal = 0.0;    // Toplam BUY zarar
-   double sellLossTotal = 0.0;   // Toplam SELL zarar
-   double buyLots = 0.0;         // Toplam BUY lot
-   double sellLots = 0.0;        // Toplam SELL lot
-   for(int i = 0; i < m_posCount; i++)
-   {
-      groupPnL += m_positions[i].profit;
-      if(m_positions[i].profit < 0.0)
-      {
-         losingLots += m_positions[i].volume;
-         if(m_positions[i].type == POSITION_TYPE_BUY)
-            buyLossTotal += m_positions[i].profit;
-         else
-            sellLossTotal += m_positions[i].profit;
-      }
-      if(m_positions[i].type == POSITION_TYPE_BUY)
-         buyLots += m_positions[i].volume;
-      else
-         sellLots += m_positions[i].volume;
-   }
-
-   // v2.4.0: Tetik: grup P/L <= -$30
-   if(groupPnL > -30.0) return;
-
-   // Bakiye kontrolu
-   double balance = AccountInfoDouble(ACCOUNT_BALANCE);
-   if(balance < MinBalanceToTrade) return;
-
-   // Margin kontrolu
-   double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
-   if(marginLevel > 0.0 && marginLevel < MinMarginLevel) return;
-
-   // v2.4.0: Yon - SELL/BUY zarar karsilastirmasi
-   // Hangi tarafta daha cok zarar varsa, KARSI TARAFA hedge ac
-   // Ornek: SELL zarari buyukse → BUY hedge ac (SELL zadarini kurtarmak icin)
-   ENUM_SIGNAL_DIR hedgeDir;
-   if(sellLossTotal < buyLossTotal)
-   {
-      // SELL tarafinda daha cok zarar → BUY ac (fiyat dussun, SELL kurtulur mu? HAYIR!)
-      // SELL zararda = fiyat yukari gidiyor → BUY ac ki yukari hareket kar getirsin
-      hedgeDir = SIGNAL_BUY;
-      PrintFormat("[PM-%s] HEDGE YON: SELLzarar=$%.2f < BUYzarar=$%.2f -> BUY (SELL kurtarmak icin fiyat yukari)",
-                  m_symbol, sellLossTotal, buyLossTotal);
-   }
-   else if(buyLossTotal < sellLossTotal)
-   {
-      // BUY tarafinda daha cok zarar → SELL ac
-      hedgeDir = SIGNAL_SELL;
-      PrintFormat("[PM-%s] HEDGE YON: BUYzarar=$%.2f < SELLzarar=$%.2f -> SELL (BUY kurtarmak icin fiyat asagi)",
-                  m_symbol, buyLossTotal, sellLossTotal);
-   }
-   else
-   {
-      // Esit zarar → ANA tersine
-      int mainIdx = FindMainPosition();
-      if(mainIdx >= 0)
-      {
-         if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
-            hedgeDir = SIGNAL_SELL;
-         else
-            hedgeDir = SIGNAL_BUY;
-      }
-      else return;
-   }
-
-   // v2.4.0: Lot = zarardaki toplam lot * 1.5
-   double hedgeLot = losingLots * 1.5;
-
-   // Normalize
-   double minLot  = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_MIN);
-   double maxLot  = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_MAX);
-   double lotStep = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_STEP);
-   if(lotStep > 0) hedgeLot = MathFloor(hedgeLot / lotStep) * lotStep;
-   if(hedgeLot < minLot) hedgeLot = minLot;
-   if(hedgeLot > maxLot) hedgeLot = maxLot;
-   hedgeLot = NormalizeDouble(hedgeLot, 2);
-
-   // Toplam hacim kontrolu
-   double totalVol = GetTotalBuyLots() + GetTotalSellLots();
-   if(totalVol + hedgeLot > MaxTotalVolume) return;
-
-   // SPM LIMITI BYPASS - BUY/SELL katman kontrolu YAPILMAZ
-   PrintFormat("[PM-%s] ACIL HEDGE v2.4: GrupP/L=$%.2f <= -$30 | ZararLot=%.2f * 1.5 = %.2f | %s | SELLzarar=$%.2f BUYzarar=$%.2f",
-               m_symbol, groupPnL, losingLots, hedgeLot,
-               (hedgeDir == SIGNAL_BUY) ? "BUY" : "SELL",
-               sellLossTotal, buyLossTotal);
-
-   OpenHedge(hedgeDir, hedgeLot);
+   // v2.4.3: HEDGE DEVRE DISI
+   // Sebep: Kucuk hesaplarda (< $1000) hedge lot'u (zarar*1.5) cok buyuk oluyor
+   // SPM sistemi zaten hedge gorevi goruyor (BUY<->SELL dongusu)
+   // XAGUSDm $100 hesapda 0.06 lot hedge = 12 dakikada $100 -> $9 (olumcul)
+   // SPM'ler 0.01 lot ile kar ediyordu ($4.65 FIFO kasasi), hedge bunu sildi
+   return;
 }
 
 //+------------------------------------------------------------------+

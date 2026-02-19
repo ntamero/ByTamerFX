@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.4.2"
-#define EA_VERSION_NUM    "2.42"
-#define EA_VERSION_NAME   "BalanceSPM"
-#define EA_VERSION_FULL   "BytamerFX v2.4.2 - SPM Lot Fix + Balance"
+#define EA_VERSION        "2.4.3"
+#define EA_VERSION_NUM    "2.43"
+#define EA_VERSION_NAME   "NoHedge+SafeMargin"
+#define EA_VERSION_FULL   "BytamerFX v2.4.3 - Hedge Yok + TUM KAPAT Yok + Tek Pozisyon Margin"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -113,7 +113,7 @@ input double   DailyProfitTarget      = 10.0;     // Gunluk kar hedefi ($)
 input int      ProtectionCooldownSec  = 180;      // Koruma sonrasi bekleme (sn)
 input double   MinBalanceToTrade      = 10.0;     // Min bakiye ($)
 input double   MaxTotalVolume         = 2.0;      // Max toplam acik hacim (lot)
-input double   MinMarginLevel         = 100.0;    // v2.4.0: Min margin seviyesi (%) - risk limiti %100
+input double   MinMarginLevel         = 300.0;    // v2.4.3: Min margin seviyesi (%) - %300 altinda SPM kapat, %150 altinda herhangi kapat
 
 //=================================================================
 // KAR YONETIMI
