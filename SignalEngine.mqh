@@ -78,8 +78,8 @@ private:
    double m_macdSignalBuf[10];
    double m_rsiBuf[10];
    double m_rsiH1Buf[5];
-   double m_stochKBuf[5];
-   double m_stochDBuf[5];
+   double m_stochKBuf[7];    // v2.0: 5→7 (3-bar crossover tarama icin)
+   double m_stochDBuf[7];    // v2.0: 5→7
    double m_adxBuf[5];
    double m_plusDIBuf[5];
    double m_minusDIBuf[5];
@@ -103,6 +103,10 @@ private:
    datetime m_lastSignalTime;
    int      m_cooldownSec;
 
+   //=== v2.1: DINAMIK PROFIL ===
+   SymbolProfile m_profile;
+   bool          m_profileSet;
+
    //=== DATA VALIDITY FLAGS ===
    bool m_dataReady;
 
@@ -113,6 +117,7 @@ public:
    CSignalEngine() :
       m_lastSignalTime(0),
       m_cooldownSec(120),
+      m_profileSet(false),
       m_dataReady(false),
       m_hEmaFast(INVALID_HANDLE),
       m_hEmaMid(INVALID_HANDLE),
@@ -196,6 +201,21 @@ public:
             EnumToString(m_tfEntry), EnumToString(m_tfTrend), EnumToString(m_tfHigher),
             SignalMinScore, m_cooldownSec));
       return true;
+   }
+
+   //+------------------------------------------------------------------+
+   //| SetProfile - v2.1: Dinamik profil ayarla (pip bazli TP icin)     |
+   //| BytamerFX.mq5 Initialize sonrasinda cagirir                      |
+   //+------------------------------------------------------------------+
+   void SetProfile(const SymbolProfile &profile)
+   {
+      m_profile    = profile;
+      m_profileSet = true;
+
+      Print(StringFormat("BHSS Profil: %s | %s | TP1=%.0f | TP2=%.0f | TP3=%.0f pips | Trigger=$%.1f",
+            m_symbol, m_profile.profileName,
+            m_profile.tp1Pips, m_profile.tp2Pips, m_profile.tp3Pips,
+            m_profile.spmTriggerLoss));
    }
 
    //+------------------------------------------------------------------+
@@ -408,6 +428,7 @@ public:
    double         GetADX()             const { return m_adx; }
    double         GetPlusDI()          const { return m_plusDI; }
    double         GetMinusDI()         const { return m_minusDI; }
+   double         GetMACDHist()        const { return m_macdHist; }
    ScoreBreakdown GetBreakdown()       const { return m_lastBreakdown; }
    ScoreBreakdown GetBuyBreakdown()    const { return m_buyBreakdown; }
    ScoreBreakdown GetSellBreakdown()   const { return m_sellBreakdown; }
@@ -442,9 +463,9 @@ private:
       if(CopyBuffer(m_hBB, 1, 0, 10, m_bbUpperBuf)  < 10) m_dataReady = false;
       if(CopyBuffer(m_hBB, 2, 0, 10, m_bbLowerBuf)  < 10) m_dataReady = false;
 
-      //--- M15 Stochastic (5 bars)
-      if(CopyBuffer(m_hStoch, 0, 0, 5, m_stochKBuf) < 5) m_dataReady = false;
-      if(CopyBuffer(m_hStoch, 1, 0, 5, m_stochDBuf) < 5) m_dataReady = false;
+      //--- M15 Stochastic (7 bars - v2.0: 3-bar crossover tarama)
+      if(CopyBuffer(m_hStoch, 0, 0, 7, m_stochKBuf) < 7) m_dataReady = false;
+      if(CopyBuffer(m_hStoch, 1, 0, 7, m_stochDBuf) < 7) m_dataReady = false;
 
       //--- M15 ATR (50 bars for percentile)
       if(CopyBuffer(m_hAtr, 0, 0, 50, m_atrBuf) < 50) m_dataReady = false;
@@ -500,8 +521,8 @@ private:
       m_bbMiddle   = m_bbMiddleBuf[9];
       m_bbUpper    = m_bbUpperBuf[9];
       m_bbLower    = m_bbLowerBuf[9];
-      m_stochK     = m_stochKBuf[4];
-      m_stochD     = m_stochDBuf[4];
+      m_stochK     = m_stochKBuf[6];  // v2.0: index 4→6 (buffer 7 eleman)
+      m_stochD     = m_stochDBuf[6];  // v2.0: index 4→6
       m_atr        = m_atrBuf[49];
       m_rsiH1      = m_rsiH1Buf[4];
    }
@@ -667,8 +688,8 @@ private:
    }
 
    //+------------------------------------------------------------------+
-   //| LAYER 4: RSI LEVEL (0-15 points)                                 |
-   //| Enhanced with divergence, momentum, MTF RSI                       |
+   //| LAYER 4: RSI LEVEL (0-15 points) - v2.0 GENISLETILMIS           |
+   //| 65-75 zone eklendi, divergence filtresi kaldirildi, H1 genisledi |
    //+------------------------------------------------------------------+
    void CalcRSILevel()
    {
@@ -676,13 +697,13 @@ private:
       bool rsiRising  = (m_rsi > rsiPrev);
       bool rsiFalling = (m_rsi < rsiPrev);
 
-      //--- RSI divergence
+      //--- RSI divergence (v2.0: RSI filtresi KALDIRILDI - her seviyede gecerli)
       int bullDivRSI = CheckDivergence(m_lowBuf, m_rsiBuf, true);
       int bearDivRSI = CheckDivergence(m_highBuf, m_rsiBuf, false);
 
-      //--- MTF agreement: M15 RSI vs H1 RSI
-      bool h1RsiBullish = (m_rsiH1 > 45 && m_rsiH1 < 70);
-      bool h1RsiBearish = (m_rsiH1 < 55 && m_rsiH1 > 30);
+      //--- MTF agreement: v2.0 genisletilmis araliklar
+      bool h1RsiBullish = (m_rsiH1 > 40 && m_rsiH1 < 75);  // v2.0: 45-70→40-75
+      bool h1RsiBearish = (m_rsiH1 < 60 && m_rsiH1 > 25);  // v2.0: 55-30→60-25
 
       //--- BUY scoring
       if(m_rsi >= 30 && m_rsi <= 50)
@@ -696,8 +717,12 @@ private:
          m_buyBreakdown.rsiLevel += 3;
          if(rsiRising)    m_buyBreakdown.rsiLevel += 2;
       }
-      // Bullish divergence: strong reversal signal
-      if(bullDivRSI > 0 && m_rsi < 45)
+      else if(m_rsi > 65 && m_rsi <= 75)
+      {
+         m_buyBreakdown.rsiLevel += 2;  // v2.0 YENI: guclu trend devami
+      }
+      // Bullish divergence: v2.0 RSI filtresi kaldirildi (her seviyede gecerli)
+      if(bullDivRSI > 0)
          m_buyBreakdown.rsiLevel += 3;
       // MTF agreement bonus
       if(h1RsiBullish && m_buyBreakdown.rsiLevel > 0)
@@ -717,8 +742,12 @@ private:
          m_sellBreakdown.rsiLevel += 3;
          if(rsiFalling)   m_sellBreakdown.rsiLevel += 2;
       }
-      // Bearish divergence
-      if(bearDivRSI > 0 && m_rsi > 55)
+      else if(m_rsi >= 25 && m_rsi < 35)
+      {
+         m_sellBreakdown.rsiLevel += 2;  // v2.0 YENI: guclu trend devami
+      }
+      // Bearish divergence: v2.0 RSI filtresi kaldirildi
+      if(bearDivRSI > 0)
          m_sellBreakdown.rsiLevel += 3;
       // MTF agreement bonus
       if(h1RsiBearish && m_sellBreakdown.rsiLevel > 0)
@@ -728,8 +757,8 @@ private:
    }
 
    //+------------------------------------------------------------------+
-   //| LAYER 5: BOLLINGER BANDS (0-15 points)                           |
-   //| Enhanced with squeeze, band walk, %B indicator                    |
+   //| LAYER 5: BOLLINGER BANDS (0-15 points) - v2.0 GENISLETILMIS     |
+   //| Esikler genisletildi, band walk penalty kaldirildi               |
    //+------------------------------------------------------------------+
    void CalcBBPosition(double price)
    {
@@ -738,78 +767,60 @@ private:
       double percentB = CalcBBPercentB(price);
       bool squeezing  = IsSqueezing();
 
-      //--- Band walk detection (price consistently near band edge)
-      bool walkingUpper = true;
-      bool walkingLower = true;
-      for(int i = 7; i < 10; i++)
-      {
-         double bw = m_bbUpperBuf[i] - m_bbLowerBuf[i];
-         if(bw <= 0) { walkingUpper = false; walkingLower = false; break; }
-         double pB = (m_closeBuf[i] - m_bbLowerBuf[i]) / bw;
-         if(pB < 0.75) walkingUpper = false;
-         if(pB > 0.25) walkingLower = false;
-      }
+      //--- BUY scoring: v2.0 genis esikler
+      if(percentB <= 0.15)
+         m_buyBreakdown.bbPosition += 10;     // v2.0: 0.10→0.15
+      else if(percentB <= 0.30)
+         m_buyBreakdown.bbPosition += 7;      // v2.0: 0.25→0.30
+      else if(percentB <= 0.45)
+         m_buyBreakdown.bbPosition += 4;      // v2.0: 0.40→0.45
 
-      //--- BUY scoring based on %B
-      if(percentB <= 0.10)
-      {
-         m_buyBreakdown.bbPosition += 10;  // Touching/below lower band
-      }
-      else if(percentB <= 0.25)
-      {
-         m_buyBreakdown.bbPosition += 7;
-      }
-      else if(percentB <= 0.40)
-      {
-         m_buyBreakdown.bbPosition += 4;
-      }
-
-      // Squeeze with bullish setup: breakout potential
+      // Squeeze + bullish EMA: breakout potansiyeli
       if(squeezing && m_emaFast > m_emaMid)
          m_buyBreakdown.bbPosition += 3;
 
-      // Band walk penalty for BUY (price walking lower = continuation down, bad for buy)
-      if(walkingLower && m_buyBreakdown.bbPosition > 0)
-         m_buyBreakdown.bbPosition = (int)(m_buyBreakdown.bbPosition * 0.5);
+      // v2.0: Band walk penalty KALDIRILDI (cok katı, sinyal olduruyor)
 
-      //--- SELL scoring based on %B
-      if(percentB >= 0.90)
-      {
-         m_sellBreakdown.bbPosition += 10;
-      }
-      else if(percentB >= 0.75)
-      {
-         m_sellBreakdown.bbPosition += 7;
-      }
-      else if(percentB >= 0.60)
-      {
-         m_sellBreakdown.bbPosition += 4;
-      }
+      //--- SELL scoring: v2.0 genis esikler
+      if(percentB >= 0.85)
+         m_sellBreakdown.bbPosition += 10;    // v2.0: 0.90→0.85
+      else if(percentB >= 0.70)
+         m_sellBreakdown.bbPosition += 7;     // v2.0: 0.75→0.70
+      else if(percentB >= 0.55)
+         m_sellBreakdown.bbPosition += 4;     // v2.0: 0.60→0.55
 
       if(squeezing && m_emaFast < m_emaMid)
          m_sellBreakdown.bbPosition += 3;
 
-      // Band walk upper = continuation up, bad for sell
-      if(walkingUpper && m_sellBreakdown.bbPosition > 0)
-         m_sellBreakdown.bbPosition = (int)(m_sellBreakdown.bbPosition * 0.5);
+      // v2.0: Band walk penalty KALDIRILDI
    }
 
    //+------------------------------------------------------------------+
-   //| LAYER 6: STOCHASTIC (0-10 points)                                |
-   //| Enhanced with multi-zone scoring and divergence                   |
+   //| LAYER 6: STOCHASTIC (0-10 points) - v2.0 GENISLETILMIS          |
+   //| 3-bar crossover tarama + momentum zone skorlama                  |
    //+------------------------------------------------------------------+
    void CalcStochSignal()
    {
-      //--- Previous values for crossover detection
-      double prevK = m_stochKBuf[3];
-      double prevD = m_stochDBuf[3];
-      bool kCrossedAboveD = (prevK <= prevD && m_stochK > m_stochD);
-      bool kCrossedBelowD = (prevK >= prevD && m_stochK < m_stochD);
+      //--- v2.0: Son 3 barda crossover tara (buf[4]→[5], [5]→[6])
+      //--- Buffer: [0]=en eski ... [6]=guncel bar
+      bool kCrossedAboveD = false;
+      bool kCrossedBelowD = false;
+      for(int i = 4; i <= 6; i++)
+      {
+         if(m_stochKBuf[i-1] <= m_stochDBuf[i-1] && m_stochKBuf[i] > m_stochDBuf[i])
+            kCrossedAboveD = true;
+         if(m_stochKBuf[i-1] >= m_stochDBuf[i-1] && m_stochKBuf[i] < m_stochDBuf[i])
+            kCrossedBelowD = true;
+      }
 
-      //--- BUY: oversold zone with bullish crossover
+      //--- K yonu (momentum)
+      bool kRising  = (m_stochKBuf[6] > m_stochKBuf[5]);
+      bool kFalling = (m_stochKBuf[6] < m_stochKBuf[5]);
+
+      //--- BUY: oversold + crossover + momentum zone
       if(m_stochK < 20 && kCrossedAboveD)
       {
-         m_buyBreakdown.stochSignal += 10;  // Full points: deep oversold + cross
+         m_buyBreakdown.stochSignal += 10;  // Derin oversold + cross
       }
       else if(m_stochK < 30 && kCrossedAboveD)
       {
@@ -817,14 +828,14 @@ private:
       }
       else if(m_stochK < 40 && m_stochK > m_stochD)
       {
-         m_buyBreakdown.stochSignal += 4;
+         m_buyBreakdown.stochSignal += 4;   // v2.0: Momentum zone (cross gerekmez)
       }
-      else if(m_stochK < 50 && m_stochK > m_stochD)
+      else if(m_stochK < 50 && m_stochK > m_stochD && kRising)
       {
-         m_buyBreakdown.stochSignal += 2;
+         m_buyBreakdown.stochSignal += 2;   // v2.0: Momentum devam
       }
 
-      //--- SELL: overbought zone with bearish crossover
+      //--- SELL: overbought + crossover + momentum zone
       if(m_stochK > 80 && kCrossedBelowD)
       {
          m_sellBreakdown.stochSignal += 10;
@@ -835,11 +846,11 @@ private:
       }
       else if(m_stochK > 60 && m_stochK < m_stochD)
       {
-         m_sellBreakdown.stochSignal += 4;
+         m_sellBreakdown.stochSignal += 4;   // v2.0: Momentum zone
       }
-      else if(m_stochK > 50 && m_stochK < m_stochD)
+      else if(m_stochK > 50 && m_stochK < m_stochD && kFalling)
       {
-         m_sellBreakdown.stochSignal += 2;
+         m_sellBreakdown.stochSignal += 2;   // v2.0: Momentum devam
       }
    }
 
@@ -1344,67 +1355,112 @@ private:
    }
 
    //+------------------------------------------------------------------+
-   //| CalculateTPLevels - ATR-based TP with trend strength adaptation   |
+   //| CalculateTPLevels - v2.1: DINAMIK PIP BAZLI TP                   |
+   //| Profil varsa: pip bazli sabit TP (enstruman bazli)               |
+   //| Profil yoksa: ATR bazli fallback (eski sistem)                   |
+   //| Trend gucu: WEAK→TP1 | MODERATE→TP2 | STRONG→TP3                |
    //| SL is always 0 (ABSOLUTE RULE)                                   |
    //+------------------------------------------------------------------+
    void CalculateTPLevels(SignalData &sig)
    {
-      if(m_atr <= 0) return;
-
-      //--- Category multiplier
-      double catMult = 1.0;
-      switch(m_category)
-      {
-         case CAT_FOREX:   catMult = 1.0;  break;
-         case CAT_METAL:   catMult = 0.9;  break;
-         case CAT_CRYPTO:  catMult = 1.25; break;
-         case CAT_INDICES: catMult = 1.0;  break;
-         case CAT_ENERGY:  catMult = 0.85; break;
-         case CAT_STOCKS:  catMult = 1.0;  break;
-         default:          catMult = 1.0;  break;
-      }
-
-      //--- Trend strength adaptation
       ENUM_TREND_STRENGTH strength = GetTrendStrength();
-      double tp1Mult = 1.5, tp2Mult = 2.5, tp3Mult = 4.0;  // Default: MODERATE
-
-      switch(strength)
-      {
-         case TREND_WEAK:
-            tp1Mult = 1.0;  tp2Mult = 1.5;  tp3Mult = 2.5;  // Conservative
-            break;
-         case TREND_MODERATE:
-            tp1Mult = 1.5;  tp2Mult = 2.5;  tp3Mult = 4.0;  // Standard
-            break;
-         case TREND_STRONG:
-            tp1Mult = 2.0;  tp2Mult = 3.5;  tp3Mult = 5.5;  // Aggressive
-            break;
-      }
-
-      double tp1Distance = m_atr * tp1Mult * catMult;
-      double tp2Distance = m_atr * tp2Mult * catMult;
-      double tp3Distance = m_atr * tp3Mult * catMult;
+      sig.trendStrength = strength;
+      sig.sl = 0;  // SL = NONE (ABSOLUTE RULE)
 
       double ask = SymbolInfoDouble(m_symbol, SYMBOL_ASK);
       double bid = SymbolInfoDouble(m_symbol, SYMBOL_BID);
+      double point = SymbolInfoDouble(m_symbol, SYMBOL_POINT);
 
-      if(sig.direction == SIGNAL_BUY)
+      if(point <= 0 || ask <= 0 || bid <= 0) return;
+
+      //=== v2.1: PIP BAZLI DINAMIK TP ===
+      if(m_profileSet && m_profile.tp1Pips > 0)
       {
-         sig.tp1 = ask + tp1Distance;
-         sig.tp2 = ask + tp2Distance;
-         sig.tp3 = ask + tp3Distance;
-         sig.tp  = sig.tp1;
+         //--- Pips → fiyat donusumu: pips * point
+         double tp1Dist = m_profile.tp1Pips * point;
+         double tp2Dist = m_profile.tp2Pips * point;
+         double tp3Dist = m_profile.tp3Pips * point;
+
+         //--- Trend gucune gore ANA TP secimi:
+         //    WEAK → TP1 (konservatif, erken al)
+         //    MODERATE → TP2 (standart)
+         //    STRONG → TP3 (agresif, trendi son damlasina kadar)
+         double mainTPDist = tp1Dist;  // WEAK varsayilan
+         switch(strength)
+         {
+            case TREND_WEAK:     mainTPDist = tp1Dist; break;
+            case TREND_MODERATE: mainTPDist = tp2Dist; break;
+            case TREND_STRONG:   mainTPDist = tp3Dist; break;
+         }
+
+         if(sig.direction == SIGNAL_BUY)
+         {
+            sig.tp1 = ask + tp1Dist;
+            sig.tp2 = ask + tp2Dist;
+            sig.tp3 = ask + tp3Dist;
+            sig.tp  = ask + mainTPDist;   // Trend gucune gore
+         }
+         else
+         {
+            sig.tp1 = bid - tp1Dist;
+            sig.tp2 = bid - tp2Dist;
+            sig.tp3 = bid - tp3Dist;
+            sig.tp  = bid - mainTPDist;   // Trend gucune gore
+         }
+
+         Print(StringFormat("BHSS TP [%s]: Trend=%s | TP=%.5f (%.0f pips) | TP1=%.0f TP2=%.0f TP3=%.0f pips",
+               m_profile.profileName,
+               (strength == TREND_STRONG) ? "GUCLU" : (strength == TREND_MODERATE) ? "ORTA" : "ZAYIF",
+               sig.tp, mainTPDist / point,
+               m_profile.tp1Pips, m_profile.tp2Pips, m_profile.tp3Pips));
       }
       else
       {
-         sig.tp1 = bid - tp1Distance;
-         sig.tp2 = bid - tp2Distance;
-         sig.tp3 = bid - tp3Distance;
-         sig.tp  = sig.tp1;
-      }
+         //=== ATR BAZLI FALLBACK (profil yoksa) ===
+         if(m_atr <= 0) return;
 
-      sig.sl = 0;  // SL = NONE (ABSOLUTE RULE)
-      sig.trendStrength = strength;
+         double catMult = 1.0;
+         switch(m_category)
+         {
+            case CAT_FOREX:   catMult = 1.0;  break;
+            case CAT_METAL:   catMult = 0.9;  break;
+            case CAT_CRYPTO:  catMult = 1.25; break;
+            case CAT_INDICES: catMult = 1.0;  break;
+            case CAT_ENERGY:  catMult = 0.85; break;
+            default:          catMult = 1.0;  break;
+         }
+
+         double tp1Mult = 1.5, tp2Mult = 2.5, tp3Mult = 4.0;
+         switch(strength)
+         {
+            case TREND_WEAK:     tp1Mult = 1.0; tp2Mult = 1.5; tp3Mult = 2.5; break;
+            case TREND_MODERATE: tp1Mult = 1.5; tp2Mult = 2.5; tp3Mult = 4.0; break;
+            case TREND_STRONG:   tp1Mult = 2.0; tp2Mult = 3.5; tp3Mult = 5.5; break;
+         }
+
+         double tp1Distance = m_atr * tp1Mult * catMult;
+         double tp2Distance = m_atr * tp2Mult * catMult;
+         double tp3Distance = m_atr * tp3Mult * catMult;
+
+         if(sig.direction == SIGNAL_BUY)
+         {
+            sig.tp1 = ask + tp1Distance;
+            sig.tp2 = ask + tp2Distance;
+            sig.tp3 = ask + tp3Distance;
+            sig.tp  = sig.tp1;
+         }
+         else
+         {
+            sig.tp1 = bid - tp1Distance;
+            sig.tp2 = bid - tp2Distance;
+            sig.tp3 = bid - tp3Distance;
+            sig.tp  = sig.tp1;
+         }
+
+         Print(StringFormat("BHSS TP [ATR-FALLBACK]: Trend=%s | ATR=%.5f | TP1=%.5f TP2=%.5f TP3=%.5f",
+               (strength == TREND_STRONG) ? "GUCLU" : (strength == TREND_MODERATE) ? "ORTA" : "ZAYIF",
+               m_atr, sig.tp1, sig.tp2, sig.tp3));
+      }
    }
 };
 

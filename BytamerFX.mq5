@@ -3,17 +3,17 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v1.2.0 - SPM-FIFO                                     |
+//| BytamerFX v2.4.0 - Cycle SPM + Hedge Fix                          |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
-//| Dinamik Lot | Kar Odakli SPM | Chart Overlay Indikator           |
-//| Hesap: 262230423 (Exness)                                        |
+//| FIFO +$5 Net | Dongusel SPM | SELL-BUY Hedge | 5+5 Katman       |
+//| Hesap: 262230423 (Exness) | Dinamik Profil + Haber Kontrol       |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "1.20"
-#property description "BytamerFX v1.2.0 - SPM-FIFO Strateji"
-#property description "7 Katmanli Hibrit Sinyal + Kar Odakli SPM"
-#property description "SL=YOK | Asla Zararina Satis Yok"
+#property version     "2.40"
+#property description "BytamerFX v2.4.0 - Cycle SPM + Hedge Fix"
+#property description "Dongusel SPM + SELL-BUY Hedge + FIFO + Terfi"
+#property description "SL=YOK | Dinamik Profil | Pip-TP | MinProfit"
 #property description "Copyright 2026, By T@MER"
 #property strict
 
@@ -31,6 +31,7 @@
 #include "PositionManager.mqh"
 #include "TelegramMsg.mqh"
 #include "DiscordMsg.mqh"
+#include "NewsManager.mqh"
 #include "ChartDashboard.mqh"
 
 //=================================================================
@@ -46,6 +47,7 @@ CTradeExecutor    g_executor;
 CPositionManager  g_posMgr;
 CTelegramMsg      g_telegram;
 CDiscordMsg       g_discord;
+CNewsManager      g_newsMgr;         // v2.2: Haber yonetici
 CChartDashboard   g_dashboard;
 
 //--- Durum degiskenleri
@@ -75,11 +77,15 @@ int OnInit()
    Print(EA_VERSION_FULL);
    Print(StringFormat("Hesap: %d | Broker: %s", accNo, broker));
    Print(StringFormat("Bakiye: $%.2f | Sembol: %s", balance, _Symbol));
-   Print("SL=YOK | Strateji: SPM+FIFO | Net Hedef: $" + DoubleToString(SPM_NetTargetUSD, 2));
+   Print("SL=YOK | Strateji: KAZAN-KAZAN | Net Hedef: $" + DoubleToString(SPM_NetTargetUSD, 2));
    Print(StringFormat("MinScore=%d | SPM Trigger=$%.1f | SPM Close=$%.1f",
          SignalMinScore, SPM_TriggerLoss, SPM_CloseProfit));
-   Print(StringFormat("SPM LotBase=%.1f | LotIncrement=%.2f | MaxLayers=%d",
-         SPM_LotBase, SPM_LotIncrement, SPM_MaxLayers));
+   Print(StringFormat("SPM LotBase=%.1f | LotIncrement=%.2f | MaxBuy=%d MaxSell=%d",
+         SPM_LotBase, SPM_LotIncrement, SPM_MaxBuyLayers, SPM_MaxSellLayers));
+   Print(StringFormat("v2.2: DCA=%d | Hedge=%.0f%% | Deadlock=%dsn | NewsFilter=%s",
+         DCA_MaxPerPosition, Hedge_FillPercent * 100.0, Deadlock_TimeoutSec,
+         EnableNewsFilter ? "AKTIF" : "KAPALI"));
+   Print("Dinamik Profil: Sembol bazli TP/SPM/Hedge parametreleri");
    Print("================================================");
 
    //--- 2. SEMBOL KATEGORI TESPITI
@@ -96,8 +102,11 @@ int OnInit()
    //--- 4. MUM ANALIZORU
    g_candle.Initialize(_Symbol, PERIOD_M15);
 
-   //--- 5. LOT HESAPLAYICI
-   g_lotCalc.Initialize(_Symbol, g_category);
+   //--- 5b. v2.1: DINAMIK PROFIL (erken yukle - lotcalc icin gerekli)
+   SymbolProfile signalProfile = GetSymbolProfile(g_category, _Symbol);
+
+   //--- 5. LOT HESAPLAYICI (v2.2.1: profil min lot ile)
+   g_lotCalc.Initialize(_Symbol, g_category, signalProfile.minLotOverride);
 
    //--- 6. SINYAL MOTORU
    if(!g_signalEngine.Initialize(_Symbol, g_category))
@@ -105,6 +114,9 @@ int OnInit()
       Print("!!! SINYAL MOTORU BASARISIZ - EA DEVRE DISI !!!");
       return INIT_FAILED;
    }
+
+   //--- 6b. v2.1: DINAMIK PROFIL → SignalEngine'e aktar (pip bazli TP icin)
+   g_signalEngine.SetProfile(signalProfile);
 
    //--- 7. ISLEM YURUTME
    g_executor.Initialize(_Symbol);
@@ -117,9 +129,22 @@ int OnInit()
    g_posMgr.Initialize(_Symbol, g_category, g_executor, g_signalEngine,
                         g_telegram, g_discord);
 
-   //--- 10. DASHBOARD
+   //--- 9b. v2.2: HABER SISTEMI (Universal News Intelligence)
+   if(EnableNewsFilter)
+   {
+      g_newsMgr.Initialize(_Symbol, g_category);
+      Print(StringFormat("Haber Filtresi: AKTIF | %d haber yuklendi | Blok: -%ddk / +%ddk",
+            g_newsMgr.GetNewsCount(), NewsBlockBeforeMin, NewsBlockAfterMin));
+   }
+   else
+   {
+      Print("Haber Filtresi: DEVRE DISI");
+   }
+
+   //--- 10. DASHBOARD (v2.2: News referansi eklendi)
+   CNewsManager *newsPtr = EnableNewsFilter ? GetPointer(g_newsMgr) : NULL;
    g_dashboard.Initialize(_Symbol, g_category, g_signalEngine, g_posMgr,
-                          g_spreadFilter, EnableDashboard);
+                          g_spreadFilter, EnableDashboard, newsPtr);
 
    //--- 11. BASLANGIC MESAJLARI
    g_telegram.SendStartup(_Symbol, catName, accNo, broker, balance);
@@ -209,8 +234,60 @@ void OnTick()
    //--- 3. Pozisyon yoneticisi (SPM+FIFO + koruma)
    g_posMgr.OnTick();
 
+   //--- 3b. v2.2: HABER KONTROLU
+   if(EnableNewsFilter)
+   {
+      g_newsMgr.OnTick();
+
+      //--- Haber bildirimi (30dk once)
+      string alertMsg;
+      if(g_newsMgr.CheckNewsAlert(alertMsg))
+      {
+         g_telegram.SendNewsAlert(alertMsg);
+
+         //--- Discord icin ayri format
+         string newsTitle, newsCurr;
+         ENUM_NEWS_IMPACT newsImpact;
+         datetime newsTime;
+         int newsMin;
+         if(g_newsMgr.GetActiveNewsInfo(newsTitle, newsCurr, newsImpact, newsTime, newsMin) ||
+            g_newsMgr.GetNextNewsInfo(newsTitle, newsCurr, newsImpact, newsTime, newsMin))
+         {
+            NewsEvent ne;
+            ne.eventTime = newsTime;
+            ne.title = newsTitle;
+            ne.currency = newsCurr;
+            ne.impact = newsImpact;
+            string discordDesc = CNewsManager::FormatDiscordNewsAlert(_Symbol, ne,
+                                    AccountInfoDouble(ACCOUNT_BALANCE),
+                                    AccountInfoDouble(ACCOUNT_EQUITY));
+            g_discord.SendNewsAlert(discordDesc, CNewsManager::GetDiscordColor(newsImpact));
+         }
+
+         if(EnablePushNotification)
+            SendNotification(StringFormat("HABER: %s | %s", _Symbol, alertMsg));
+      }
+
+      //--- Haber nedeniyle islem bloke mi?
+      if(g_newsMgr.IsTradingBlocked())
+      {
+         static datetime lastNewsBlockLog = 0;
+         if(TimeCurrent() - lastNewsBlockLog > 120)
+         {
+            PrintFormat("[NEWS-%s] Islem BLOKE: Haber suresi aktif (bitene kadar: %s)",
+                        _Symbol, TimeToString(g_newsMgr.GetBlockUntil(), TIME_MINUTES));
+            lastNewsBlockLog = TimeCurrent();
+         }
+         return;  // Yeni islem acma, sadece mevcut islemler yonetilir
+      }
+   }
+
    //--- 4. Trading paused ise yeni islem acma
    if(g_posMgr.IsTradingPaused())
+      return;
+
+   //--- 4b. v2.2.6: MarginKritik sonrasi toparlanma modu
+   if(g_posMgr.IsInRecoveryMode())
       return;
 
    //--- 5. Yeni bar kontrolu
@@ -232,6 +309,10 @@ void OnTimer()
 
    //--- Dashboard guncelle
    g_dashboard.Update();
+
+   //--- v2.2: Haber kontrolu (timer ile de calistir - tick gelmese bile)
+   if(EnableNewsFilter)
+      g_newsMgr.OnTick();
 }
 
 //+------------------------------------------------------------------+
@@ -288,18 +369,23 @@ void CheckForNewSignal()
 
    Print(StringFormat("=== YENI SINYAL: %s | Skor: %d/100 ===",
          (sig.direction == SIGNAL_BUY) ? "BUY" : "SELL", sig.score));
-   Print(StringFormat("  RSI=%.1f | ADX=%.1f | ATR=%.5f", sig.rsi, sig.adx, sig.atr));
-   Print(StringFormat("  TP1=%.5f | TP2=%.5f | TP3=%.5f", sig.tp1, sig.tp2, sig.tp3));
+   string trendName = (sig.trendStrength == TREND_STRONG) ? "GUCLU" :
+                      (sig.trendStrength == TREND_MODERATE) ? "ORTA" : "ZAYIF";
+   Print(StringFormat("  RSI=%.1f | ADX=%.1f | ATR=%.5f | Trend=%s", sig.rsi, sig.adx, sig.atr, trendName));
+   Print(StringFormat("  TP=%.5f (Ana) | TP1=%.5f | TP2=%.5f | TP3=%.5f", sig.tp, sig.tp1, sig.tp2, sig.tp3));
 
-   //--- Dinamik lot hesapla (balance + atr + score + trend + margin)
+   //--- v2.2: Dinamik lot hesapla (8 faktor: balance + atr + score + trend + margin + toplam lot)
    ENUM_TREND_STRENGTH trendStr = g_signalEngine.GetTrendStrength();
    double lot = g_lotCalc.CalculateDynamic(
-      AccountInfoDouble(ACCOUNT_BALANCE), sig.atr, sig.score, trendStr, marginLevel);
+      AccountInfoDouble(ACCOUNT_BALANCE), sig.atr, sig.score, trendStr, marginLevel, totalVolume);
 
-   //--- TP hedefi belirle (TP1 default)
-   double tp = sig.tp1;
+   //--- v2.2.2: ANA pozisyona BROKER TP KONMAZ
+   //--- ANA SADECE FIFO ile kapanir (net >= +$5)
+   //--- Broker TP koymak -> broker otomatik kapatir -> FIFO bozulur
+   //--- TP tracking internal olarak ManageTPLevels ile yapilir (sadece log)
+   double tp = 0;   // v2.2.2: ANA icin broker TP = YOK
 
-   //--- Islem ac (SL=YOK - MUTLAK)
+   //--- Islem ac (SL=YOK - MUTLAK, TP=YOK - FIFO ILE KAPANIR)
    string comment = StringFormat("BTFX_%s_%d", _Symbol, sig.score);
    if(StringLen(comment) > 25) comment = StringSubstr(comment, 0, 25);
 
@@ -383,52 +469,24 @@ void DrawSignalArrow(const SignalData &sig, double lot, double price)
    ObjectSetInteger(0, name, OBJPROP_SELECTABLE, false);
    ObjectSetInteger(0, name, OBJPROP_HIDDEN, false);  // Gorunur (tooltip icin)
 
-   //--- TOOLTIP: Mouse ile ok uzerine gelince islem bilgileri goster
-   string dirStr = (sig.direction == SIGNAL_BUY) ? "ALIS (BUY)" : "SATIS (SELL)";
-   string trendStr;
-   switch(sig.trendStrength)
-   {
-      case TREND_STRONG:   trendStr = "GUCLU";  break;
-      case TREND_MODERATE: trendStr = "ORTA";   break;
-      default:             trendStr = "ZAYIF";  break;
-   }
-
+   //--- TOOLTIP: v2.2.2 - Kompakt, BMP Unicode
+   string dirMark = (sig.direction == SIGNAL_BUY) ? "\x25B2" : "\x25BC";
+   string dirStr  = (sig.direction == SIGNAL_BUY) ? "ALIS (BUY)" : "SATIS (SELL)";
    int digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
 
    string tooltip = StringFormat(
-      "BytamerFX %s\n"
-      "Yon: %s\n"
-      "Skor: %d/100\n"
-      "Lot: %.2f\n"
-      "Fiyat: %s\n"
-      "TP1: %s\n"
-      "TP2: %s\n"
-      "TP3: %s\n"
-      "SL: YOK (MUTLAK)\n"
-      "ATR: %s\n"
-      "ADX: %.1f\n"
-      "RSI: %.1f\n"
-      "+DI/−DI: %.1f/%.1f\n"
-      "Trend: %s\n"
-      "MACD: %.6f\n"
-      "Stoch: %.1f/%.1f\n"
-      "Zaman: %s",
-      EA_VERSION,
-      dirStr,
-      sig.score,
-      lot,
-      DoubleToString(price, digits),
+      "%s  %s  %s\n"
+      "\x25CF  %s | Lot: %.2f\n"
+      "\x2714  TP1: %s\n"
+      "\x2714  TP2: %s\n"
+      "\x2605  Skor: %d/100\n"
+      "%s",
+      dirMark, _Symbol, dirStr,
+      DoubleToString(price, digits), lot,
       DoubleToString(sig.tp1, digits),
       DoubleToString(sig.tp2, digits),
-      DoubleToString(sig.tp3, digits),
-      DoubleToString(sig.atr, digits),
-      sig.adx,
-      sig.rsi,
-      sig.plusDI, sig.minusDI,
-      trendStr,
-      sig.macd_main,
-      sig.stoch_k, sig.stoch_d,
-      TimeToString(TimeCurrent(), TIME_DATE | TIME_SECONDS));
+      sig.score,
+      TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES));
 
    ObjectSetString(0, name, OBJPROP_TOOLTIP, tooltip);
 }

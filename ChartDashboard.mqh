@@ -19,12 +19,21 @@
 #include "SignalEngine.mqh"
 #include "PositionManager.mqh"
 #include "SpreadFilter.mqh"
+#include "NewsManager.mqh"
 
 //+------------------------------------------------------------------+
 //| Color Constants                                                   |
 //+------------------------------------------------------------------+
 #define CLR_PANEL_BG        C'25,25,35'
 #define CLR_PANEL_BORDER    C'60,60,80'
+#define CLR_NEWS_CRITICAL   C'255,40,40'
+#define CLR_NEWS_HIGH       C'255,140,0'
+#define CLR_NEWS_MEDIUM     C'255,220,0'
+#define CLR_NEWS_LOW        C'100,200,100'
+#define CLR_NEWS_BG_CRIT    C'60,10,10'
+#define CLR_NEWS_BG_HIGH    C'60,30,0'
+#define CLR_NEWS_BG_MED     C'50,45,10'
+#define CLR_NEWS_BG_NORM    C'25,25,35'
 #define CLR_HEADER          C'0,200,255'
 #define CLR_LABEL           C'180,180,200'
 #define CLR_VALUE           C'255,255,255'
@@ -64,6 +73,7 @@ private:
    CSignalEngine*    m_engine;
    CPositionManager* m_posMgr;
    CSpreadFilter*    m_spread;
+   CNewsManager*     m_news;     // v2.2: Haber referansi
    string            m_symbol;
    ENUM_SYMBOL_CATEGORY m_category;
    bool              m_enabled;
@@ -505,7 +515,7 @@ private:
       int y    = baseY + 6;
 
       //--- Header
-      CreateLabel("P4_HDR", x, y, "SPM + FIFO", CLR_HEADER, DASH_HEADER_SIZE);
+      CreateLabel("P4_HDR", x, y, "KAZAN-KAZAN v2.2", CLR_HEADER, DASH_HEADER_SIZE);
       y += DASH_LINE_H + 2;
 
       //--- Main P/L
@@ -513,18 +523,23 @@ private:
       CreateLabel("P4_MAIN_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Active SPM
-      CreateLabel("P4_ASPM_L", x, y, "Aktif SPM:", CLR_LABEL);
-      CreateLabel("P4_ASPM_V", vx, y, "0 / Katman:0", CLR_VALUE);
+      //--- v2.0: BUY/SELL katmanlari
+      CreateLabel("P4_BSLY_L", x, y, "BUY/SELL:", CLR_LABEL);
+      CreateLabel("P4_BSLY_V", vx, y, "0/0", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Closed SPM Profit
-      CreateLabel("P4_CSPM_L", x, y, "SPM Kapal.:", CLR_LABEL);
+      //--- Active SPM + DCA + Hedge
+      CreateLabel("P4_ASPM_L", x, y, "SPM/DCA/HG:", CLR_LABEL);
+      CreateLabel("P4_ASPM_V", vx, y, "0/0/0", CLR_VALUE);
+      y += DASH_LINE_H;
+
+      //--- Closed SPM Profit (kasa)
+      CreateLabel("P4_CSPM_L", x, y, "Kasa:", CLR_LABEL);
       CreateLabel("P4_CSPM_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
-      //--- Open SPM Profit
-      CreateLabel("P4_OSPM_L", x, y, "SPM Acik:", CLR_LABEL);
+      //--- Open SPM Profit / Loss
+      CreateLabel("P4_OSPM_L", x, y, "Acik P/L:", CLR_LABEL);
       CreateLabel("P4_OSPM_V", vx, y, "$0.00", CLR_VALUE);
       y += DASH_LINE_H;
 
@@ -889,19 +904,25 @@ private:
       //--- Main P/L
       UpdateLabel("P4_MAIN_V", StringFormat("$%.2f", fifo.mainLoss), ColorBySign(fifo.mainLoss));
 
-      //--- Active SPM count + layers
-      UpdateLabel("P4_ASPM_V",
-                  StringFormat("%d / Katman:%d", fifo.activeSPMCount, fifo.spmLayerCount),
+      //--- v2.0: BUY/SELL katmanlari
+      UpdateLabel("P4_BSLY_V",
+                  StringFormat("B:%d / S:%d", fifo.buyLayerCount, fifo.sellLayerCount),
                   CLR_VALUE);
 
-      //--- Closed SPM profit
+      //--- Active SPM + DCA + Hedge count
+      UpdateLabel("P4_ASPM_V",
+                  StringFormat("%d/%d/%d", fifo.activeSPMCount, fifo.activeDCACount, fifo.activeHedgeCount),
+                  CLR_VALUE);
+
+      //--- Closed SPM profit (kasa)
       UpdateLabel("P4_CSPM_V",
                   StringFormat("$%.2f (%d)", fifo.closedProfitTotal, fifo.closedCount),
                   ColorBySign(fifo.closedProfitTotal));
 
-      //--- Open SPM profit
-      UpdateLabel("P4_OSPM_V", StringFormat("$%.2f", fifo.openSPMProfit),
-                  ColorBySign(fifo.openSPMProfit));
+      //--- Open SPM profit + loss
+      double openTotal = fifo.openSPMProfit + fifo.openSPMLoss;
+      UpdateLabel("P4_OSPM_V", StringFormat("$%.2f", openTotal),
+                  ColorBySign(openTotal));
 
       //--- Net result
       color netClr = ColorBySign(fifo.netResult);
@@ -932,6 +953,133 @@ private:
       else if(progress >= 25.0) barClr = CLR_WARNING;
       else                      barClr = CLR_NEGATIVE;
       UpdateProgressBar("P4_FIFO_BAR", progress, barClr);
+   }
+
+   //=================================================================
+   // PANEL 5 CREATION: HABER BILGI CUBUKLARI (y=1005, h=100)
+   //=================================================================
+   void CreatePanel5(int baseX, int baseY)
+   {
+      int pw = DASH_PANEL_W;
+      int ph = 100;
+      CreatePanel("P5", baseX, baseY, pw, ph);
+
+      int x  = baseX + DASH_INDENT;
+      int vx = baseX + DASH_VAL_X;
+      int y  = baseY + 6;
+
+      //--- Header
+      CreateLabel("P5_HDR", x, y, "HABER DURUMU", CLR_HEADER, DASH_HEADER_SIZE);
+      y += DASH_LINE_H + 2;
+
+      //--- Haber basligi
+      CreateLabel("P5_TITLE_L", x, y, "Haber:", CLR_LABEL);
+      CreateLabel("P5_TITLE_V", vx, y, "---", CLR_VALUE);
+      y += DASH_LINE_H;
+
+      //--- Para/Durum
+      CreateLabel("P5_STAT_L", x, y, "Durum:", CLR_LABEL);
+      CreateLabel("P5_STAT_V", vx, y, "Normal", CLR_POSITIVE);
+      y += DASH_LINE_H;
+
+      //--- Kalan sure
+      CreateLabel("P5_TIME_L", x, y, "Kalan:", CLR_LABEL);
+      CreateLabel("P5_TIME_V", vx, y, "---", CLR_VALUE);
+   }
+
+   //=================================================================
+   // PANEL 5 UPDATE: HABER DURUMU
+   //=================================================================
+   void UpdatePanel5()
+   {
+      if(m_news == NULL)
+      {
+         UpdateLabel("P5_TITLE_V", "Modul yok", CLR_LABEL);
+         UpdateLabel("P5_STAT_V", "---", CLR_LABEL);
+         UpdateLabel("P5_TIME_V", "---", CLR_LABEL);
+         return;
+      }
+
+      string title, currency;
+      ENUM_NEWS_IMPACT impact;
+      datetime eventTime;
+      int minutesLeft;
+
+      //--- Aktif haber varsa (blok zamanindayiz)
+      if(m_news.GetActiveNewsInfo(title, currency, impact, eventTime, minutesLeft))
+      {
+         //--- Haber basligi (kisalt)
+         if(StringLen(title) > 20) title = StringSubstr(title, 0, 20) + "..";
+         UpdateLabel("P5_TITLE_V", title, CLR_VALUE);
+
+         //--- Durum + renk (impact'e gore)
+         color statClr = CLR_VALUE;
+         color borderClr = CLR_PANEL_BORDER;
+         color bgClr = CLR_PANEL_BG;
+         string statText = "";
+
+         switch(impact)
+         {
+            case NEWS_CRITICAL:
+               statText = "KRITIK - BLOK";
+               statClr = CLR_NEWS_CRITICAL;
+               borderClr = CLR_NEWS_CRITICAL;
+               bgClr = CLR_NEWS_BG_CRIT;
+               break;
+            case NEWS_HIGH:
+               statText = "YUKSEK - BLOK";
+               statClr = CLR_NEWS_HIGH;
+               borderClr = CLR_NEWS_HIGH;
+               bgClr = CLR_NEWS_BG_HIGH;
+               break;
+            case NEWS_MEDIUM:
+               statText = "ORTA - UYARI";
+               statClr = CLR_NEWS_MEDIUM;
+               borderClr = CLR_NEWS_MEDIUM;
+               bgClr = CLR_NEWS_BG_MED;
+               break;
+            default:
+               statText = "DUSUK";
+               statClr = CLR_NEWS_LOW;
+               break;
+         }
+
+         statText += " [" + currency + "]";
+         UpdateLabel("P5_STAT_V", statText, statClr);
+
+         //--- Panel cerceve rengi degistir
+         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BORDER_COLOR, borderClr);
+         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BGCOLOR, bgClr);
+
+         //--- Kalan sure
+         if(minutesLeft > 0)
+            UpdateLabel("P5_TIME_V", StringFormat("-%d dk (bekleniyor)", minutesLeft), CLR_WARNING);
+         else
+            UpdateLabel("P5_TIME_V", StringFormat("+%d dk (aktif)", -minutesLeft), CLR_NEGATIVE);
+      }
+      //--- Aktif haber yok, sonrakine bak
+      else if(m_news.GetNextNewsInfo(title, currency, impact, eventTime, minutesLeft))
+      {
+         if(StringLen(title) > 20) title = StringSubstr(title, 0, 20) + "..";
+         UpdateLabel("P5_TITLE_V", title, CLR_LABEL);
+
+         string impactStr = CNewsManager::GetImpactStr(impact);
+         UpdateLabel("P5_STAT_V", "Normal [" + impactStr + " " + currency + "]", CLR_POSITIVE);
+         UpdateLabel("P5_TIME_V", StringFormat("%d dk sonra", minutesLeft), CLR_VALUE);
+
+         //--- Normal panel rengi
+         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BORDER_COLOR, CLR_PANEL_BORDER);
+         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BGCOLOR, CLR_PANEL_BG);
+      }
+      else
+      {
+         UpdateLabel("P5_TITLE_V", "Haber yok (24s)", CLR_LABEL);
+         UpdateLabel("P5_STAT_V", "Normal", CLR_POSITIVE);
+         UpdateLabel("P5_TIME_V", "---", CLR_LABEL);
+
+         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BORDER_COLOR, CLR_PANEL_BORDER);
+         ObjectSetInteger(m_chartId, "BTFX_P5", OBJPROP_BGCOLOR, CLR_PANEL_BG);
+      }
    }
 
    //=================================================================
@@ -1081,6 +1229,7 @@ public:
       m_engine           = NULL;
       m_posMgr           = NULL;
       m_spread           = NULL;
+      m_news             = NULL;
       m_symbol           = "";
       m_category         = CAT_UNKNOWN;
       m_enabled          = false;
@@ -1109,13 +1258,15 @@ public:
    //+------------------------------------------------------------------+
    void Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat,
                    CSignalEngine &engine, CPositionManager &posMgr,
-                   CSpreadFilter &spread, bool enabled)
+                   CSpreadFilter &spread, bool enabled,
+                   CNewsManager *news = NULL)
    {
       m_symbol   = symbol;
       m_category = cat;
       m_engine   = GetPointer(engine);
       m_posMgr   = GetPointer(posMgr);
       m_spread   = GetPointer(spread);
+      m_news     = news;
       m_enabled  = enabled;
       m_chartId  = ChartID();
       m_subWindow = 0;
@@ -1141,15 +1292,16 @@ public:
       //--- Create all 4 panels with new positions and sizes
       int x = m_panelX;
 
-      CreatePanel1(x, 30);     // y=30,  h=285
-      CreatePanel2(x, 325);    // y=325, h=290
-      CreatePanel3(x, 625);    // y=625, h=165
-      CreatePanel4(x, 800);    // y=800, h=195
+      CreatePanel1(x, 30);      // y=30,  h=285
+      CreatePanel2(x, 325);     // y=325, h=290
+      CreatePanel3(x, 625);     // y=625, h=165
+      CreatePanel4(x, 800);     // y=800, h=195
+      CreatePanel5(x, 1005);    // y=1005, h=100 (v2.2: Haber paneli)
 
       ChartRedraw(m_chartId);
 
-      Print(StringFormat("[Dashboard] %s [%s] Dashboard olusturuldu. Panels=4 Overlay=BB+SAR+Mom",
-            m_symbol, GetCategoryName(m_category)));
+      Print(StringFormat("[Dashboard] %s [%s] Dashboard olusturuldu. Panels=5 Overlay=BB+SAR+Mom | News=%s",
+            m_symbol, GetCategoryName(m_category), (m_news != NULL) ? "AKTIF" : "YOK"));
    }
 
    //+------------------------------------------------------------------+
@@ -1165,6 +1317,7 @@ public:
       UpdatePanel2();
       UpdatePanel3();
       UpdatePanel4();
+      UpdatePanel5();    // v2.2: Haber paneli
 
       //--- Update chart overlay indicators (throttled to every 2 sec)
       DrawIndicatorOverlay();
