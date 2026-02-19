@@ -823,26 +823,102 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
          if(profit > m_peakProfit[i])
             m_peakProfit[i] = profit;
 
-      //=== KURAL 0: ANA tek basina karda -> profil hedefinde KAPAT ===
-      // v2.3.0: ANA SPM yokken kar hedefine ulasinca hemen kapat
-      // Geri cekilmelerde kar realize edilir, kasaya konur
+      //=== KURAL 0: ANA tek basina karda -> AKILLI KAPATMA ===
+      // v2.3.0: ANA SPM yokken kar hedefine ulasinca:
+      //   - Trend guclu (skor >= 93) + mum ayni yonde → BEKLE, PeakDrop ile koru
+      //   - Trend zayif / mum ters → HEMEN KAPAT
       if(role == ROLE_MAIN && profit >= m_profile.anaCloseProfit && GetActiveSPMCount() == 0)
       {
-         PrintFormat("[PM-%s] ANA KAR HEDEF: $%.2f >= $%.2f -> KAPAT (SPM=0)",
-                     m_symbol, profit, m_profile.anaCloseProfit);
+         // Sinyal ve mum yonu analiz et
+         bool trendGuclu = false;
+         bool mumAyniYon = false;
 
-         m_totalCashedProfit += profit;
-         m_dailyProfit += profit;
+         if(m_signalEngine != NULL)
+         {
+            SignalData sig = m_signalEngine.Evaluate();
+            ENUM_SIGNAL_DIR posDir = (m_positions[i].type == POSITION_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
 
-         if(m_telegram != NULL)
-            m_telegram.SendMessage(StringFormat("ANA KAR %s: $%.2f -> KAPATILDI", m_symbol, profit));
-         if(m_discord != NULL)
-            m_discord.SendMessage(StringFormat("ANA KAR %s: $%.2f -> KAPATILDI", m_symbol, profit));
+            // Sinyal skoru >= 93 VE ayni yonde → trend guclu
+            if(sig.score >= 93 && sig.direction == posDir)
+               trendGuclu = true;
+         }
 
-         ClosePosWithNotification(i, "AnaKar_" + DoubleToString(profit, 2));
-         m_mainTicket = 0;
-         ResetFIFO();
-         return;  // ANA kapandi, yeni sinyal bekle
+         // Mum yonu kontrol (M15)
+         ENUM_SIGNAL_DIR candleDir = GetCandleDirection();
+         ENUM_SIGNAL_DIR posDir2 = (m_positions[i].type == POSITION_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
+         if(candleDir == posDir2)
+            mumAyniYon = true;
+
+         if(trendGuclu && mumAyniYon)
+         {
+            //--- GUCLU TREND: Bekle, PeakDrop ile koru
+            // ANA icin PeakDrop uygula (peak'ten %50 duserse kapat)
+            double peakVal = (i < ArraySize(m_peakProfit)) ? m_peakProfit[i] : profit;
+            if(peakVal >= m_profile.anaCloseProfit && profit >= m_profile.anaCloseProfit)
+            {
+               double dropPct = (peakVal - profit) / peakVal * 100.0;
+               if(dropPct >= PeakDropPercent)
+               {
+                  // Peak'ten dustu → karini koru, hemen kapat
+                  PrintFormat("[PM-%s] ANA PEAK DROP: Peak=$%.2f Now=$%.2f Drop=%.0f%% -> KAPAT",
+                              m_symbol, peakVal, profit, dropPct);
+
+                  m_totalCashedProfit += profit;
+                  m_dailyProfit += profit;
+
+                  if(m_telegram != NULL)
+                     m_telegram.SendMessage(StringFormat("ANA KAR %s: $%.2f (Peak=$%.2f) -> KAPATILDI",
+                                            m_symbol, profit, peakVal));
+                  if(m_discord != NULL)
+                     m_discord.SendMessage(StringFormat("ANA KAR %s: $%.2f (Peak=$%.2f) -> KAPATILDI",
+                                           m_symbol, profit, peakVal));
+
+                  ClosePosWithNotification(i, "AnaPeakDrop_" + DoubleToString(profit, 2));
+                  m_mainTicket = 0;
+                  ResetFIFO();
+                  // 30sn sabit bekleme (SetProtectionCooldown KULLANILMAZ - o 180sn*mult)
+                  m_protectionCooldownUntil = TimeCurrent() + 30;
+                  m_tradingPaused = true;
+                  PrintFormat("[PM-%s] ANA KAR SONRASI 30sn BEKLEME", m_symbol);
+                  return;
+               }
+               else
+               {
+                  // Peak'ten henuz dusmedi, guclu trend devam → BEKLE
+                  if(TimeCurrent() - m_lastSPMLogTime >= 30)
+                  {
+                     PrintFormat("[PM-%s] ANA GUCLU TREND: $%.2f (Peak=$%.2f) Skor>=93+Mum OK -> BEKLE",
+                                 m_symbol, profit, peakVal);
+                     m_lastSPMLogTime = TimeCurrent();
+                  }
+               }
+            }
+         }
+         else
+         {
+            //--- ZAYIF TREND / MUM TERS: Hemen kapat
+            PrintFormat("[PM-%s] ANA KAR: $%.2f >= $%.2f | Trend=%s Mum=%s -> HEMEN KAPAT",
+                        m_symbol, profit, m_profile.anaCloseProfit,
+                        trendGuclu ? "GUCLU" : "ZAYIF",
+                        mumAyniYon ? "OK" : "TERS");
+
+            m_totalCashedProfit += profit;
+            m_dailyProfit += profit;
+
+            if(m_telegram != NULL)
+               m_telegram.SendMessage(StringFormat("ANA KAR %s: $%.2f -> KAPATILDI", m_symbol, profit));
+            if(m_discord != NULL)
+               m_discord.SendMessage(StringFormat("ANA KAR %s: $%.2f -> KAPATILDI", m_symbol, profit));
+
+            ClosePosWithNotification(i, "AnaKar_" + DoubleToString(profit, 2));
+            m_mainTicket = 0;
+            ResetFIFO();
+            // 30sn sabit bekleme (SetProtectionCooldown KULLANILMAZ - o 180sn*mult)
+            m_protectionCooldownUntil = TimeCurrent() + 30;
+            m_tradingPaused = true;
+            PrintFormat("[PM-%s] ANA KAR SONRASI 30sn BEKLEME", m_symbol);
+            return;
+         }
       }
 
       //=== KURAL 1: SPM/DCA/HEDGE karda -> HEMEN KAPAT ===
