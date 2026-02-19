@@ -10,8 +10,8 @@
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.25"
-#property description "BytamerFX v2.2.5 - KazanKazan Pro"
+#property version     "2.26"
+#property description "BytamerFX v2.2.6 - KazanKazan Pro"
 #property description "FIFO +$5 | DCA | Hedge | News Intelligence"
 #property description "SL=YOK | Dinamik Profil | Pip-TP | MinProfit"
 #property description "Copyright 2026, By T@MER"
@@ -284,6 +284,10 @@ void OnTick()
 
    //--- 4. Trading paused ise yeni islem acma
    if(g_posMgr.IsTradingPaused())
+      return;
+
+   //--- 4b. v2.2.6: MarginKritik sonrasi toparlanma modu
+   if(g_posMgr.IsInRecoveryMode())
       return;
 
    //--- 5. Yeni bar kontrolu

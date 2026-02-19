@@ -11,8 +11,8 @@
 //|  KURALLAR:                                                       |
 //|  1. SL YOK - ASLA (MUTLAK)                                      |
 //|  2. ANA islem SADECE FIFO ile kapanir (net >= +$5)               |
-//|  3. PeakDrop SADECE SPM'lere uygulanir (ANA'ya degil)            |
-//|  4. SPM 5+5 yapi: max 5 BUY + 5 SELL                            |
+//|  3. PeakDrop SADECE SPM/DCA icin (ANA ve HEDGE muaf)             |
+//|  4. SPM 3+3 yapi: max 3 BUY + 3 SELL (v2.2.6)                   |
 //|  5. SPM yon: 5-oy sistemi (Trend,Sinyal,Mum,MACD,DI)            |
 //|     ASLA zarardaki ANA yonunde SPM acma (CheckSameDirectionBlock)|
 //|  6. SPM tetik: -$5 | SPM kar: $4 | FIFO net hedef: +$5          |
@@ -105,6 +105,11 @@ private:
    datetime             m_lastSPMLogTime;
    bool                 m_spmDirOverridden;  // SAME-DIR BLOCK sonrasi override flag
 
+   //--- v2.2.6: MarginKritik sonrasi toparlanma modu
+   bool                 m_recoveryMode;
+   double               m_preCrashBalance;
+   datetime             m_recoveryModeStart;
+
    //=================================================================
    // PRIVATE METHODS
    //=================================================================
@@ -181,6 +186,7 @@ public:
 
    bool                 HasPosition() const;
    bool                 IsTradingPaused() const;
+   bool                 IsInRecoveryMode();     // v2.2.6: MarginKritik sonrasi toparlanma
    bool                 HasHedge() const;
    int                  GetSPMCount() const;
    CCandleAnalyzer*     GetCandleAnalyzer();
@@ -246,6 +252,10 @@ CPositionManager::CPositionManager()
    m_tradingPaused       = false;
    m_lastSPMLogTime      = 0;
    m_spmDirOverridden    = false;
+
+   m_recoveryMode        = false;
+   m_preCrashBalance     = 0.0;
+   m_recoveryModeStart   = 0;
 
    m_profile.SetDefault();
 }
@@ -364,6 +374,37 @@ bool CPositionManager::HasPosition() const
 bool CPositionManager::IsTradingPaused() const
 {
    return (m_tradingPaused && TimeCurrent() < m_protectionCooldownUntil);
+}
+
+//+------------------------------------------------------------------+
+//| IsInRecoveryMode - v2.2.6: MarginKritik sonrasi toparlanma       |
+//| Cikis: Bakiye >= crash oncesi %50 VEYA 24 saat gecti             |
+//+------------------------------------------------------------------+
+bool CPositionManager::IsInRecoveryMode()
+{
+   if(!m_recoveryMode) return false;
+
+   double currentBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+
+   // Cikis kosulu 1: Bakiye crash oncesinin %50'sine ulasti
+   if(currentBalance >= m_preCrashBalance * 0.5)
+   {
+      PrintFormat("[PM-%s] TOPARLANMA BITTI: Bakiye=$%.2f >= Hedef=$%.2f (%50 of $%.2f)",
+                  m_symbol, currentBalance, m_preCrashBalance * 0.5, m_preCrashBalance);
+      m_recoveryMode = false;
+      return false;
+   }
+
+   // Cikis kosulu 2: 24 saat gecti (manuel mudahale bekleniyor)
+   if(TimeCurrent() - m_recoveryModeStart > 86400)
+   {
+      PrintFormat("[PM-%s] TOPARLANMA ZAMAN ASIMI: 24 saat gecti, mod kapatildi",
+                  m_symbol);
+      m_recoveryMode = false;
+      return false;
+   }
+
+   return true;  // Hala toparlanma modunda - yeni islem ACMA
 }
 
 //+------------------------------------------------------------------+
@@ -677,6 +718,15 @@ bool CPositionManager::CheckMarginEmergency()
       CloseAllPositions("MarginKritik_" + DoubleToString(marginLevel, 1) + "%");
       SetProtectionCooldown("MarginKritik");
       ResetFIFO();
+
+      // v2.2.6: Toparlanma modu - MarginKritik sonrasi yeni islem engelle
+      double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+      m_recoveryMode = true;
+      m_preCrashBalance = balance;
+      m_recoveryModeStart = TimeCurrent();
+      PrintFormat("[PM-%s] TOPARLANMA MODU: Bakiye=$%.2f - Yeni islem icin min $%.2f gerekli",
+                  m_symbol, balance, balance * 2.0);
+
       return true;
    }
 
@@ -730,7 +780,7 @@ bool CPositionManager::CheckMarginEmergency()
 
 //+------------------------------------------------------------------+
 //| ManageKarliPozisyonlar - v2.0 KAR ODAKLI                        |
-//| PeakDrop SADECE SPM/DCA/HEDGE icin (ANA'yi kapatmaz)            |
+//| PeakDrop SADECE SPM/DCA icin (ANA ve HEDGE muaf - v2.2.6)       |
 //| TERFI (PromoteOldestSPMToMain) KALDIRILDI                       |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageKarliPozisyonlar(bool newBar)
@@ -874,9 +924,10 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
       }
 
       //=== KURAL 5: Peak drop %50 -> Karini koru ===
-      // v2.0: SADECE SPM/DCA/HEDGE icin (ANA'yi PeakDrop ile kapatmaz)
+      // v2.2.6: SADECE SPM/DCA icin (ANA ve HEDGE muaf)
+      // HEDGE muaf: PeakDrop HEDGE'i erken kapatirsa margin korumasi kalkiyor
       // v2.2.2: minCloseProfit kontrolu - drop sonrasi bile min karin altinda kapatma
-      if(role != ROLE_MAIN)
+      if(role == ROLE_SPM || role == ROLE_DCA)
       {
          double peakVal = (i < ArraySize(m_peakProfit)) ? m_peakProfit[i] : profit;
          if(peakVal >= PeakMinProfit && profit >= m_profile.minCloseProfit)
