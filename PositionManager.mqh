@@ -1857,42 +1857,69 @@ void CPositionManager::RenumberSPMLayers()
 }
 
 //+------------------------------------------------------------------+
-//| CheckLotBalance - v2.0: Lot denge kontrolu                       |
+//| CheckLotBalance - v2.4.1: Lot + Katman denge kontrolu            |
+//| Tek taraf yigilmasini onler (BUY vs SELL dengeleme)               |
 //+------------------------------------------------------------------+
 bool CPositionManager::CheckLotBalance(ENUM_SIGNAL_DIR newDir, double newLot)
 {
    double totalBuy = GetTotalBuyLots();
    double totalSell = GetTotalSellLots();
+   int buyCount = GetBuyLayerCount();
+   int sellCount = GetSellLayerCount();
 
    double proposedBuy = totalBuy;
    double proposedSell = totalSell;
+   int proposedBuyCount = buyCount;
+   int proposedSellCount = sellCount;
 
    if(newDir == SIGNAL_BUY)
+   {
       proposedBuy += newLot;
+      proposedBuyCount++;
+   }
    else if(newDir == SIGNAL_SELL)
+   {
       proposedSell += newLot;
+      proposedSellCount++;
+   }
 
-   // Tek tarafli birikim korumasi
-   double oneSideMax = MaxTotalVolume * 0.6;
+   // v2.4.1: KATMAN SAYISI DENGE KONTROLU
+   // Tek taraf en fazla karsi taraftan 2 fazla olabilir
+   // Ornek: BUY=4, SELL=1 -> fark=3 -> ENGELLE (max fark 2)
+   int layerDiff = MathAbs(proposedBuyCount - proposedSellCount);
+   if(layerDiff > 2)
+   {
+      PrintFormat("[PM-%s] TEK TARAF DENGE: BUY=%d SELL=%d fark=%d > 2 -> %s ENGELLENDI",
+                  m_symbol, proposedBuyCount, proposedSellCount, layerDiff,
+                  (newDir == SIGNAL_BUY) ? "BUY" : "SELL");
+      return false;
+   }
+
+   // Tek tarafli birikim korumasi (lot bazli)
+   double oneSideMax = MaxTotalVolume * 0.7;  // v2.4.1: 0.6→0.7 katman dengeleme ile beraber
    if(proposedSell <= 0.0 && proposedBuy > oneSideMax)
    {
-      PrintFormat("[PM-%s] TEK TARAF KORUMA: Sadece BUY=%.2f > %.2f (MaxVol*0.6)",
+      PrintFormat("[PM-%s] TEK TARAF KORUMA: Sadece BUY=%.2f > %.2f (MaxVol*0.7)",
                   m_symbol, proposedBuy, oneSideMax);
       return false;
    }
    if(proposedBuy <= 0.0 && proposedSell > oneSideMax)
    {
-      PrintFormat("[PM-%s] TEK TARAF KORUMA: Sadece SELL=%.2f > %.2f (MaxVol*0.6)",
+      PrintFormat("[PM-%s] TEK TARAF KORUMA: Sadece SELL=%.2f > %.2f (MaxVol*0.7)",
                   m_symbol, proposedSell, oneSideMax);
       return false;
    }
 
-   // 4.0:1 oran limiti - v2.2.4: 2.5→4.0 daha fazla SPM katmani icin
+   // v2.4.1: 4.0→3.0 lot oran limiti (katman dengeleme destegi)
    if(proposedBuy > 0 && proposedSell > 0)
    {
       double ratio = MathMax(proposedBuy, proposedSell) / MathMin(proposedBuy, proposedSell);
-      if(ratio > 4.0)
+      if(ratio > 3.0)
+      {
+         PrintFormat("[PM-%s] LOT ORAN LIMITI: BUY=%.2f SELL=%.2f oran=%.1f > 3.0",
+                     m_symbol, proposedBuy, proposedSell, ratio);
          return false;
+      }
    }
 
    // Toplam hacim kontrolu
