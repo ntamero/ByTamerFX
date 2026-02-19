@@ -1162,10 +1162,8 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
 }
 
 //+------------------------------------------------------------------+
-//| ManageActiveSPMs - v2.4.0: DONGUSEL SPM Yonu                     |
-//| TUM SPM'ler DAIMA oncekinin TERSI (5-oy KULLANILMAZ)             |
-//| SPM1=ANA tersi, SPM2=SPM1 tersi, SPM3=SPM2 tersi...              |
-//| ANA kapanana kadar bu dongu devam eder                             |
+//| ManageActiveSPMs - v2.3.0: Smart Yon                              |
+//| SPM2 = SPM1 tersi | SPM3+ = 5-oy sistemi (trend bazli)           |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageActiveSPMs(int mainIdx)
 {
@@ -1184,16 +1182,31 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
       {
          int nextLayer = highestLayer + 1;
 
-         // v2.4.0: DONGUSEL YON - DAIMA onceki SPM'in tersi
-         // SPM1=ANA tersi, SPM2=SPM1 tersi, SPM3=SPM2 tersi...
-         // ANA kapanana kadar bu dongu devam eder
+         // v2.3.0: Smart yon mantigi
          ENUM_SIGNAL_DIR nextDir;
-         if(m_positions[i].type == POSITION_TYPE_BUY)
-            nextDir = SIGNAL_SELL;
+         if(nextLayer == 2)
+         {
+            // SPM2: Onceki SPM'in (SPM1) tersi
+            if(m_positions[i].type == POSITION_TYPE_BUY)
+               nextDir = SIGNAL_SELL;
+            else
+               nextDir = SIGNAL_BUY;
+         }
          else
-            nextDir = SIGNAL_BUY;
+         {
+            // SPM3+: Trend bazli 5-oy sistemi
+            nextDir = DetermineSPMDirection(spmLayer);
+            if(nextDir == SIGNAL_NONE)
+            {
+               // Fallback: onceki SPM'in tersi
+               if(m_positions[i].type == POSITION_TYPE_BUY)
+                  nextDir = SIGNAL_SELL;
+               else
+                  nextDir = SIGNAL_BUY;
+            }
+         }
 
-         // Katman limiti kontrol (5+5 yapi)
+         // Katman limiti kontrol (3+3 yapi)
          if(nextDir == SIGNAL_BUY && GetBuyLayerCount() >= m_profile.spmMaxBuyLayers)
          {
             if(!m_spmLimitLogged)
@@ -1258,9 +1271,10 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
             continue;
          }
 
-         PrintFormat("[PM-%s] SPM%d TETIK: SPM%d zarar=$%.2f -> %s lot=%.2f (onceki_tersi)",
+         string dirSource = (nextLayer == 2) ? "SPM1_tersi" : "5-oy";
+         PrintFormat("[PM-%s] SPM%d TETIK: SPM%d zarar=$%.2f -> %s lot=%.2f (%s)",
                      m_symbol, nextLayer, spmLayer, spmProfit,
-                     (nextDir == SIGNAL_BUY) ? "BUY" : "SELL", nextLot);
+                     (nextDir == SIGNAL_BUY) ? "BUY" : "SELL", nextLot, dirSource);
 
          OpenSPM(nextDir, nextLot, nextLayer, m_positions[i].ticket);
       }
@@ -1338,11 +1352,11 @@ void CPositionManager::ManageDCA()
 }
 
 //+------------------------------------------------------------------+
-//| ManageEmergencyHedge - v2.4.0: SELL-BUY karsilastirmali hedge    |
+//| ManageEmergencyHedge - v2.3.0: Grup P/L bazli acil hedge         |
 //| KOSULLAR:                                                         |
-//|  1. Grup toplam P/L <= -$30                                       |
-//|  2. Yon: SELL/BUY zarar karsilastirmasi (en cok zarar tersi)      |
-//|  3. Lot: zarardaki toplam lot * 1.5                               |
+//|  1. Grup toplam P/L <= -$40                                       |
+//|  2. Yon: 5-oy sistemi (trend+sinyal+mum+MACD+DI)                 |
+//|  3. Lot: zarardaki toplam lot * 1.2                               |
 //|  4. SPM katman limiti BYPASS                                      |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageEmergencyHedge()
@@ -1351,32 +1365,18 @@ void CPositionManager::ManageEmergencyHedge()
    if(TimeCurrent() < m_lastHedgeTime + Hedge_CooldownSec) return;
    if(IsTradingPaused()) return;
 
-   // v2.4.0: Grup toplam P/L + SELL/BUY zarar karsilastirmasi
+   // v2.3.0: Grup toplam P/L hesapla
    double groupPnL = 0.0;
    double losingLots = 0.0;
-   double buyLossTotal = 0.0;    // Toplam BUY zarar
-   double sellLossTotal = 0.0;   // Toplam SELL zarar
-   double buyLots = 0.0;         // Toplam BUY lot
-   double sellLots = 0.0;        // Toplam SELL lot
    for(int i = 0; i < m_posCount; i++)
    {
       groupPnL += m_positions[i].profit;
       if(m_positions[i].profit < 0.0)
-      {
          losingLots += m_positions[i].volume;
-         if(m_positions[i].type == POSITION_TYPE_BUY)
-            buyLossTotal += m_positions[i].profit;
-         else
-            sellLossTotal += m_positions[i].profit;
-      }
-      if(m_positions[i].type == POSITION_TYPE_BUY)
-         buyLots += m_positions[i].volume;
-      else
-         sellLots += m_positions[i].volume;
    }
 
-   // v2.4.0: Tetik: grup P/L <= -$30
-   if(groupPnL > -30.0) return;
+   // Tetik: grup P/L <= -$40
+   if(groupPnL > -40.0) return;
 
    // Bakiye kontrolu
    double balance = AccountInfoDouble(ACCOUNT_BALANCE);
@@ -1386,28 +1386,11 @@ void CPositionManager::ManageEmergencyHedge()
    double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
    if(marginLevel > 0.0 && marginLevel < MinMarginLevel) return;
 
-   // v2.4.0: Yon - SELL/BUY zarar karsilastirmasi
-   // Hangi tarafta daha cok zarar varsa, KARSI TARAFA hedge ac
-   // Ornek: SELL zarari buyukse → BUY hedge ac (SELL zadarini kurtarmak icin)
-   ENUM_SIGNAL_DIR hedgeDir;
-   if(sellLossTotal < buyLossTotal)
+   // v2.3.0: Yon - 5-oy sistemi
+   ENUM_SIGNAL_DIR hedgeDir = DetermineSPMDirection(0);
+   if(hedgeDir == SIGNAL_NONE)
    {
-      // SELL tarafinda daha cok zarar → BUY ac (fiyat dussun, SELL kurtulur mu? HAYIR!)
-      // SELL zararda = fiyat yukari gidiyor → BUY ac ki yukari hareket kar getirsin
-      hedgeDir = SIGNAL_BUY;
-      PrintFormat("[PM-%s] HEDGE YON: SELLzarar=$%.2f < BUYzarar=$%.2f -> BUY (SELL kurtarmak icin fiyat yukari)",
-                  m_symbol, sellLossTotal, buyLossTotal);
-   }
-   else if(buyLossTotal < sellLossTotal)
-   {
-      // BUY tarafinda daha cok zarar → SELL ac
-      hedgeDir = SIGNAL_SELL;
-      PrintFormat("[PM-%s] HEDGE YON: BUYzarar=$%.2f < SELLzarar=$%.2f -> SELL (BUY kurtarmak icin fiyat asagi)",
-                  m_symbol, buyLossTotal, sellLossTotal);
-   }
-   else
-   {
-      // Esit zarar → ANA tersine
+      // Fallback: ANA tersine
       int mainIdx = FindMainPosition();
       if(mainIdx >= 0)
       {
@@ -1416,11 +1399,11 @@ void CPositionManager::ManageEmergencyHedge()
          else
             hedgeDir = SIGNAL_BUY;
       }
-      else return;
+      else return;  // ANA yok, yon belirlenemez
    }
 
-   // v2.4.0: Lot = zarardaki toplam lot * 1.5
-   double hedgeLot = losingLots * 1.5;
+   // v2.3.0: Lot = zarardaki toplam lot * 1.2
+   double hedgeLot = losingLots * 1.2;
 
    // Normalize
    double minLot  = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_MIN);
@@ -1436,10 +1419,9 @@ void CPositionManager::ManageEmergencyHedge()
    if(totalVol + hedgeLot > MaxTotalVolume) return;
 
    // SPM LIMITI BYPASS - BUY/SELL katman kontrolu YAPILMAZ
-   PrintFormat("[PM-%s] ACIL HEDGE v2.4: GrupP/L=$%.2f <= -$30 | ZararLot=%.2f * 1.5 = %.2f | %s | SELLzarar=$%.2f BUYzarar=$%.2f",
+   PrintFormat("[PM-%s] ACIL HEDGE v2.3: GrupP/L=$%.2f <= -$40 | ZararLot=%.2f * 1.2 = %.2f | %s",
                m_symbol, groupPnL, losingLots, hedgeLot,
-               (hedgeDir == SIGNAL_BUY) ? "BUY" : "SELL",
-               sellLossTotal, buyLossTotal);
+               (hedgeDir == SIGNAL_BUY) ? "BUY" : "SELL");
 
    OpenHedge(hedgeDir, hedgeLot);
 }

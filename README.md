@@ -1,146 +1,177 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX** - Profesyonel hibrit sinyal motoru ile otomatik forex trading sistemi.
+**BytamerFX v2.2.5** - Professional automated forex trading system with hybrid signal engine.
 
-> **SL=YOK** | **Asla zararina satis yok** | **SPM+FIFO Strateji**
+> **NO SL** | **Never close at a loss** | **SPM+FIFO Strategy** | **Smart Hedge**
 
 ---
 
-## Ozellikler
+## Features
 
-### Sinyal Motoru - ByTamer Hybrid Signal System
-- **12 indikator handle** (M15 + H1 + H4 multi-timeframe)
-- **7 katmanli skor sistemi** (0-100 puan, min 35 giriş)
-- EMA Ribbon (8/21/50) + crossover tespiti
-- MACD Momentum + Diverjans motoru (regular + hidden)
-- ADX Trend Gucu + DI gap analizi + slope tespiti
-- RSI Seviye + Multi-TF RSI + Diverjans
-- Bollinger Bands + Squeeze tespiti + %B hesaplama
-- Stochastic K/D + Overbought/Oversold zonlari
-- ATR Volatilite + Percentile ranking
-- Market Structure analizi (HH/HL/LH/LL)
-- Mum formasyonu tespiti (Pin Bar, Engulfing, Doji)
-- Momentum shift algilama
-- H1 + H4 trend filtresi (multi-timeframe onay)
+### Signal Engine - ByTamer Hybrid Signal System (BHSS)
+- **12 indicator handles** (M15 + H1 + H4 multi-timeframe)
+- **7-layer scoring system** (0-100 points, min 35 entry threshold)
+- EMA Ribbon (8/21/50) + crossover detection
+- MACD Momentum + Divergence engine (regular + hidden)
+- ADX Trend Strength + DI gap analysis + slope detection
+- RSI Level + Multi-TF RSI + Divergence
+- Bollinger Bands + Squeeze detection + %B calculation
+- Stochastic K/D + Overbought/Oversold zones
+- ATR Volatility + Percentile ranking
+- Market Structure analysis (HH/HL/LH/LL)
+- Candlestick pattern detection (Pin Bar, Engulfing, Doji)
+- Momentum shift detection
+- H1 + H4 trend filter (multi-timeframe confirmation)
 
-### Pozisyon Yonetimi - SPM+FIFO
-- **SPM** (Sub Position Management): Zarardaki ana pozisyon icin ters yon hedge katmanlari
-- **FIFO** (First In First Out): SPM karlari birikerek ana zarari karsilar
-- Net hedef: SPM toplam kar - Ana zarar >= +$5
-- Max 4 SPM katmani
-- Otomatik yeni ana pozisyon acma (sinyal > trend > mum > hint onceligi)
+### Position Management - WIN-WIN Hedge System (v2.0+)
+- **SPM** (Sub Position Management): 5+5 structure (max 5 BUY + 5 SELL layers)
+- **5-Vote System**: SPM direction via H1 Trend + Signal Score + M15 Candle + MACD + DI
+- **FIFO** (First In First Out): SPM profits accumulate to offset main loss (net >= +$5)
+- **CheckSameDirectionBlock**: Never opens SPM in same direction as losing main, forces opposite
+- **DCA**: Dollar cost averaging for losing SPM positions
+- **Emergency Hedge**: Auto-hedge when lot ratio exceeds 2:1 imbalance
+- **Deadlock Detection**: 5min net change < $0.50 triggers position closure
 
-### Koruma Sistemi
-- Equity koruma: Max %25 drawdown -> tum pozisyonlar kapanir
-- Dongu zarar limiti: -$10 max -> tum pozisyonlar kapanir
-- Marjin acil durum: Level < %150 -> tum pozisyonlar kapanir
-- Eskale eden cooldown: Her tetiklemede +5dk (max 30dk)
-- Min bakiye kontrolu: $10 altinda islem yok
+### Dynamic Profile System (v2.1+)
+- **10 instrument profiles**: Forex, ForexJPY, Silver, Gold, Crypto, CryptoAlt, Indices, Energy, Metal, Default
+- **Pip-Based TP**: Separate TP1/TP2/TP3 pip distances per profile
+- **Dynamic Min Lot**: Forex=0.06, BTC/XAG/XAU=0.01, Indices=0.03
+- **Profile-Based SPM**: Separate trigger, lot, cooldown parameters per instrument
+- **3-Tier Matching**: Symbol-specific > JPY group > Category priority
+
+### Universal News Intelligence (v2.2+)
+- **MQL5 Calendar API**: Economic calendar integration (CalendarValueHistory)
+- **Impact-Based Blocking**: Trade blocking during CRITICAL/HIGH impact news
+- **Currency Detection**: Automatic symbol-to-currency mapping
+- **Symbol Filter**: News only displayed on affected symbol charts
+- **Full-Width Banner**: Live news info on chart (impact colors, countdown timer)
+
+### Smart Margin Management (v2.2.1)
+- **Gradual Closure**: Below 150% only the worst-performing position is closed
+- **Critical Emergency**: Below 120% all positions are closed
+- **Per-instrument** smart management, not account-wide liquidation
+
+### Minimum Profit Protection (v2.2.2)
+- **minCloseProfit**: No SPM/DCA/HEDGE closes below threshold (Forex=$1.0, BTC=$1.5)
+- **Emergency SPM**: When SPM loss exceeds 2x trigger, cooldown is skipped entirely
+- **No Broker TP on ANA**: Main position only closes via FIFO (net >= +$5), not broker TP
+- **ANA Ticket Detection**: Auto-detects when broker closes ANA, properly resets state
+
+### Lot Calculation - 8-Factor Dynamic Engine
+- Balance-based base lot
+- ATR volatility factor
+- Risk factor (0.5-1.5x)
+- Margin usage limit
+- Drawdown reduction
+- Correlation risk
+- Streak factor (consecutive win/loss)
+- Time factor (low volatility hours)
 
 ### Dashboard
-- 4 panelli real-time chart dashboard (koyu tema)
-- Panel 1: Hesap bilgileri, indikator degerleri, durum
-- Panel 2: 7 katman sinyal skor detayi + progress bar
-- Panel 3: TP1/TP2/TP3 hedefleri + trend gucu
-- Panel 4: SPM+FIFO durumu + net ilerleme
+- Full-width news banner (impact-colored background + border)
+- 4-panel real-time chart dashboard (dark theme)
+- Panel 1: Account info, indicator values, status
+- Panel 2: 7-layer signal score breakdown + progress bar
+- Panel 3: TP1/TP2/TP3 targets + trend strength + indicators
+- Panel 4: SPM+FIFO status + net progress
 
-### Bildirimler
-- Telegram (HTML format + emoji + cerceve)
-- Discord (Embed format + renk kodlu)
+### Notifications
+- Telegram (HTML format + emoji + balance/equity info)
+- Discord (Embed format + color-coded + balance/equity info)
 - MT5 Push Notification
 
-### Guvenlik
-- Hesap numarasi dogrulama (262230423)
-- SL=0 MUTLAK kural (asla stop loss yok)
-- 5 dakika aralikla hesap tekrar dogrulama
+### Security
+- Account number verification (262230423)
+- SL=0 absolute rule (never set stop loss)
+- Account re-verification every 5 minutes
 
 ---
 
-## Teknik Detaylar
+## Technical Specifications
 
-| Ozellik | Deger |
-|---------|-------|
+| Property | Value |
+|----------|-------|
 | Platform | MetaTrader 5 (Build 5200+) |
-| Dil | MQL5 |
-| Timeframe | M15 (giris) + H1/H4 (filtre) |
-| Min Bakiye | $10 |
-| Min Sinyal Skor | 35/100 |
-| SPM Max Katman | 4 |
-| Net Hedef | $5 |
-| Cooldown | 120sn (sinyal) / 60sn (SPM) |
+| Language | MQL5 |
+| Timeframe | M15 (entry) + H1/H4 (filter) |
+| Min Balance | $10 |
+| Min Signal Score | 35/100 |
+| SPM Max Layers | 5 BUY + 5 SELL |
+| FIFO Net Target | $5 |
+| Margin Warning | <150% (gradual closure) |
+| Margin Critical | <120% (full closure) |
+| SPM Trigger | Forex: -$3, BTC/XAG/XAU: -$5 |
+| Min Lot | Forex: 0.06, Metal/Crypto: 0.01, Indices: 0.03 |
+| Profile Count | 10 instrument profiles |
 
 ---
 
-## Dosya Yapisi
+## File Structure
 
 ```
 BytamerFX/
-├── BytamerFX.mq5          # Ana EA dosyasi
-├── Config.mqh             # Merkezi konfigurasyon
-├── AccountSecurity.mqh    # Hesap dogrulama
-├── SymbolManager.mqh      # Sembol kategorileme
-├── SpreadFilter.mqh       # Spread kontrolu
-├── CandleAnalyzer.mqh     # Mum analizi
-├── LotCalculator.mqh      # Dinamik lot hesaplama
-├── SignalEngine.mqh       # ByTamer Hybrid Signal System
-├── TradeExecutor.mqh      # Islem yurutme (SL=0)
-├── PositionManager.mqh    # SPM+FIFO motoru
-├── TelegramMsg.mqh        # Telegram bildirimleri
-├── DiscordMsg.mqh         # Discord bildirimleri
-├── ChartDashboard.mqh     # 4 panel dashboard
+├── BytamerFX.mq5          # Main EA file (v2.2.2)
+├── Config.mqh             # Central configuration + 10 SymbolProfiles
+├── AccountSecurity.mqh    # Account verification
+├── SymbolManager.mqh      # Symbol categorization
+├── SpreadFilter.mqh       # Spread control
+├── CandleAnalyzer.mqh     # Candle analysis + pattern detection
+├── LotCalculator.mqh      # 8-factor dynamic lot calculator
+├── SignalEngine.mqh       # ByTamer Hybrid Signal System (BHSS)
+├── TradeExecutor.mqh      # Trade execution (SL=0 absolute)
+├── PositionManager.mqh    # WIN-WIN Hedge + SPM+FIFO engine
+├── NewsManager.mqh        # Universal News Intelligence
+├── TelegramMsg.mqh        # Telegram notifications (emoji + balance)
+├── DiscordMsg.mqh         # Discord notifications (embed + balance)
+├── ChartDashboard.mqh     # News banner + 4-panel dashboard
+├── CHANGELOG.md           # Detailed version history
+├── compile.ps1            # PowerShell compile script
 └── .gitignore
 ```
 
 ---
 
-## Guncelleme Gecmisi
+## Version History
 
-### v1.1.0 (2026-02-17)
-- **YENI**: ByTamer Hybrid Signal System - gelismis sinyal motoru
-  - MACD + RSI diverjans motoru (regular + hidden)
-  - Market structure analizi (HH/HL/LH/LL tepe/dip tespiti)
-  - Bollinger squeeze tespiti (breakout ongorusu)
-  - Mum formasyonu puanlama (Pin Bar, Engulfing, Doji)
-  - Momentum shift algilama (ani hareket tespiti)
-  - Multi-timeframe onay: H1 + H4 trend filtresi
-  - ATR percentile ranking (volatilite rejimi)
-  - RSI multi-TF: M15 + H1 uyum bonusu
-- **IYILESTIRME**: Dashboard font +1, satir araligi +1, genislik +10
-- **DUZELTME**: Discord embed description JSON escape
-- **DUZELTME**: Telegram SendMessage public erisim
-- Telegram token guncellendi
+See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
-### v1.0.0 (2026-02-17)
-- Ilk surum
-- 7 katmanli temel sinyal motoru (EMA+MACD+ADX+RSI+BB+Stoch+ATR)
-- SPM+FIFO pozisyon yonetim sistemi
-- Eskale eden koruma sistemi
-- 4 panelli chart dashboard
-- Telegram + Discord bildirim sistemi
-- Hesap guvenlik dogrulama
-- Dinamik lot hesaplama
+| Version | Date | Description |
+|---------|------|-------------|
+| v2.2.5 | 2026-02-18 | SPM lot carpanlari duzeltildi: 1.0x, 1.1x, 1.2x (margin koruma) |
+| v2.2.4 | 2026-02-18 | Deadlock kapatma kaldirildi, LOT DENGE 4.0, EmergencyHedge gevsedi |
+| v2.2.3 | 2026-02-18 | BMP Unicode Dashboard, Emoji-yazi bosluk |
+| v2.2.2 | 2026-02-18 | Min Profit Threshold, Emergency SPM, No Broker TP on ANA |
+| v2.2.1 | 2026-02-18 | SPM SAME-DIR BLOCK fix, Smart Margin, News Filter |
+| v2.2.0 | 2026-02-18 | Universal News Intelligence, Dynamic Lot, Emoji |
+| v2.1.0 | 2026-02-17 | Dynamic Profile System, Pip-Based TP |
+| v2.0.1 | 2026-02-17 | Hedge bug fix |
+| v2.0.0 | 2026-02-17 | WIN-WIN Hedge System, 5+5 SPM, FIFO |
+| v1.3.0 | 2026-02-17 | SmartSPM, Strong Hedge |
+| v1.2.0 | 2026-02-17 | SPM-FIFO Profit-Focused System |
+| v1.1.0 | 2026-02-17 | ByTamer Hybrid Signal System |
+| v1.0.0 | 2026-02-17 | Initial release |
 
 ---
 
-## Kurulum
+## Installation
 
-1. Tum dosyalari `MQL5/Experts/BytamerFX/` klasorune kopyalayin
-2. MetaEditor ile `BytamerFX.mq5` derleyin
-3. MT5'te chart'a surukleyin
-4. **Ayarlar** > Tools > Options > Expert Advisors:
-   - "Allow DLL imports" isaretli
-   - "Allow WebRequest" aktif
-   - URL listesine ekleyin:
+1. Copy all files to `MQL5/Experts/BytamerFX/` directory
+2. Compile `BytamerFX.mq5` with MetaEditor
+3. Drag onto chart in MT5 (M15 timeframe)
+4. **Settings** > Tools > Options > Expert Advisors:
+   - Check "Allow DLL imports"
+   - Enable "Allow WebRequest"
+   - Add to URL list:
      - `https://api.telegram.org`
      - `https://discordapp.com`
-5. EA ayarlarindan Telegram/Discord bilgilerini girin
+5. Enter Telegram/Discord credentials in EA settings
 
 ---
 
-## Yasal Uyari
+## Disclaimer
 
-> **Bu yazilim yatirim tavsiyesi degildir.** Forex ve CFD ticareti yuksek risk icerir. Gecmis performans gelecek sonuclari garanti etmez. Yatirim kararlarinizi kendi arastirmaniza dayanarak verin.
+> **This software is not investment advice.** Forex and CFD trading involves high risk. Past performance does not guarantee future results. Make investment decisions based on your own research.
 
 ---
 
-**Copyright 2026, By T@MER** | [www.bytamer.com](https://www.bytamer.com) | @ByT@MER
+**Copyright 2026, By T@MER** | [www.bytamer.com](https://www.bytamer.com)
