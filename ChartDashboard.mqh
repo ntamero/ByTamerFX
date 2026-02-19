@@ -524,7 +524,7 @@ private:
    void CreatePanel4(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 220;  // v2.3.0: 170→220 (3 yeni satir)
+      int ph = 240;  // v2.3.0: 220→240 (satir araligi acildi)
       CreatePanel("P4", baseX, baseY, pw, ph);
 
       int x    = baseX + DASH_INDENT;
@@ -532,65 +532,66 @@ private:
       int barX = baseX + DASH_INDENT;
       int barW = pw - 2 * DASH_INDENT;
       int y    = baseY + 6;
+      int lh   = 18;  // v2.3.0: satir araligi 16→18 (Panel 4 ozel)
 
       //--- Header (v2.3.0: BMP Unicode)
       CreateLabel("P4_HDR", x, y, "\x25A0  KAZAN-KAZAN v2.3", CLR_HEADER, DASH_HEADER_SIZE);  // ■
-      y += DASH_LINE_H + 2;
+      y += lh + 2;
 
       //--- v2.3.0: Gunluk Kar
       CreateLabel("P4_DKAR_L", x, y, "\x25B2  Gunluk:", CLR_LABEL);        // ▲
       CreateLabel("P4_DKAR_V", vx, y, "$0.00 (0.0%)", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- v2.3.0: Toplam Islem (BUY/SELL)
       CreateLabel("P4_TTRD_L", x, y, "\x25A3  Islemler:", CLR_LABEL);      // ▣
       CreateLabel("P4_TTRD_V", vx, y, "B:0 / S:0", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- v2.3.0: Gunluk Islem
       CreateLabel("P4_DTRD_L", x, y, "\x25C7  Bugun:", CLR_LABEL);         // ◇
       CreateLabel("P4_DTRD_V", vx, y, "0 islem", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh + 2;  // bosluk: istatistik/pozisyon ayirici
 
       //--- Main P/L
       CreateLabel("P4_MAIN_L", x, y, "\x20AC  Ana P/L:", CLR_LABEL);       // €
       CreateLabel("P4_MAIN_V", vx, y, "$0.00", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- v2.0: BUY/SELL katmanlari
       CreateLabel("P4_BSLY_L", x, y, "\x2696  BUY/SELL:", CLR_LABEL);     // ⚖
       CreateLabel("P4_BSLY_V", vx, y, "0/0", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- Active SPM + DCA + Hedge
       CreateLabel("P4_ASPM_L", x, y, "\x25C6  SPM/DCA/HG:", CLR_LABEL);   // ◆
       CreateLabel("P4_ASPM_V", vx, y, "0/0/0", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- Closed SPM Profit (kasa)
       CreateLabel("P4_CSPM_L", x, y, "\x2713  Kasa:", CLR_LABEL);          // ✓
       CreateLabel("P4_CSPM_V", vx, y, "$0.00", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- Open SPM Profit / Loss
       CreateLabel("P4_OSPM_L", x, y, "\x25CB  Acik P/L:", CLR_LABEL);      // ○
       CreateLabel("P4_OSPM_V", vx, y, "$0.00", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- FIFO Net
       CreateLabel("P4_NET_L", x, y, "\x21D2  FIFO Net:", CLR_LABEL);       // ⇒
       CreateLabel("P4_NET_V", vx, y, "$0.00", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- Target
       CreateLabel("P4_TGT_L", x, y, "\x25CF  Hedef:", CLR_LABEL);          // ●
       CreateLabel("P4_TGT_V", vx, y, "$0.00", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- Progress percentage
       CreateLabel("P4_PCT_L", x, y, "\x25B8  Ilerleme:", CLR_LABEL);       // ▸
       CreateLabel("P4_PCT_V", vx, y, "0.0%", CLR_VALUE);
-      y += DASH_LINE_H;
+      y += lh;
 
       //--- Progress bar
       CreateProgressBar("P4_FIFO_BAR", barX, y, barW, 8, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
@@ -1381,7 +1382,7 @@ public:
       CreatePanel1(x, topY);                  // h=235
       CreatePanel2(x, topY + 240);            // h=255
       CreatePanel3(x, topY + 500);            // h=140
-      CreatePanel4(x, topY + 645);            // h=220 (v2.3.0)
+      CreatePanel4(x, topY + 645);            // h=240 (v2.3.0)
 
       ChartRedraw(m_chartId);
 
