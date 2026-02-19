@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.3.0"
-#define EA_VERSION_NUM    "2.30"
-#define EA_VERSION_NAME   "SmartRecovery"
-#define EA_VERSION_FULL   "BytamerFX v2.3.0 - Smart Recovery"
+#define EA_VERSION        "2.3.1"
+#define EA_VERSION_NUM    "2.31"
+#define EA_VERSION_NAME   "SmartClose"
+#define EA_VERSION_FULL   "BytamerFX v2.3.1 - Smart Close"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
