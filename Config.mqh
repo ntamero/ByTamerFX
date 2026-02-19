@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.2.6"
-#define EA_VERSION_NUM    "2.26"
+#define EA_VERSION        "2.2.7"
+#define EA_VERSION_NUM    "2.27"
 #define EA_VERSION_NAME   "KazanKazan"
-#define EA_VERSION_FULL   "BytamerFX v2.2.6 - KazanKazan Pro"
+#define EA_VERSION_FULL   "BytamerFX v2.2.7 - KazanKazan Pro"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================

@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v2.2.7] - 2026-02-19
+
+### Critical Fixes
+- **ANA Kar Koruma Mekanizmasi**: FIFO deadlock durumunda ANA pozisyonun karini korur. ANA >= $10 karda + FIFO net < -$10 + kilitlenme 300sn+ + ANA peak'ten %30 dusmüs → tum pozisyonlari kapatir, ANA karini realize eder.
+- Onceki sorun: ANA +$16 karda iken SPM'ler -$44 zararda → FIFO ASLA tetiklenemiyordu → ANA kari realize edilemeden eriyebiliyordu.
+
+### Changes
+- `PositionManager.mqh`: CheckFIFOTarget icinde ANA Kar Koruma blogu eklendi
+- Versiyon 2.2.6 → 2.2.7
+
+---
+
 ## [v2.2.6] - 2026-02-19
 
 ### Critical Fixes

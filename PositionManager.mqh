@@ -1633,6 +1633,42 @@ void CPositionManager::CheckFIFOTarget()
    if(net < m_profile.fifoNetTarget)
    {
       m_fifoWaitStart = 0;
+
+      // v2.2.7: ANA KAR KORUMA - FIFO deadlock onleme
+      // ANA yeterince karda + FIFO hedefi ulasilamaz + kilitlenme + kar erimeye baslamis
+      if(mainProfit >= 10.0 && net < -10.0)
+      {
+         // ANA peak'ten %30+ dusmüs mu?
+         double mainPeak = (mainIdx < ArraySize(m_peakProfit)) ? m_peakProfit[mainIdx] : mainProfit;
+         double mainDrop = (mainPeak > 0.0) ? (mainPeak - mainProfit) / mainPeak * 100.0 : 0.0;
+
+         // Kilitlenme suresi >= 300sn?
+         int deadlockElapsed = (m_deadlockActive) ? (int)(TimeCurrent() - m_deadlockCheckStart) : 0;
+
+         if(mainDrop >= 30.0 && deadlockElapsed >= 300)
+         {
+            PrintFormat("[PM-%s] ANA KAR KORUMA: ANA=$%.2f (Peak=$%.2f Drop=%.0f%%) | Net=$%.2f | Kilitlenme=%dsn",
+                        m_symbol, mainProfit, mainPeak, mainDrop, net, deadlockElapsed);
+            PrintFormat("[PM-%s] FIFO hedefi ulasilamaz, ANA kari korunuyor -> TUM KAPAT",
+                        m_symbol);
+
+            if(m_telegram != NULL)
+               m_telegram.SendMessage(StringFormat("ANA KAR KORUMA %s: ANA=$%.2f | Net=$%.2f -> TUM KAPAT",
+                                                   m_symbol, mainProfit, net));
+            if(m_discord != NULL)
+               m_discord.SendMessage(StringFormat("ANA KAR KORUMA %s: ANA=$%.2f | Net=$%.2f -> TUM KAPAT",
+                                                  m_symbol, mainProfit, net));
+
+            CloseAllPositions("AnaKarKoruma_ANA=" + DoubleToString(mainProfit, 2));
+
+            double newCashIn = openProfit + openLoss + mainProfit;
+            m_totalCashedProfit += newCashIn;
+            m_dailyProfit += net;
+            ResetFIFO();
+            return;
+         }
+      }
+
       return;
    }
 
