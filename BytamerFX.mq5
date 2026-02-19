@@ -3,16 +3,16 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.2.2 - KAZAN-KAZAN Pro                                |
+//| BytamerFX v2.4.0 - Cycle SPM + Hedge Fix                          |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
-//| FIFO +$5 Net | DCA | Acil Hedge | Universal News Intelligence    |
+//| FIFO +$5 Net | Dongusel SPM | SELL-BUY Hedge | 5+5 Katman       |
 //| Hesap: 262230423 (Exness) | Dinamik Profil + Haber Kontrol       |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.32"
-#property description "BytamerFX v2.3.2 - Smart Close"
-#property description "Akilli Kapatma + FIFO + Terfi | News Intelligence"
+#property version     "2.40"
+#property description "BytamerFX v2.4.0 - Cycle SPM + Hedge Fix"
+#property description "Dongusel SPM + SELL-BUY Hedge + FIFO + Terfi"
 #property description "SL=YOK | Dinamik Profil | Pip-TP | MinProfit"
 #property description "Copyright 2026, By T@MER"
 #property strict
