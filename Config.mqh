@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.4.1"
-#define EA_VERSION_NUM    "2.41"
+#define EA_VERSION        "2.4.2"
+#define EA_VERSION_NUM    "2.42"
 #define EA_VERSION_NAME   "BalanceSPM"
-#define EA_VERSION_FULL   "BytamerFX v2.4.1 - SPM Balance + Profile Fix"
+#define EA_VERSION_FULL   "BytamerFX v2.4.2 - SPM Lot Fix + Balance"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================

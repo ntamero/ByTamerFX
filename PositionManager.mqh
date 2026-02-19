@@ -1244,8 +1244,11 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
          double totalVol = GetTotalBuyLots() + GetTotalSellLots();
          if(totalVol >= MaxTotalVolume) continue;
 
-         // Lot
-         double nextLot = CalcSPMLot(m_positions[mainIdx].volume, nextLayer);
+         // v2.4.1: Lot hesabi - aktif taraf sayisina gore (katman numarasi degil)
+         // BUY acilacaksa mevcut BUY sayisi+1, SELL acilacaksa mevcut SELL sayisi+1
+         int sideCount = (nextDir == SIGNAL_BUY) ? GetBuyLayerCount() : GetSellLayerCount();
+         int lotLayer = sideCount + 1;  // Yeni pozisyon dahil kacinci olacak
+         double nextLot = CalcSPMLot(m_positions[mainIdx].volume, lotLayer);
 
          // Lot denge kontrolu
          if(!CheckLotBalance(nextDir, nextLot))
@@ -1935,11 +1938,19 @@ bool CPositionManager::CheckLotBalance(ENUM_SIGNAL_DIR newDir, double newLot)
 }
 
 //+------------------------------------------------------------------+
-//| CalcSPMLot - v2.0: Profil bazli lot hesaplama                    |
+//| CalcSPMLot - v2.4.1: Aktif pozisyon bazli lot hesaplama          |
+//| layer parametresi artik AKTIF pozisyon sirasini temsil eder      |
+//| SPM1=1.0x, SPM2=1.1x, SPM3=1.2x, SPM4=1.3x, SPM5=1.4x max1.5x|
+//| BUY ve SELL taraflari AYRI AYRI sayilir                          |
 //+------------------------------------------------------------------+
 double CPositionManager::CalcSPMLot(double mainLot, int layer)
 {
-   double multiplier = m_profile.spmLotBase + (layer - 1) * m_profile.spmLotIncrement;
+   // v2.4.1: layer yerine o yondeki aktif SPM sirasini kullan
+   // Boylece SPM kapatilip yeniden acildiginda lot sismesi onlenir
+   // layer hala katman numarasi olarak geliyor ama carpan
+   // aktif pozisyon sayisina gore hesaplanir (max 5 katman)
+   int effectiveLayer = MathMin(layer, 5);  // Max 5. katman carpani (1.4x)
+   double multiplier = m_profile.spmLotBase + (effectiveLayer - 1) * m_profile.spmLotIncrement;
    if(multiplier > m_profile.spmLotCap) multiplier = m_profile.spmLotCap;
    double lot = mainLot * multiplier;
 

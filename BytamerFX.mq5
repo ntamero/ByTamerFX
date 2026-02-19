@@ -3,16 +3,16 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.4.1 - SPM Balance + Profile Fix                      |
+//| BytamerFX v2.4.2 - SPM Lot Fix + Balance                          |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
 //| FIFO +$5 Net | Dongusel SPM | SELL-BUY Hedge | 5+5 Katman       |
 //| Hesap: 262230423 (Exness) | Dinamik Profil + Haber Kontrol       |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.41"
-#property description "BytamerFX v2.4.1 - SPM Balance + Profile Fix"
-#property description "Tek Taraf Denge + Forex Tetik -4 + SPM Kar +4"
+#property version     "2.42"
+#property description "BytamerFX v2.4.2 - SPM Lot Fix + Balance"
+#property description "SPM Lot: taraf bazli carpan + Tek Taraf Denge"
 #property description "SL=YOK | Dinamik Profil | Pip-TP | MinProfit"
 #property description "Copyright 2026, By T@MER"
 #property strict
