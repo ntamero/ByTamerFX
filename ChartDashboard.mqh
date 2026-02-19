@@ -3,7 +3,7 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.2.7 - 4 Panel + Top News Banner + Chart Overlay      |
+//| BytamerFX v2.3.0 - 4 Panel + Top News Banner + Chart Overlay      |
 //| Real-time EA information display with indicator overlays          |
 //| Banner: Tam genislik haber serit (ust)                            |
 //| Panels: ANA BILGILER, SINYAL SKOR, TP+INDIKATOR, SPM+FIFO       |
@@ -524,7 +524,7 @@ private:
    void CreatePanel4(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 170;
+      int ph = 220;  // v2.3.0: 170→220 (3 yeni satir)
       CreatePanel("P4", baseX, baseY, pw, ph);
 
       int x    = baseX + DASH_INDENT;
@@ -533,9 +533,24 @@ private:
       int barW = pw - 2 * DASH_INDENT;
       int y    = baseY + 6;
 
-      //--- Header (v2.2.2: BMP Unicode)
-      CreateLabel("P4_HDR", x, y, "\x25A0  KAZAN-KAZAN v2.2", CLR_HEADER, DASH_HEADER_SIZE);  // ■
+      //--- Header (v2.3.0: BMP Unicode)
+      CreateLabel("P4_HDR", x, y, "\x25A0  KAZAN-KAZAN v2.3", CLR_HEADER, DASH_HEADER_SIZE);  // ■
       y += DASH_LINE_H + 2;
+
+      //--- v2.3.0: Gunluk Kar
+      CreateLabel("P4_DKAR_L", x, y, "\x25B2  Gunluk:", CLR_LABEL);        // ▲
+      CreateLabel("P4_DKAR_V", vx, y, "$0.00 (0.0%)", CLR_VALUE);
+      y += DASH_LINE_H;
+
+      //--- v2.3.0: Toplam Islem (BUY/SELL)
+      CreateLabel("P4_TTRD_L", x, y, "\x25A3  Islemler:", CLR_LABEL);      // ▣
+      CreateLabel("P4_TTRD_V", vx, y, "B:0 / S:0", CLR_VALUE);
+      y += DASH_LINE_H;
+
+      //--- v2.3.0: Gunluk Islem
+      CreateLabel("P4_DTRD_L", x, y, "\x25C7  Bugun:", CLR_LABEL);         // ◇
+      CreateLabel("P4_DTRD_V", vx, y, "0 islem", CLR_VALUE);
+      y += DASH_LINE_H;
 
       //--- Main P/L
       CreateLabel("P4_MAIN_L", x, y, "\x20AC  Ana P/L:", CLR_LABEL);       // €
@@ -919,6 +934,21 @@ private:
          return;
 
       FIFOSummary fifo = m_posMgr.GetFIFOSummary();
+
+      //--- v2.3.0: Gunluk Kar
+      UpdateLabel("P4_DKAR_V",
+                  StringFormat("$%.2f (%.1f%%)", fifo.dailyProfit, fifo.dailyProfitPct),
+                  ColorBySign(fifo.dailyProfit));
+
+      //--- v2.3.0: Toplam Islem (BUY/SELL)
+      UpdateLabel("P4_TTRD_V",
+                  StringFormat("B:%d / S:%d", fifo.totalBuyTrades, fifo.totalSellTrades),
+                  CLR_VALUE);
+
+      //--- v2.3.0: Gunluk Islem
+      UpdateLabel("P4_DTRD_V",
+                  StringFormat("%d islem", fifo.dailyTradeCount),
+                  CLR_VALUE);
 
       //--- Main P/L
       UpdateLabel("P4_MAIN_V", StringFormat("$%.2f", fifo.mainLoss), ColorBySign(fifo.mainLoss));
@@ -1351,7 +1381,7 @@ public:
       CreatePanel1(x, topY);                  // h=235
       CreatePanel2(x, topY + 240);            // h=255
       CreatePanel3(x, topY + 500);            // h=140
-      CreatePanel4(x, topY + 645);            // h=170
+      CreatePanel4(x, topY + 645);            // h=220 (v2.3.0)
 
       ChartRedraw(m_chartId);
 

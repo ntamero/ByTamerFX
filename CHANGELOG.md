@@ -4,6 +4,53 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v2.3.0] - 2026-02-19
+
+### Major: Smart Recovery Sistemi
+
+#### 1. Smart SPM Yon Mantigi
+- **SPM1**: DAIMA ANA tersine (5-oy sistemi KULLANILMAZ)
+- **SPM2**: DAIMA SPM1 tersine (ANA ile ayni yon)
+- **SPM3+**: 5-oy sistemi (Trend, Sinyal, Mum, MACD, DI)
+- DetermineSPMDirection, CheckSameDirectionBlock, ShouldWaitForANARecovery SPM1 icin kaldirildi
+
+#### 2. Yeni FIFO Hesaplama
+- **Eski**: net = kasa + acikKar + acikZarar + anaP/L (acik SPM zararlari FIFO'yu kilitliyordu)
+- **Yeni**: net = kasa - ANA zarar (acik SPM P/L DAHIL DEGIL)
+- ANA karda ise: net = kasa → kasa >= $5 ise ANA kapanir
+- ANA zararda ise: net = kasa - |zarar| → SPM karlari ANA zarari telafi edince kapanir
+- v2.2.7 ANA Kar Koruma blogu KALDIRILDI (yeni FIFO ile gereksiz)
+
+#### 3. SPM Terfi (AKTIF)
+- ANA FIFO ile kapandiktan sonra SADECE ANA kapanir (SPM'ler ACIK KALIR)
+- En eski SPM → yeni ANA olur (PromoteOldestSPM)
+- Kalan SPM katmanlari openTime sirasina gore yeniden numaralanir (RenumberSPMLayers)
+- Dongü devam eder: yeni ANA zararda ise yeni SPM'ler acilir
+
+#### 4. Acil Hedge Yeniden Yazildi
+- **Eski**: Lot oran > 2:1 + iki tarafta pozisyon + zarardaki taraf buyuk
+- **Yeni**: Grup toplam P/L <= -$40 tetiklenir
+- Yon: 5-oy sistemi (trend bazli)
+- Lot: zarardaki toplam lot * 1.2
+- SPM katman limiti BYPASS
+
+#### 5. SPM Kar Hedefi
+- XAG, XAU, INDICES, CRYPTO_ALT, METAL: spmCloseProfit $4 → $5
+- BTC: $5 (degismedi), FOREX: $3 (degismedi)
+
+#### 6. Dashboard Gunluk Istatistikler
+- Panel 4'e 3 yeni satir: Gunluk Kar ($+%), Toplam Islem (B:X/S:Y), Bugun (X islem)
+- Trade sayaclari: OpenNewMainTrade, OpenSPM, OpenDCA, OpenHedge
+- Gunluk sayac midnight reset
+
+### Files Changed
+- `Config.mqh`: FIFOSummary (5 yeni alan), profil kar hedefleri, versiyon 2.3.0
+- `PositionManager.mqh`: 6 degisiklik (yon, FIFO, terfi, hedge, sayaclar, header)
+- `ChartDashboard.mqh`: Panel 4 (3 yeni satir, h=220), versiyon header
+- `BytamerFX.mq5`: Versiyon 2.30
+
+---
+
 ## [v2.2.7] - 2026-02-19
 
 ### Critical Fixes

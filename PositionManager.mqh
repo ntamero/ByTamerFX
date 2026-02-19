@@ -5,21 +5,20 @@
 //|                                    Copyright 2026, By T@MER      |
 //|                                    https://www.bytamer.com        |
 //|                                                                  |
-//|              v2.0.0 - KAZAN-KAZAN Hedge Sistemi                  |
-//|              FIFO +$5 Net | DCA | Acil Hedge | Kilitlenme Tespit |
+//|              v2.3.0 - SMART RECOVERY Sistemi                     |
+//|              FIFO + Terfi + Akilli SPM Yon                       |
 //+------------------------------------------------------------------+
 //|  KURALLAR:                                                       |
 //|  1. SL YOK - ASLA (MUTLAK)                                      |
-//|  2. ANA islem SADECE FIFO ile kapanir (net >= +$5)               |
+//|  2. ANA islem SADECE FIFO ile kapanir (kasa - ANA zarar >= +$5)  |
 //|  3. PeakDrop SADECE SPM/DCA icin (ANA ve HEDGE muaf)             |
-//|  4. SPM 3+3 yapi: max 3 BUY + 3 SELL (v2.2.6)                   |
-//|  5. SPM yon: 5-oy sistemi (Trend,Sinyal,Mum,MACD,DI)            |
-//|     ASLA zarardaki ANA yonunde SPM acma (CheckSameDirectionBlock)|
-//|  6. SPM tetik: -$5 | SPM kar: $4 | FIFO net hedef: +$5          |
+//|  4. SPM 3+3 yapi: max 3 BUY + 3 SELL (Acil Hedge BYPASS)       |
+//|  5. SPM yon: SPM1=ANA tersi, SPM2=SPM1 tersi, SPM3+=5-oy       |
+//|  6. SPM tetik: -$5 | SPM kar: $5 | FIFO net hedef: +$5          |
 //|  7. DCA: Zarardaki SPM icin maliyet ortalama (max 1 per pozisyon)|
-//|  8. Acil Hedge: Lot oran > 2:1 + zarardaki taraf buyukse hedge   |
-//|  9. Kilitlenme: 5dk net degisim < $0.50 → tum kapat             |
-//| 10. TERFI (SPM→ANA) KALDIRILDI - kara delik yaratiyor            |
+//|  8. Acil Hedge: Grup P/L <= -$40, lot=zarar_lot*1.2, SPM BYPASS |
+//|  9. Kilitlenme: Log + bildirim (kapatma YOK)                    |
+//| 10. TERFI: ANA kapaninca en eski SPM -> ANA, dongu devam         |
 //| 11. Enstruman bazli parametreler (SymbolProfile)                 |
 //| 12. HER ZAMAN kar odakli: kucuk karlari topla, kasaya ekle       |
 //+------------------------------------------------------------------+
@@ -110,6 +109,12 @@ private:
    double               m_preCrashBalance;
    datetime             m_recoveryModeStart;
 
+   //--- v2.3.0: Trade istatistikleri
+   int                  m_totalBuyTrades;     // Toplam BUY islem sayisi
+   int                  m_totalSellTrades;    // Toplam SELL islem sayisi
+   int                  m_dailyTradeCount;    // Bugun acilan islem sayisi
+   double               m_dayStartBalance;    // Gun basi bakiye (% hesabi icin)
+
    //=================================================================
    // PRIVATE METHODS
    //=================================================================
@@ -159,6 +164,10 @@ private:
    //--- Notification helpers
    void ClosePosWithNotification(int idx, string reason);
    void CloseMainWithFIFONotification(int mainIdx, double spmKar, double mainZarar, double net);
+
+   //--- v2.3.0: Terfi mekanizmasi
+   void PromoteOldestSPM();
+   void RenumberSPMLayers();
 
    //--- Helpers
    int    FindMainPosition();
@@ -257,6 +266,12 @@ CPositionManager::CPositionManager()
    m_preCrashBalance     = 0.0;
    m_recoveryModeStart   = 0;
 
+   //--- v2.3.0: Trade istatistikleri
+   m_totalBuyTrades      = 0;
+   m_totalSellTrades     = 0;
+   m_dailyTradeCount     = 0;
+   m_dayStartBalance     = 0.0;
+
    m_profile.SetDefault();
 }
 
@@ -275,6 +290,7 @@ void CPositionManager::Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat,
    m_discord      = GetPointer(discord);
 
    m_startBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+   m_dayStartBalance = m_startBalance;  // v2.3.0: Gun basi bakiye
    m_dailyResetTime = iTime(m_symbol, PERIOD_D1, 0);
 
    m_candle.Initialize(m_symbol, PERIOD_M15);
@@ -296,7 +312,7 @@ void CPositionManager::Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat,
    PrintFormat("[PM-%s] v2.1: DCA(dist=%.1f ATR) | Hedge(oran=%.1f, fill=%.0f%%) | Deadlock(%dsn)",
                m_symbol, m_profile.dcaDistanceATR,
                Hedge_RatioTrigger, Hedge_FillPercent * 100.0, Deadlock_TimeoutSec);
-   PrintFormat("[PM-%s] KURALLAR: TERFI=YOK | PeakDrop=SADECE_SPM | ANA=SADECE_FIFO | SL=YOK",
+   PrintFormat("[PM-%s] KURALLAR: TERFI=AKTIF | PeakDrop=SADECE_SPM | ANA=SADECE_FIFO | SL=YOK",
                m_symbol);
 
    AdoptExistingPositions();
@@ -469,13 +485,20 @@ FIFOSummary CPositionManager::GetFIFOSummary()
    int mainIdx = FindMainPosition();
    summary.mainLoss = (mainIdx >= 0) ? m_positions[mainIdx].profit : 0.0;
 
-   // v2.0: Net hesap = kasa + acikKar + acikZarar + anaP/L
-   summary.netResult = m_spmClosedProfitTotal + openSPMProfit + openSPMLoss;
-   if(mainIdx >= 0 && m_positions[mainIdx].profit < 0.0)
-      summary.netResult += m_positions[mainIdx].profit;  // negatif ekleniyor
+   // v2.3.0: Net hesap = kasa - ANA zarar (acik SPM P/L DAHIL DEGIL)
+   double anaLoss = (mainIdx >= 0 && m_positions[mainIdx].profit < 0.0) ?
+                     m_positions[mainIdx].profit : 0.0;
+   summary.netResult = m_spmClosedProfitTotal + anaLoss;
 
    summary.targetUSD    = m_profile.fifoNetTarget;
    summary.isProfitable = (summary.netResult >= m_profile.fifoNetTarget);
+
+   //--- v2.3.0: Dashboard istatistikleri
+   summary.dailyProfit     = m_dailyProfit;
+   summary.dailyProfitPct  = (m_dayStartBalance > 0.0) ? (m_dailyProfit / m_dayStartBalance * 100.0) : 0.0;
+   summary.totalBuyTrades  = m_totalBuyTrades;
+   summary.totalSellTrades = m_totalSellTrades;
+   summary.dailyTradeCount = m_dailyTradeCount;
 
    return summary;
 }
@@ -594,6 +617,8 @@ void CPositionManager::RefreshPositions()
    {
       m_dailyResetTime = today;
       m_dailyProfit = 0.0;
+      m_dailyTradeCount = 0;  // v2.3.0: Gunluk islem sayaci sifirla
+      m_dayStartBalance = AccountInfoDouble(ACCOUNT_BALANCE);  // v2.3.0: Gun basi bakiye
       m_spmLimitLogged = false;
    }
 
@@ -781,7 +806,7 @@ bool CPositionManager::CheckMarginEmergency()
 //+------------------------------------------------------------------+
 //| ManageKarliPozisyonlar - v2.0 KAR ODAKLI                        |
 //| PeakDrop SADECE SPM/DCA icin (ANA ve HEDGE muaf - v2.2.6)       |
-//| TERFI (PromoteOldestSPMToMain) KALDIRILDI                       |
+//| v2.3.0: TERFI AKTIF (CheckFIFOTarget icinde)                    |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 {
@@ -976,7 +1001,7 @@ void CPositionManager::ManageSPMSystem()
 }
 
 //+------------------------------------------------------------------+
-//| ManageMainInLoss - v2.2.1: SAME-DIR BLOCK fix + log cooldown    |
+//| ManageMainInLoss - v2.3.0: SPM1 DAIMA ANA tersine                |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
 {
@@ -1003,36 +1028,16 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
    double totalVol = GetTotalBuyLots() + GetTotalSellLots();
    if(totalVol >= MaxTotalVolume) return;
 
-   //--- v2.2.1: Log cooldown (30sn) - tick basi spam onleme
    bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);
 
-   // v2.0: BUY/SELL katman limiti kontrol
-   m_spmDirOverridden = false;
-   ENUM_SIGNAL_DIR spmDir = DetermineSPMDirection(0);
+   // v2.3.0: SPM1 DAIMA ANA tersine (5-oy sistemi KULLANILMAZ)
+   ENUM_SIGNAL_DIR spmDir;
+   if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
+      spmDir = SIGNAL_SELL;
+   else
+      spmDir = SIGNAL_BUY;
 
-   if(spmDir == SIGNAL_NONE)
-   {
-      // Fallback: ana tersine
-      if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
-         spmDir = SIGNAL_SELL;
-      else
-         spmDir = SIGNAL_BUY;
-      m_spmDirOverridden = true;
-   }
-
-   // Ayni yon bloklama - ASLA zarardaki yonde ikiye katlama
-   if(CheckSameDirectionBlock(spmDir))
-   {
-      if(canLog)
-         PrintFormat("[PM-%s] SPM1 SAME-DIR BLOCK! Override: ANA tersine zorunlu.", m_symbol);
-      if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
-         spmDir = SIGNAL_SELL;
-      else
-         spmDir = SIGNAL_BUY;
-      m_spmDirOverridden = true;  // v2.2.1: Yon override edildi, bekleme ATLANIYOR
-   }
-
-   // v2.0: BUY/SELL katman limiti
+   // BUY/SELL katman limiti
    if(spmDir == SIGNAL_BUY && GetBuyLayerCount() >= m_profile.spmMaxBuyLayers)
    {
       if(canLog)
@@ -1052,19 +1057,6 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
       return;
    }
 
-   //--- v2.2.1: ANA toparlanma bekleme - SADECE yon override EDILMEDIYSE
-   //--- Yon override edildiyse (SAME-DIR BLOCK sonrasi), SPM zaten ters yonde gidiyor
-   //--- ANA'nin toparlanmasini beklemeye GEREK YOK, hemen ac!
-   if(!m_spmDirOverridden && ShouldWaitForANARecovery(mainIdx))
-   {
-      if(canLog)
-      {
-         PrintFormat("[PM-%s] SPM1 BEKLE: Trend ANA yonune donuyor, toparlanma bekleniyor.", m_symbol);
-         m_lastSPMLogTime = TimeCurrent();
-      }
-      return;
-   }
-
    // Lot hesapla (layer 1)
    double spmLot = CalcSPMLot(m_positions[mainIdx].volume, 1);
 
@@ -1079,7 +1071,7 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
       return;
    }
 
-   PrintFormat("[PM-%s] SPM1 TETIK: Ana zarar=$%.2f <= $%.2f -> %s lot=%.2f",
+   PrintFormat("[PM-%s] SPM1 TETIK: Ana zarar=$%.2f <= $%.2f -> %s lot=%.2f (ANA tersi)",
                m_symbol, mainProfit, m_profile.spmTriggerLoss,
                (spmDir == SIGNAL_BUY) ? "BUY" : "SELL", spmLot);
 
@@ -1087,12 +1079,13 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
 }
 
 //+------------------------------------------------------------------+
-//| ManageActiveSPMs - v2.2.1: SAME-DIR BLOCK fix + log cooldown    |
+//| ManageActiveSPMs - v2.3.0: Smart Yon                              |
+//| SPM2 = SPM1 tersi | SPM3+ = 5-oy sistemi (trend bazli)           |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageActiveSPMs(int mainIdx)
 {
    int highestLayer = GetHighestLayer();
-   bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);  // v2.2.1: Log cooldown
+   bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);
 
    for(int i = m_posCount - 1; i >= 0; i--)
    {
@@ -1106,23 +1099,31 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
       {
          int nextLayer = highestLayer + 1;
 
-         // v2.2.1: BUY/SELL ayri katman limiti + SAME-DIR BLOCK fix
-         bool nextDirOverridden = false;
-         ENUM_SIGNAL_DIR nextDir = DetermineSPMDirection(spmLayer);
-
-         // Ayni yon bloklama
-         if(CheckSameDirectionBlock(nextDir))
+         // v2.3.0: Smart yon mantigi
+         ENUM_SIGNAL_DIR nextDir;
+         if(nextLayer == 2)
          {
-            if(canLog)
-               PrintFormat("[PM-%s] SPM%d SAME-DIR BLOCK! Override: ANA tersine.", m_symbol, nextLayer);
-            if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
+            // SPM2: Onceki SPM'in (SPM1) tersi
+            if(m_positions[i].type == POSITION_TYPE_BUY)
                nextDir = SIGNAL_SELL;
             else
                nextDir = SIGNAL_BUY;
-            nextDirOverridden = true;  // v2.2.1: Bekleme atlanacak
+         }
+         else
+         {
+            // SPM3+: Trend bazli 5-oy sistemi
+            nextDir = DetermineSPMDirection(spmLayer);
+            if(nextDir == SIGNAL_NONE)
+            {
+               // Fallback: onceki SPM'in tersi
+               if(m_positions[i].type == POSITION_TYPE_BUY)
+                  nextDir = SIGNAL_SELL;
+               else
+                  nextDir = SIGNAL_BUY;
+            }
          }
 
-         // Katman limiti kontrol (5+5 yapi)
+         // Katman limiti kontrol (3+3 yapi)
          if(nextDir == SIGNAL_BUY && GetBuyLayerCount() >= m_profile.spmMaxBuyLayers)
          {
             if(!m_spmLimitLogged)
@@ -1148,8 +1149,7 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
          double balance = AccountInfoDouble(ACCOUNT_BALANCE);
          if(balance < MinBalanceToTrade) continue;
 
-         //--- v2.2.2: ACIL SPM - zarar 2x tetik asarsa cooldown ATLA
-         //--- Normal: 60sn bekle. Acil: zarar >= 2x tetik ise HEMEN ac!
+         //--- ACIL SPM - zarar 2x tetik asarsa cooldown ATLA
          bool isEmergencySPM = (spmProfit <= m_profile.spmTriggerLoss * 2.0);
          if(!isEmergencySPM && TimeCurrent() < m_lastSPMTime + m_profile.spmCooldownSec)
          {
@@ -1174,17 +1174,6 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
          double totalVol = GetTotalBuyLots() + GetTotalSellLots();
          if(totalVol >= MaxTotalVolume) continue;
 
-         //--- v2.2.1: ANA toparlanma bekleme - SADECE yon override EDILMEDIYSE
-         if(!nextDirOverridden && ShouldWaitForANARecovery(mainIdx))
-         {
-            if(canLog)
-            {
-               PrintFormat("[PM-%s] SPM%d BEKLE: Trend ANA yonune donuyor.", m_symbol, nextLayer);
-               m_lastSPMLogTime = TimeCurrent();
-            }
-            continue;
-         }
-
          // Lot
          double nextLot = CalcSPMLot(m_positions[mainIdx].volume, nextLayer);
 
@@ -1199,9 +1188,10 @@ void CPositionManager::ManageActiveSPMs(int mainIdx)
             continue;
          }
 
-         PrintFormat("[PM-%s] SPM%d TETIK: SPM%d zarar=$%.2f -> %s lot=%.2f",
+         string dirSource = (nextLayer == 2) ? "SPM1_tersi" : "5-oy";
+         PrintFormat("[PM-%s] SPM%d TETIK: SPM%d zarar=$%.2f -> %s lot=%.2f (%s)",
                      m_symbol, nextLayer, spmLayer, spmProfit,
-                     (nextDir == SIGNAL_BUY) ? "BUY" : "SELL", nextLot);
+                     (nextDir == SIGNAL_BUY) ? "BUY" : "SELL", nextLot, dirSource);
 
          OpenSPM(nextDir, nextLot, nextLayer, m_positions[i].ticket);
       }
@@ -1279,12 +1269,12 @@ void CPositionManager::ManageDCA()
 }
 
 //+------------------------------------------------------------------+
-//| ManageEmergencyHedge - v2.0.1: Guclendirilmis Acil Hedge         |
+//| ManageEmergencyHedge - v2.3.0: Grup P/L bazli acil hedge         |
 //| KOSULLAR:                                                         |
-//|  1. En az 2 SPM aktif olmali (tek pozisyonda hedge SACMA)         |
-//|  2. Iki tarafta da pozisyon olmali (oran hesabi anlamli olsun)    |
-//|  3. Lot oran > 2.0 VE zarardaki taraf buyukse                    |
-//|  4. Toplam zarar > SPM tetik esigi (anlamli zarar biriktikten)   |
+//|  1. Grup toplam P/L <= -$40                                       |
+//|  2. Yon: 5-oy sistemi (trend+sinyal+mum+MACD+DI)                 |
+//|  3. Lot: zarardaki toplam lot * 1.2                               |
+//|  4. SPM katman limiti BYPASS                                      |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageEmergencyHedge()
 {
@@ -1292,48 +1282,45 @@ void CPositionManager::ManageEmergencyHedge()
    if(TimeCurrent() < m_lastHedgeTime + Hedge_CooldownSec) return;
    if(IsTradingPaused()) return;
 
-   //--- KOSUL 1: En az N SPM aktif olmali (profil bazli)
-   // Tek pozisyon veya ANA+1SPM durumunda hedge gereksiz
-   // SPM sistemi kendi isini yapiyor, hedge sadece CIDDI dengesizlikte devreye girer
-   int activeSPMs = GetActiveSPMCount();
-   if(activeSPMs < m_profile.hedgeMinSPMCount) return;
-
-   double totalBuyLot = GetTotalBuyLots();
-   double totalSellLot = GetTotalSellLots();
-
-   //--- KOSUL 2: Iki tarafta da pozisyon olmali
-   // Tek tarafta pozisyon varken oran hesabi anlamsiz (0.01/0 = sonsuz)
-   if(totalBuyLot <= 0.0 || totalSellLot <= 0.0) return;
-
-   double maxSide = MathMax(totalBuyLot, totalSellLot);
-   double minSide = MathMin(totalBuyLot, totalSellLot);
-   double ratio = maxSide / minSide;
-
-   //--- KOSUL 3: Oran tetigi
-   if(ratio <= Hedge_RatioTrigger) return;
-
-   //--- KOSUL 4: Toplam zarar kontrolu - anlamli zarar biriktikten sonra
-   double buyPnL = 0.0, sellPnL = 0.0;
+   // v2.3.0: Grup toplam P/L hesapla
+   double groupPnL = 0.0;
+   double losingLots = 0.0;
    for(int i = 0; i < m_posCount; i++)
    {
-      if(m_positions[i].type == POSITION_TYPE_BUY)
-         buyPnL += m_positions[i].profit;
-      else
-         sellPnL += m_positions[i].profit;
+      groupPnL += m_positions[i].profit;
+      if(m_positions[i].profit < 0.0)
+         losingLots += m_positions[i].volume;
    }
 
-   // Zarardaki tarafin toplam zarari yeterince buyuk olmali (profil bazli)
-   double losingPnL = MathMin(buyPnL, sellPnL);  // en cok zarardaki taraf
-   if(losingPnL > m_profile.hedgeMinLossUSD) return;  // Yeterince zarar yok (BTC:-$10, XAG:-$8)
+   // Tetik: grup P/L <= -$40
+   if(groupPnL > -40.0) return;
 
-   // v2.2.4: Toplam net zarar kontrolu - zarar_taraf_buyuk sarti kaldirildi
-   // Oran > 2.0 VE toplam zarar yeterli ise dengeye getir
-   double totalPnL = buyPnL + sellPnL;
-   if(totalPnL >= 0.0) return;  // Toplam karda ise hedge gerekmiyor
+   // Bakiye kontrolu
+   double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+   if(balance < MinBalanceToTrade) return;
 
-   // Hedge: Eksik tarafta pozisyon ac (karsi yon)
-   double fark = MathAbs(totalBuyLot - totalSellLot);
-   double hedgeLot = fark * Hedge_FillPercent;
+   // Margin kontrolu
+   double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
+   if(marginLevel > 0.0 && marginLevel < MinMarginLevel) return;
+
+   // v2.3.0: Yon - 5-oy sistemi
+   ENUM_SIGNAL_DIR hedgeDir = DetermineSPMDirection(0);
+   if(hedgeDir == SIGNAL_NONE)
+   {
+      // Fallback: ANA tersine
+      int mainIdx = FindMainPosition();
+      if(mainIdx >= 0)
+      {
+         if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
+            hedgeDir = SIGNAL_SELL;
+         else
+            hedgeDir = SIGNAL_BUY;
+      }
+      else return;  // ANA yok, yon belirlenemez
+   }
+
+   // v2.3.0: Lot = zarardaki toplam lot * 1.2
+   double hedgeLot = losingLots * 1.2;
 
    // Normalize
    double minLot  = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_MIN);
@@ -1345,27 +1332,13 @@ void CPositionManager::ManageEmergencyHedge()
    hedgeLot = NormalizeDouble(hedgeLot, 2);
 
    // Toplam hacim kontrolu
-   double totalVol = totalBuyLot + totalSellLot;
+   double totalVol = GetTotalBuyLots() + GetTotalSellLots();
    if(totalVol + hedgeLot > MaxTotalVolume) return;
 
-   // Margin kontrolu
-   double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
-   if(marginLevel > 0.0 && marginLevel < MinMarginLevel) return;
-
-   // Hedge yonu: buyuk olan tarafin tersine
-   ENUM_SIGNAL_DIR hedgeDir;
-   if(totalBuyLot > totalSellLot)
-      hedgeDir = SIGNAL_SELL;
-   else
-      hedgeDir = SIGNAL_BUY;
-
-   PrintFormat("[PM-%s] ACIL HEDGE: BUY=%.2f(%s%.2f) SELL=%.2f(%s%.2f) Oran=%.1f > %.1f",
-               m_symbol, totalBuyLot, (buyPnL >= 0) ? "+" : "", buyPnL,
-               totalSellLot, (sellPnL >= 0) ? "+" : "", sellPnL,
-               ratio, Hedge_RatioTrigger);
-   PrintFormat("[PM-%s] HEDGE: %s %.2f lot (fark=%.2f * %.0f%%)",
-               m_symbol, (hedgeDir == SIGNAL_BUY) ? "BUY" : "SELL",
-               hedgeLot, fark, Hedge_FillPercent * 100.0);
+   // SPM LIMITI BYPASS - BUY/SELL katman kontrolu YAPILMAZ
+   PrintFormat("[PM-%s] ACIL HEDGE v2.3: GrupP/L=$%.2f <= -$40 | ZararLot=%.2f * 1.2 = %.2f | %s",
+               m_symbol, groupPnL, losingLots, hedgeLot,
+               (hedgeDir == SIGNAL_BUY) ? "BUY" : "SELL");
 
    OpenHedge(hedgeDir, hedgeLot);
 }
@@ -1609,109 +1582,177 @@ void CPositionManager::CheckFIFOTarget()
 
    double mainProfit = m_positions[mainIdx].profit;
 
-   // v2.0: ANA karda olsa bile FIFO kontrolu yap
-   // (SPM'lerden biriken kasa + ANA kar = toplam net)
-
-   // Acik SPM/DCA/HEDGE P/L
-   double openProfit = 0.0;
-   double openLoss   = 0.0;
-   for(int i = 0; i < m_posCount; i++)
-   {
-      if(m_positions[i].role == ROLE_SPM || m_positions[i].role == ROLE_DCA || m_positions[i].role == ROLE_HEDGE)
-      {
-         if(m_positions[i].profit >= 0.0)
-            openProfit += m_positions[i].profit;
-         else
-            openLoss += m_positions[i].profit;  // negatif
-      }
-   }
-
-   // v2.0 net hesap: kasa + acikKar + acikZarar + anaP/L
-   double net = m_spmClosedProfitTotal + openProfit + openLoss + mainProfit;
+   // v2.3.0: Yeni FIFO hesap = Kasa (kapanmis SPM karlari) - ANA zarar
+   // Acik SPM P/L artik FIFO hesabina DAHIL DEGIL
+   double anaLoss = (mainProfit < 0.0) ? mainProfit : 0.0;  // negatif veya 0
+   double net = m_spmClosedProfitTotal + anaLoss;
 
    // Hedef ulasilmadi
    if(net < m_profile.fifoNetTarget)
    {
       m_fifoWaitStart = 0;
-
-      // v2.2.7: ANA KAR KORUMA - FIFO deadlock onleme
-      // ANA yeterince karda + FIFO hedefi ulasilamaz + kilitlenme + kar erimeye baslamis
-      if(mainProfit >= 10.0 && net < -10.0)
-      {
-         // ANA peak'ten %30+ dusmüs mu?
-         double mainPeak = (mainIdx < ArraySize(m_peakProfit)) ? m_peakProfit[mainIdx] : mainProfit;
-         double mainDrop = (mainPeak > 0.0) ? (mainPeak - mainProfit) / mainPeak * 100.0 : 0.0;
-
-         // Kilitlenme suresi >= 300sn?
-         int deadlockElapsed = (m_deadlockActive) ? (int)(TimeCurrent() - m_deadlockCheckStart) : 0;
-
-         if(mainDrop >= 30.0 && deadlockElapsed >= 300)
-         {
-            PrintFormat("[PM-%s] ANA KAR KORUMA: ANA=$%.2f (Peak=$%.2f Drop=%.0f%%) | Net=$%.2f | Kilitlenme=%dsn",
-                        m_symbol, mainProfit, mainPeak, mainDrop, net, deadlockElapsed);
-            PrintFormat("[PM-%s] FIFO hedefi ulasilamaz, ANA kari korunuyor -> TUM KAPAT",
-                        m_symbol);
-
-            if(m_telegram != NULL)
-               m_telegram.SendMessage(StringFormat("ANA KAR KORUMA %s: ANA=$%.2f | Net=$%.2f -> TUM KAPAT",
-                                                   m_symbol, mainProfit, net));
-            if(m_discord != NULL)
-               m_discord.SendMessage(StringFormat("ANA KAR KORUMA %s: ANA=$%.2f | Net=$%.2f -> TUM KAPAT",
-                                                  m_symbol, mainProfit, net));
-
-            CloseAllPositions("AnaKarKoruma_ANA=" + DoubleToString(mainProfit, 2));
-
-            double newCashIn = openProfit + openLoss + mainProfit;
-            m_totalCashedProfit += newCashIn;
-            m_dailyProfit += net;
-            ResetFIFO();
-            return;
-         }
-      }
-
       return;
    }
 
    //--- HEDEF ULASILDI!
-   PrintFormat("[PM-%s] FIFO HEDEF: Net=$%.2f >= $%.2f", m_symbol, net, m_profile.fifoNetTarget);
-
-   //--- v2.0: HEMEN kapat (trend bekleme KALDIRILDI - hedef tutuyorsa hemen al)
-   PrintFormat("[PM-%s] +++ FIFO HEDEF ULASILDI +++ Net=$%.2f", m_symbol, net);
-   PrintFormat("[PM-%s] FIFO: Kasa=$%.2f + AcikKar=$%.2f + AcikZarar=$%.2f + Ana=$%.2f = $%.2f",
-               m_symbol, m_spmClosedProfitTotal, openProfit, openLoss, mainProfit, net);
+   PrintFormat("[PM-%s] +++ FIFO HEDEF ULASILDI +++ Net=$%.2f (Kasa=$%.2f + ANA=$%.2f)",
+               m_symbol, net, m_spmClosedProfitTotal, anaLoss);
 
    // Bildirim
-   CloseMainWithFIFONotification(mainIdx, m_spmClosedProfitTotal + openProfit + openLoss, mainProfit, net);
+   CloseMainWithFIFONotification(mainIdx, m_spmClosedProfitTotal, mainProfit, net);
 
-   // Tum pozisyonlari kapat
-   CloseAllPositions("FIFO_Net=" + DoubleToString(net, 2));
+   // v2.3.0: SADECE ANA'yi kapat (SPM'ler ACIK KALIR)
+   if(m_executor != NULL)
+   {
+      bool closed = m_executor.ClosePosition(m_positions[mainIdx].ticket);
+      if(!closed)
+      {
+         PrintFormat("[PM-%s] FIFO: ANA kapatma BASARISIZ #%llu", m_symbol, m_positions[mainIdx].ticket);
+         return;
+      }
+   }
 
-   //--- v2.2.2: Cift sayma duzeltmesi
-   //--- m_spmClosedProfitTotal zaten m_totalCashedProfit'e eklenmis (ManageKarliPozisyonlar'da)
-   //--- Sadece acik pozisyon P/L + ANA P/L eklenmeli (bunlar henuz kasaya eklenmemisti)
-   double newCashIn = openProfit + openLoss + mainProfit;
-   m_totalCashedProfit += newCashIn;
+   // Kasa guncelle: net kar realize edildi
+   m_totalCashedProfit += net;
    m_dailyProfit += net;
 
-   // FIFO sifirla
-   ResetFIFO();
+   PrintFormat("[PM-%s] FIFO: ANA #%llu kapatildi. Net=$%.2f realize edildi.",
+               m_symbol, m_positions[mainIdx].ticket, net);
+
+   // Bildirim
+   if(m_telegram != NULL)
+      m_telegram.SendMessage(StringFormat("FIFO %s: ANA kapatildi Net=$%.2f | TERFI kontrol...",
+                                          m_symbol, net));
+   if(m_discord != NULL)
+      m_discord.SendMessage(StringFormat("FIFO %s: ANA kapatildi Net=$%.2f | TERFI kontrol...",
+                                         m_symbol, net));
+
+   m_mainTicket = 0;
+
+   // v2.3.0: TERFI - en eski SPM → ANA
+   RefreshPositions();  // Listeyi guncelle (ANA artik yok)
+   PromoteOldestSPM();
+
+   // FIFO sifirla (yeni ANA icin yeni dongü)
+   // PromoteOldestSPM icinde zaten sifirlanir
    m_fifoWaitStart = 0;
 
-   // Yeni ANA icin sinyal ara
-   ENUM_SIGNAL_DIR newDir = SIGNAL_NONE;
-   if(m_signalEngine != NULL)
+   if(FindMainPosition() < 0)
    {
-      SignalData sig = m_signalEngine.Evaluate();
-      if(sig.direction != SIGNAL_NONE && sig.score >= SignalMinScore)
-         newDir = sig.direction;
-   }
-   if(newDir == SIGNAL_NONE)
-      newDir = GetCandleDirection();
+      // Hic SPM kalmadi → temiz bitis
+      PrintFormat("[PM-%s] FIFO DONGU TAMAMLANDI - tum pozisyonlar kapatildi", m_symbol);
 
-   if(newDir != SIGNAL_NONE)
-      OpenNewMainTrade(newDir, "FIFO_YeniDongu");
+      // Yeni ANA icin sinyal ara
+      ENUM_SIGNAL_DIR newDir = SIGNAL_NONE;
+      if(m_signalEngine != NULL)
+      {
+         SignalData sig = m_signalEngine.Evaluate();
+         if(sig.direction != SIGNAL_NONE && sig.score >= SignalMinScore)
+            newDir = sig.direction;
+      }
+      if(newDir == SIGNAL_NONE)
+         newDir = GetCandleDirection();
+
+      if(newDir != SIGNAL_NONE)
+         OpenNewMainTrade(newDir, "FIFO_YeniDongu");
+      else
+         PrintFormat("[PM-%s] FIFO dongu tamamlandi, sinyal bekleniyor.", m_symbol);
+   }
    else
-      PrintFormat("[PM-%s] FIFO dongu tamamlandi, sinyal bekleniyor.", m_symbol);
+   {
+      PrintFormat("[PM-%s] TERFI sonrasi yeni ANA mevcut, dongü devam ediyor.", m_symbol);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| PromoteOldestSPM - v2.3.0: En eski SPM → ANA terfi               |
+//| ANA FIFO ile kapandiktan sonra dongü devam etsin                  |
+//+------------------------------------------------------------------+
+void CPositionManager::PromoteOldestSPM()
+{
+   // En eski SPM'i bul (openTime en kucuk olan)
+   int oldestIdx = -1;
+   datetime oldestTime = D'2099.01.01';
+   for(int i = 0; i < m_posCount; i++)
+   {
+      if(m_positions[i].role == ROLE_SPM && m_positions[i].openTime < oldestTime)
+      {
+         oldestTime = m_positions[i].openTime;
+         oldestIdx = i;
+      }
+   }
+
+   if(oldestIdx < 0)
+   {
+      PrintFormat("[PM-%s] TERFI: Acik SPM yok, yeni dongü bekliyor.", m_symbol);
+      return;
+   }
+
+   // Role degistir: SPM → MAIN
+   ulong promotedTicket = m_positions[oldestIdx].ticket;
+   int oldLayer = m_positions[oldestIdx].spmLayer;
+   m_positions[oldestIdx].role = ROLE_MAIN;
+   m_positions[oldestIdx].spmLayer = 0;
+   m_mainTicket = promotedTicket;
+
+   // Kalan SPM'lerin katmanlarini yeniden numarala
+   RenumberSPMLayers();
+
+   // FIFO sifirla (yeni ANA ile yeni dongü)
+   m_spmClosedProfitTotal = 0.0;
+   m_spmClosedCount = 0;
+
+   PrintFormat("[PM-%s] TERFI: SPM%d #%llu -> ANA | Kalan SPM=%d | P/L=$%.2f",
+               m_symbol, oldLayer, promotedTicket, GetActiveSPMCount(),
+               m_positions[oldestIdx].profit);
+
+   if(m_telegram != NULL)
+      m_telegram.SendMessage(StringFormat("TERFI %s: SPM%d #%d -> ANA | SPM=%d",
+                             m_symbol, oldLayer, (int)promotedTicket, GetActiveSPMCount()));
+   if(m_discord != NULL)
+      m_discord.SendMessage(StringFormat("TERFI %s: SPM%d #%d -> ANA | SPM=%d",
+                            m_symbol, oldLayer, (int)promotedTicket, GetActiveSPMCount()));
+}
+
+//+------------------------------------------------------------------+
+//| RenumberSPMLayers - v2.3.0: SPM katmanlarini yeniden numarala     |
+//| openTime sirasina gore: en eski = layer 1, sonraki = layer 2...  |
+//+------------------------------------------------------------------+
+void CPositionManager::RenumberSPMLayers()
+{
+   // Once tum SPM layer'lari -1 yap (isaretlenmemis)
+   for(int i = 0; i < m_posCount; i++)
+   {
+      if(m_positions[i].role == ROLE_SPM)
+         m_positions[i].spmLayer = -1;
+   }
+
+   // openTime sirasina gore yeniden numarala
+   int layerNum = 1;
+   for(int pass = 0; pass < m_posCount; pass++)  // max m_posCount pass
+   {
+      datetime earliest = D'2099.01.01';
+      int earliestIdx = -1;
+
+      for(int i = 0; i < m_posCount; i++)
+      {
+         if(m_positions[i].role == ROLE_SPM && m_positions[i].spmLayer == -1)
+         {
+            if(m_positions[i].openTime < earliest)
+            {
+               earliest = m_positions[i].openTime;
+               earliestIdx = i;
+            }
+         }
+      }
+
+      if(earliestIdx < 0) break;  // Tum SPM'ler numaralandi
+
+      m_positions[earliestIdx].spmLayer = layerNum;
+      layerNum++;
+   }
+
+   m_spmLayerCount = layerNum - 1;
 }
 
 //+------------------------------------------------------------------+
@@ -1852,6 +1893,11 @@ void CPositionManager::OpenNewMainTrade(ENUM_SIGNAL_DIR dirHint, string reason)
       m_mainTicket = newTicket;
       m_spmLayerCount = 0;
 
+      // v2.3.0: Trade sayaci
+      if(finalDir == SIGNAL_BUY) m_totalBuyTrades++;
+      else m_totalSellTrades++;
+      m_dailyTradeCount++;
+
       PrintFormat("[PM-%s] YENI ANA: #%d %s Lot=%.2f Sebep=%s",
                   m_symbol, (int)newTicket,
                   (finalDir == SIGNAL_BUY) ? "BUY" : "SELL", lot, reason);
@@ -1886,6 +1932,11 @@ void CPositionManager::OpenSPM(ENUM_SIGNAL_DIR dir, double lot, int layer, ulong
       m_spmLayerCount = layer;
       m_lastSPMTime = TimeCurrent();
       m_spmLimitLogged = false;
+
+      // v2.3.0: Trade sayaci
+      if(dir == SIGNAL_BUY) m_totalBuyTrades++;
+      else m_totalSellTrades++;
+      m_dailyTradeCount++;
 
       PrintFormat("[PM-%s] SPM%d ACILDI: #%d %s Lot=%.2f Parent=%d",
                   m_symbol, layer, (int)newTicket,
@@ -1932,6 +1983,11 @@ void CPositionManager::OpenDCA(int sourceIdx)
    {
       m_lastDCATime = TimeCurrent();
 
+      // v2.3.0: Trade sayaci
+      if(dcaDir == SIGNAL_BUY) m_totalBuyTrades++;
+      else m_totalSellTrades++;
+      m_dailyTradeCount++;
+
       PrintFormat("[PM-%s] DCA ACILDI: #%d %s Lot=%.2f Parent=#%d OrtMaliyet yariladi",
                   m_symbol, (int)newTicket,
                   (dcaDir == SIGNAL_BUY) ? "BUY" : "SELL", dcaLot,
@@ -1964,6 +2020,11 @@ void CPositionManager::OpenHedge(ENUM_SIGNAL_DIR dir, double lot)
    {
       m_lastHedgeTime = TimeCurrent();
 
+      // v2.3.0: Trade sayaci
+      if(dir == SIGNAL_BUY) m_totalBuyTrades++;
+      else m_totalSellTrades++;
+      m_dailyTradeCount++;
+
       PrintFormat("[PM-%s] HEDGE ACILDI: #%d %s Lot=%.2f",
                   m_symbol, (int)newTicket,
                   (dir == SIGNAL_BUY) ? "BUY" : "SELL", lot);
@@ -1983,7 +2044,7 @@ void CPositionManager::OpenHedge(ENUM_SIGNAL_DIR dir, double lot)
 }
 
 //+------------------------------------------------------------------+
-//| ManageTPLevels - v2.0: TERFI KALDIRILDI                          |
+//| ManageTPLevels - v2.3.0: TERFI AKTIF (PromoteOldestSPM)          |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageTPLevels()
 {

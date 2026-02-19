@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.2.7"
-#define EA_VERSION_NUM    "2.27"
-#define EA_VERSION_NAME   "KazanKazan"
-#define EA_VERSION_FULL   "BytamerFX v2.2.7 - KazanKazan Pro"
+#define EA_VERSION        "2.3.0"
+#define EA_VERSION_NUM    "2.30"
+#define EA_VERSION_NAME   "SmartRecovery"
+#define EA_VERSION_FULL   "BytamerFX v2.3.0 - Smart Recovery"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -279,6 +279,13 @@ struct FIFOSummary
    double             netResult;          // Net sonuc
    double             targetUSD;          // Hedef ($)
    bool               isProfitable;       // Hedef ulasildi mi?
+
+   //--- v2.3.0: Dashboard istatistikleri
+   double             dailyProfit;        // Gunluk realize kar
+   double             dailyProfitPct;     // Gunluk kar yuzdesi
+   int                totalBuyTrades;     // Toplam BUY islem adedi
+   int                totalSellTrades;    // Toplam SELL islem adedi
+   int                dailyTradeCount;    // Bugun acilan islem adedi
 };
 
 struct ScoreBreakdown
@@ -392,7 +399,7 @@ struct SymbolProfile
       minLotOverride    = 0.01;       // XAG: min 0.01 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;       // XAG: -$5 tetik
-      spmCloseProfit    = 4.0;
+      spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 3;          // v2.2.6: 5→3
       spmMaxSellLayers  = 3;          // v2.2.6: 5→3
@@ -416,7 +423,7 @@ struct SymbolProfile
       minLotOverride    = 0.01;       // XAU: min 0.01 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;       // XAU: -$5 tetik
-      spmCloseProfit    = 4.0;
+      spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 3;          // v2.2.6: 5→3
       spmMaxSellLayers  = 3;          // v2.2.6: 5→3
@@ -464,7 +471,7 @@ struct SymbolProfile
       minLotOverride    = 0.01;       // Altcoin: min 0.01 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;
-      spmCloseProfit    = 4.0;
+      spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 3;          // v2.2.6: 5→3
       spmMaxSellLayers  = 3;          // v2.2.6: 5→3
@@ -488,7 +495,7 @@ struct SymbolProfile
       minLotOverride    = 0.03;       // Indices: min 0.03 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;
-      spmCloseProfit    = 4.0;
+      spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 3;          // v2.2.6: 5→3
       spmMaxSellLayers  = 3;          // v2.2.6: 5→3
@@ -560,7 +567,7 @@ struct SymbolProfile
       minLotOverride    = 0.01;       // Metal: min 0.01 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       spmTriggerLoss    = -5.0;
-      spmCloseProfit    = 4.0;
+      spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 3;          // v2.2.6: 5→3
       spmMaxSellLayers  = 3;          // v2.2.6: 5→3
