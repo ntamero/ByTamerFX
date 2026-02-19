@@ -6,12 +6,13 @@
 //|                                    https://www.bytamer.com        |
 //|                                                                  |
 //|              v2.3.0 - SMART RECOVERY Sistemi                     |
-//|              FIFO + Terfi + Akilli SPM Yon                       |
+//|              FIFO + Terfi + Akilli Kapatma                       |
 //+------------------------------------------------------------------+
 //|  KURALLAR:                                                       |
 //|  1. SL YOK - ASLA (MUTLAK)                                      |
 //|  2. ANA islem SADECE FIFO ile kapanir (kasa - ANA zarar >= +$5)  |
-//|  3. PeakDrop SADECE SPM/DCA icin (ANA ve HEDGE muaf)             |
+//|  3. AKILLI KAPATMA: Skor>=93+Mum OK → BEKLE (PeakDrop koru)    |
+//|     Zayif trend/mum ters → HEMEN KAPAT (TUM roller icin)        |
 //|  4. SPM 3+3 yapi: max 3 BUY + 3 SELL (Acil Hedge BYPASS)       |
 //|  5. SPM yon: SPM1=ANA tersi, SPM2=SPM1 tersi, SPM3+=5-oy       |
 //|  6. SPM tetik: -$5 | SPM kar: $5 | FIFO net hedef: +$5          |
@@ -20,7 +21,7 @@
 //|  9. Kilitlenme: Log + bildirim (kapatma YOK)                    |
 //| 10. TERFI: ANA kapaninca en eski SPM -> ANA, dongu devam         |
 //| 11. Enstruman bazli parametreler (SymbolProfile)                 |
-//| 12. HER ZAMAN kar odakli: kucuk karlari topla, kasaya ekle       |
+//| 12. 30sn bekleme sonrasi sinyal+trend+mum bazli yeni islem       |
 //+------------------------------------------------------------------+
 
 #include "Config.mqh"
@@ -178,6 +179,7 @@ private:
    string GetCatName();
    void   ResetFIFO();
    void   CloseAllPositions(string reason);
+   void   SmartClosePosition(int idx, ENUM_POS_ROLE role, double profit, string reason);
    void   SetProtectionCooldown(string reason);
    void   PrintDetailedStatus();
    double GetTotalBuyLots();
@@ -804,12 +806,27 @@ bool CPositionManager::CheckMarginEmergency()
 }
 
 //+------------------------------------------------------------------+
-//| ManageKarliPozisyonlar - v2.0 KAR ODAKLI                        |
-//| PeakDrop SADECE SPM/DCA icin (ANA ve HEDGE muaf - v2.2.6)       |
-//| v2.3.0: TERFI AKTIF (CheckFIFOTarget icinde)                    |
+//| ManageKarliPozisyonlar - v2.3.0 AKILLI KAPATMA                  |
+//| TUM pozisyonlar icin tekduze: ANA + SPM + DCA + HEDGE           |
+//| Kar hedefine ulasinca: Skor>=93 + Mum OK → BEKLE (PeakDrop)    |
+//|                        Aksi halde → HEMEN KAPAT                  |
+//| ANA SPM varken buraya GIRMEZ (FIFO ile kapanir)                 |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 {
+   // Sinyal ve mum yonu - her tick'te 1 kez hesapla (tum pozisyonlar icin ortak)
+   bool sigValid = false;
+   int sigScore = 0;
+   ENUM_SIGNAL_DIR sigDir = SIGNAL_NONE;
+   if(m_signalEngine != NULL)
+   {
+      SignalData sig = m_signalEngine.Evaluate();
+      sigValid = true;
+      sigScore = sig.score;
+      sigDir   = sig.direction;
+   }
+   ENUM_SIGNAL_DIR candleDir = GetCandleDirection();
+
    for(int i = m_posCount - 1; i >= 0; i--)
    {
       double profit = m_positions[i].profit;
@@ -823,133 +840,89 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
          if(profit > m_peakProfit[i])
             m_peakProfit[i] = profit;
 
-      //=== KURAL 0: ANA tek basina karda -> AKILLI KAPATMA ===
-      // v2.3.0: ANA SPM yokken kar hedefine ulasinca:
-      //   - Trend guclu (skor >= 93) + mum ayni yonde → BEKLE, PeakDrop ile koru
-      //   - Trend zayif / mum ters → HEMEN KAPAT
-      if(role == ROLE_MAIN && profit >= m_profile.anaCloseProfit && GetActiveSPMCount() == 0)
+      // ANA SPM varken → FIFO ile kapanir (CheckFIFOTarget), burasi ATLA
+      if(role == ROLE_MAIN && GetActiveSPMCount() > 0)
+         continue;
+
+      //--- Kar hedefi belirle (role bazli)
+      double closeTarget = 0.0;
+      if(role == ROLE_MAIN)
+         closeTarget = m_profile.anaCloseProfit;            // ANA: $4(FX) / $5(diger)
+      else if(role == ROLE_DCA)
+         closeTarget = MathMax(m_profile.profitTargetPerPos, m_profile.minCloseProfit);
+      else
+         closeTarget = MathMax(m_profile.spmCloseProfit, m_profile.minCloseProfit);  // SPM/HEDGE
+
+      //--- Pozisyon yonu
+      ENUM_SIGNAL_DIR posDir = (m_positions[i].type == POSITION_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
+
+      //--- Rol etiketi (log icin)
+      string roleStr = "";
+      if(role == ROLE_MAIN)        roleStr = "ANA";
+      else if(role == ROLE_SPM)    roleStr = StringFormat("SPM%d", m_positions[i].spmLayer);
+      else if(role == ROLE_DCA)    roleStr = "DCA";
+      else                         roleStr = "HEDGE";
+
+      //=======================================================
+      // AKILLI KAPATMA: Kar hedefine ulasti mi?
+      //=======================================================
+      if(profit >= closeTarget)
       {
-         // Sinyal ve mum yonu analiz et
-         bool trendGuclu = false;
-         bool mumAyniYon = false;
-
-         if(m_signalEngine != NULL)
-         {
-            SignalData sig = m_signalEngine.Evaluate();
-            ENUM_SIGNAL_DIR posDir = (m_positions[i].type == POSITION_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
-
-            // Sinyal skoru >= 93 VE ayni yonde → trend guclu
-            if(sig.score >= 93 && sig.direction == posDir)
-               trendGuclu = true;
-         }
-
-         // Mum yonu kontrol (M15)
-         ENUM_SIGNAL_DIR candleDir = GetCandleDirection();
-         ENUM_SIGNAL_DIR posDir2 = (m_positions[i].type == POSITION_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
-         if(candleDir == posDir2)
-            mumAyniYon = true;
+         // Trend guclu mu? (skor >= 93 + ayni yonde)
+         bool trendGuclu = (sigValid && sigScore >= 93 && sigDir == posDir);
+         // Mum ayni yonde mi?
+         bool mumAyniYon = (candleDir == posDir);
 
          if(trendGuclu && mumAyniYon)
          {
             //--- GUCLU TREND: Bekle, PeakDrop ile koru
-            // ANA icin PeakDrop uygula (peak'ten %50 duserse kapat)
             double peakVal = (i < ArraySize(m_peakProfit)) ? m_peakProfit[i] : profit;
-            if(peakVal >= m_profile.anaCloseProfit && profit >= m_profile.anaCloseProfit)
+            if(peakVal >= closeTarget && profit >= closeTarget)
             {
-               double dropPct = (peakVal - profit) / peakVal * 100.0;
+               double dropPct = (peakVal > 0.0) ? ((peakVal - profit) / peakVal * 100.0) : 0.0;
                if(dropPct >= PeakDropPercent)
                {
                   // Peak'ten dustu → karini koru, hemen kapat
-                  PrintFormat("[PM-%s] ANA PEAK DROP: Peak=$%.2f Now=$%.2f Drop=%.0f%% -> KAPAT",
-                              m_symbol, peakVal, profit, dropPct);
+                  PrintFormat("[PM-%s] %s PEAK DROP: Peak=$%.2f Now=$%.2f Drop=%.0f%% -> KAPAT",
+                              m_symbol, roleStr, peakVal, profit, dropPct);
 
-                  m_totalCashedProfit += profit;
-                  m_dailyProfit += profit;
-
-                  if(m_telegram != NULL)
-                     m_telegram.SendMessage(StringFormat("ANA KAR %s: $%.2f (Peak=$%.2f) -> KAPATILDI",
-                                            m_symbol, profit, peakVal));
-                  if(m_discord != NULL)
-                     m_discord.SendMessage(StringFormat("ANA KAR %s: $%.2f (Peak=$%.2f) -> KAPATILDI",
-                                           m_symbol, profit, peakVal));
-
-                  ClosePosWithNotification(i, "AnaPeakDrop_" + DoubleToString(profit, 2));
-                  m_mainTicket = 0;
-                  ResetFIFO();
-                  // 30sn sabit bekleme (SetProtectionCooldown KULLANILMAZ - o 180sn*mult)
-                  m_protectionCooldownUntil = TimeCurrent() + 30;
-                  m_tradingPaused = true;
-                  PrintFormat("[PM-%s] ANA KAR SONRASI 30sn BEKLEME", m_symbol);
-                  return;
+                  //--- Kapatma islemi
+                  SmartClosePosition(i, role, profit, StringFormat("%s_PeakDrop_%.2f", roleStr, profit));
+                  continue;
                }
                else
                {
-                  // Peak'ten henuz dusmedi, guclu trend devam → BEKLE
+                  // Guclu trend devam → BEKLE
                   if(TimeCurrent() - m_lastSPMLogTime >= 30)
                   {
-                     PrintFormat("[PM-%s] ANA GUCLU TREND: $%.2f (Peak=$%.2f) Skor>=93+Mum OK -> BEKLE",
-                                 m_symbol, profit, peakVal);
+                     PrintFormat("[PM-%s] %s GUCLU TREND: $%.2f (Peak=$%.2f) Skor=%d+Mum OK -> BEKLE",
+                                 m_symbol, roleStr, profit, peakVal, sigScore);
                      m_lastSPMLogTime = TimeCurrent();
                   }
+                  continue;  // BU POZISYONU ATLA - kapat degil
                }
             }
          }
          else
          {
             //--- ZAYIF TREND / MUM TERS: Hemen kapat
-            PrintFormat("[PM-%s] ANA KAR: $%.2f >= $%.2f | Trend=%s Mum=%s -> HEMEN KAPAT",
-                        m_symbol, profit, m_profile.anaCloseProfit,
+            PrintFormat("[PM-%s] %s KAR: $%.2f >= $%.2f | Trend=%s Mum=%s -> HEMEN KAPAT",
+                        m_symbol, roleStr, profit, closeTarget,
                         trendGuclu ? "GUCLU" : "ZAYIF",
                         mumAyniYon ? "OK" : "TERS");
 
-            m_totalCashedProfit += profit;
-            m_dailyProfit += profit;
-
-            if(m_telegram != NULL)
-               m_telegram.SendMessage(StringFormat("ANA KAR %s: $%.2f -> KAPATILDI", m_symbol, profit));
-            if(m_discord != NULL)
-               m_discord.SendMessage(StringFormat("ANA KAR %s: $%.2f -> KAPATILDI", m_symbol, profit));
-
-            ClosePosWithNotification(i, "AnaKar_" + DoubleToString(profit, 2));
-            m_mainTicket = 0;
-            ResetFIFO();
-            // 30sn sabit bekleme (SetProtectionCooldown KULLANILMAZ - o 180sn*mult)
-            m_protectionCooldownUntil = TimeCurrent() + 30;
-            m_tradingPaused = true;
-            PrintFormat("[PM-%s] ANA KAR SONRASI 30sn BEKLEME", m_symbol);
-            return;
+            SmartClosePosition(i, role, profit, StringFormat("%s_Kar_%.2f", roleStr, profit));
+            continue;
          }
       }
 
-      //=== KURAL 1: SPM/DCA/HEDGE karda -> HEMEN KAPAT ===
-      // Profil bazli kar hedefi kullan
-      // v2.2.2: minCloseProfit guvenlik esigi - closeTarget ASLA min'den dusuk olamaz
-      double closeTarget = MathMax(m_profile.spmCloseProfit, m_profile.minCloseProfit);
-      if(role == ROLE_DCA) closeTarget = MathMax(m_profile.profitTargetPerPos, m_profile.minCloseProfit);
+      //=======================================================
+      // KAR HEDEFININ ALTINDA AMA KARDA → Erken kapatma kurallari
+      // (Kari korumak icin - kucuk birikimler onemli)
+      //=======================================================
 
-      if((role == ROLE_SPM || role == ROLE_DCA || role == ROLE_HEDGE) && profit >= closeTarget)
-      {
-         string roleStr = (role == ROLE_SPM) ? StringFormat("SPM%d", m_positions[i].spmLayer) :
-                          (role == ROLE_DCA) ? "DCA" : "HEDGE";
-
-         PrintFormat("[PM-%s] %s KAR: $%.2f >= $%.2f -> KAPAT + FIFO",
-                     m_symbol, roleStr, profit, closeTarget);
-
-         m_spmClosedProfitTotal += profit;
-         m_spmClosedCount++;
-         m_totalCashedProfit += profit;
-         m_dailyProfit += profit;   // v2.2.2: dailyProfit tutarliligi
-
-         PrintFormat("[PM-%s] FIFO: +$%.2f -> Toplam=$%.2f (Sayi=%d) | Kasa=$%.2f",
-                     m_symbol, profit, m_spmClosedProfitTotal, m_spmClosedCount, m_totalCashedProfit);
-
-         ClosePosWithNotification(i, StringFormat("%s_Kar_%.2f", roleStr, profit));
-         continue;
-      }
-
-      //=== KURAL 2: Trend ANA tersinde, SPM karda -> KARLI KAPAT ===
-      //--- v2.2.2: minCloseProfit kontrolu (maliyeti kurtarmayan islem kapatilmaz)
-      if((role == ROLE_SPM || role == ROLE_DCA || role == ROLE_HEDGE) && profit >= MathMax(1.0, m_profile.minCloseProfit))
+      //=== Trend ANA yonune donuyor + pozisyon ANA tersi + karda ===
+      if(role != ROLE_MAIN && profit >= MathMax(1.0, m_profile.minCloseProfit))
       {
          int mainIdx = FindMainPosition();
          if(mainIdx >= 0)
@@ -958,42 +931,23 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
             if(m_signalEngine != NULL)
                trendDir = m_signalEngine.GetCurrentTrend();
 
-            ENUM_SIGNAL_DIR mainDir = SIGNAL_NONE;
-            if(m_positions[mainIdx].type == POSITION_TYPE_BUY) mainDir = SIGNAL_BUY;
-            else mainDir = SIGNAL_SELL;
+            ENUM_SIGNAL_DIR mainDir = (m_positions[mainIdx].type == POSITION_TYPE_BUY) ? SIGNAL_BUY : SIGNAL_SELL;
 
-            ENUM_SIGNAL_DIR posDir = SIGNAL_NONE;
-            if(m_positions[i].type == POSITION_TYPE_BUY) posDir = SIGNAL_BUY;
-            else posDir = SIGNAL_SELL;
-
-            // Trend ANA yonune donuyorsa VE pozisyon ana tersinde ise
-            // (profit kontrolu dis if'te zaten yapildi)
             if(trendDir == mainDir && posDir != mainDir)
             {
-               string roleStr = (role == ROLE_SPM) ? StringFormat("SPM%d", m_positions[i].spmLayer) :
-                                (role == ROLE_DCA) ? "DCA" : "HEDGE";
                PrintFormat("[PM-%s] TREND DONUS: %s karda ($%.2f), trend ANA yonune -> KARLI KAPAT",
                            m_symbol, roleStr, profit);
 
-               m_spmClosedProfitTotal += profit;
-               m_spmClosedCount++;
-               m_totalCashedProfit += profit;
-               m_dailyProfit += profit;   // v2.2.2: dailyProfit tutarliligi
-
-               ClosePosWithNotification(i, StringFormat("TrendDonus_%s_Kar_%.2f", roleStr, profit));
+               SmartClosePosition(i, role, profit, StringFormat("TrendDonus_%s_%.2f", roleStr, profit));
                continue;
             }
          }
       }
 
-      //=== KURAL 3: Mum terse dondu + SPM karda -> KARLI KAPAT ===
-      // v2.0: SADECE SPM/DCA/HEDGE icin (ANA'yi kapatmaz)
-      // v2.2.2: minCloseProfit kontrolu
-      if(newBar && profit >= MathMax(1.5, m_profile.minCloseProfit) && role != ROLE_MAIN)
+      //=== Mum terse dondu + karda (herhangi bir rol) ===
+      if(newBar && profit >= MathMax(1.5, m_profile.minCloseProfit))
       {
-         ENUM_SIGNAL_DIR candleDir = GetCandleDirection();
          bool candleAgainst = false;
-
          if(m_positions[i].type == POSITION_TYPE_BUY && candleDir == SIGNAL_SELL)
             candleAgainst = true;
          else if(m_positions[i].type == POSITION_TYPE_SELL && candleDir == SIGNAL_BUY)
@@ -1001,25 +955,16 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 
          if(candleAgainst)
          {
-            string roleStr = (role == ROLE_SPM) ? StringFormat("SPM%d", m_positions[i].spmLayer) :
-                             (role == ROLE_DCA) ? "DCA" : "HEDGE";
-            PrintFormat("[PM-%s] MUM DONUS: %s #%d karda ($%.2f) + mum terse dondu -> KAPAT",
+            PrintFormat("[PM-%s] MUM DONUS: %s #%d karda ($%.2f) + mum ters -> KAPAT",
                         m_symbol, roleStr, (int)ticket, profit);
 
-            m_spmClosedProfitTotal += profit;
-            m_spmClosedCount++;
-            m_totalCashedProfit += profit;
-            m_dailyProfit += profit;
-
-            ClosePosWithNotification(i, "MumDonus_Kar_" + DoubleToString(profit, 2));
+            SmartClosePosition(i, role, profit, StringFormat("MumDonus_%s_%.2f", roleStr, profit));
             continue;
          }
       }
 
-      //=== KURAL 4: Engulfing formasyonu ile karli kapat ===
-      // v2.0: SADECE SPM/DCA/HEDGE icin
-      // v2.2.2: minCloseProfit kontrolu (0.80 -> minCloseProfit)
-      if(newBar && profit >= m_profile.minCloseProfit && role != ROLE_MAIN)
+      //=== Engulfing formasyonu + karda (herhangi bir rol) ===
+      if(newBar && profit >= m_profile.minCloseProfit)
       {
          int engulfPattern = m_candle.DetectEngulfing();
          bool engulfAgainst = false;
@@ -1031,48 +976,72 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 
          if(engulfAgainst)
          {
-            string roleStr = (role == ROLE_SPM) ? StringFormat("SPM%d", m_positions[i].spmLayer) :
-                             (role == ROLE_DCA) ? "DCA" : "HEDGE";
             PrintFormat("[PM-%s] ENGULFING: %s #%d karda ($%.2f) -> KAPAT",
                         m_symbol, roleStr, (int)ticket, profit);
 
-            m_spmClosedProfitTotal += profit;
-            m_spmClosedCount++;
-            m_totalCashedProfit += profit;
-            m_dailyProfit += profit;   // v2.2.2: dailyProfit tutarliligi
-
-            ClosePosWithNotification(i, "Engulfing_Kar_" + DoubleToString(profit, 2));
+            SmartClosePosition(i, role, profit, StringFormat("Engulfing_%s_%.2f", roleStr, profit));
             continue;
          }
       }
 
-      //=== KURAL 5: Peak drop %50 -> Karini koru ===
-      // v2.2.6: SADECE SPM/DCA icin (ANA ve HEDGE muaf)
-      // HEDGE muaf: PeakDrop HEDGE'i erken kapatirsa margin korumasi kalkiyor
-      // v2.2.2: minCloseProfit kontrolu - drop sonrasi bile min karin altinda kapatma
-      if(role == ROLE_SPM || role == ROLE_DCA)
+      //=== Genel PeakDrop (kar hedefi altinda bile) - TUM roller ===
       {
          double peakVal = (i < ArraySize(m_peakProfit)) ? m_peakProfit[i] : profit;
          if(peakVal >= PeakMinProfit && profit >= m_profile.minCloseProfit)
          {
-            double dropPct = (peakVal - profit) / peakVal * 100.0;
+            double dropPct = (peakVal > 0.0) ? ((peakVal - profit) / peakVal * 100.0) : 0.0;
             if(dropPct >= PeakDropPercent)
             {
-               string roleStr = (role == ROLE_SPM) ? StringFormat("SPM%d", m_positions[i].spmLayer) :
-                                (role == ROLE_DCA) ? "DCA" : "HEDGE";
                PrintFormat("[PM-%s] PEAK DROP: %s #%d Peak=$%.2f Now=$%.2f Drop=%.0f%% -> KAPAT",
                            m_symbol, roleStr, (int)ticket, peakVal, profit, dropPct);
 
-               m_spmClosedProfitTotal += profit;
-               m_spmClosedCount++;
-               m_totalCashedProfit += profit;
-               m_dailyProfit += profit;   // v2.2.2: dailyProfit tutarliligi
-
-               ClosePosWithNotification(i, StringFormat("PeakDrop_%.0f%%", dropPct));
+               SmartClosePosition(i, role, profit, StringFormat("PeakDrop_%s_%.0f%%", roleStr, dropPct));
                continue;
             }
          }
       }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| SmartClosePosition - Tekduze kapatma + muhasebe                  |
+//| TUM pozisyon kapatma islemi buradan gecer                        |
+//+------------------------------------------------------------------+
+void CPositionManager::SmartClosePosition(int idx, ENUM_POS_ROLE role, double profit, string reason)
+{
+   //--- Muhasebe
+   m_totalCashedProfit += profit;
+   m_dailyProfit += profit;
+
+   if(role != ROLE_MAIN)
+   {
+      // SPM/DCA/HEDGE → kasaya ekle (FIFO)
+      m_spmClosedProfitTotal += profit;
+      m_spmClosedCount++;
+      PrintFormat("[PM-%s] FIFO: +$%.2f -> Kasa=$%.2f (Sayi=%d)",
+                  m_symbol, profit, m_spmClosedProfitTotal, m_spmClosedCount);
+   }
+
+   //--- Bildirim
+   string roleStr = (role == ROLE_MAIN) ? "ANA" :
+                     (role == ROLE_SPM)  ? "SPM" :
+                     (role == ROLE_DCA)  ? "DCA" : "HEDGE";
+   string msg = StringFormat("%s KAR %s: $%.2f -> KAPATILDI", roleStr, m_symbol, profit);
+   if(m_telegram != NULL) m_telegram.SendMessage(msg);
+   if(m_discord != NULL)  m_discord.SendMessage(msg);
+
+   //--- Pozisyonu kapat
+   ClosePosWithNotification(idx, reason);
+
+   //--- ANA ise: reset + 30sn bekleme
+   if(role == ROLE_MAIN)
+   {
+      m_mainTicket = 0;
+      ResetFIFO();
+      // 30sn sabit bekleme → sinyal+trend+mum kontrolu ile yeni islem
+      m_protectionCooldownUntil = TimeCurrent() + 30;
+      m_tradingPaused = true;
+      PrintFormat("[PM-%s] KAR SONRASI 30sn BEKLEME", m_symbol);
    }
 }
 
