@@ -70,8 +70,8 @@ input int      SignalCooldownSec      = 120;
 //=================================================================
 // SPM + FIFO SISTEMI (v2.0 - KAZAN-KAZAN)
 //=================================================================
-input double   SPM_TriggerLoss        = -4.0;     // v2.4.1: SPM tetik ($) - forex -4, diger -5
-input double   SPM_CloseProfit        = 3.0;      // v2.4.1: SPM kar hedefi ($) - forex +3
+input double   SPM_TriggerLoss        = -3.0;     // v2.4.3: SPM tetik ($) - forex -3, XAG/XAU/BTC -5
+input double   SPM_CloseProfit        = 3.0;      // v2.4.3: SPM kar hedefi ($) - forex +3
 input double   SPM_NetTargetUSD       = 5.0;      // FIFO net hedef ($) - toplam net >= +5$
 input int      SPM_MaxBuyLayers       = 5;        // v2.4.0: Max BUY katman (5+5 yapi)
 input int      SPM_MaxSellLayers      = 5;        // v2.4.0: Max SELL katman
@@ -354,8 +354,8 @@ struct SymbolProfile
       minLotOverride    = 0.06;       // Forex: min 0.06 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma (maliyet kurtarma)
       anaCloseProfit    = 4.0;        // v2.4.0: ANA +$4 → kapat (forex icin +4)
-      spmTriggerLoss    = -4.0;       // v2.4.1: -$3→-$4 tetik (forex SPM tetik -4)
-      spmCloseProfit    = 3.0;        // v2.4.0: SPM kar hedefi $3 (forex +3)
+      spmTriggerLoss    = -3.0;       // v2.4.3: forex SPM tetik -$3
+      spmCloseProfit    = 3.0;        // v2.4.3: SPM kar hedefi $3 (forex +3)
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
       spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
@@ -379,8 +379,8 @@ struct SymbolProfile
       minLotOverride    = 0.06;       // JPY: min 0.06 lot
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       anaCloseProfit    = 4.0;        // v2.4.0: ANA +$4 → kapat (forex icin +4)
-      spmTriggerLoss    = -4.0;       // v2.4.1: -$3→-$4 tetik (forex SPM tetik -4)
-      spmCloseProfit    = 3.0;        // v2.4.0: SPM kar hedefi $3 (forex +3)
+      spmTriggerLoss    = -3.0;       // v2.4.3: forex SPM tetik -$3
+      spmCloseProfit    = 3.0;        // v2.4.3: SPM kar hedefi $3 (forex +3)
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
       spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
@@ -405,7 +405,7 @@ struct SymbolProfile
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       anaCloseProfit    = 5.0;        // v2.4.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;       // XAG: -$5 tetik
-      spmCloseProfit    = 4.0;        // v2.4.1: $5→$4 (BTC/XAG/XAU spm+4 kari al)
+      spmCloseProfit    = 5.0;        // v2.4.3: XAG TP1 +$5
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
       spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
@@ -430,7 +430,7 @@ struct SymbolProfile
       minCloseProfit    = 1.0;        // v2.2.2: $1 altinda kapatma
       anaCloseProfit    = 5.0;        // v2.4.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;       // XAU: -$5 tetik
-      spmCloseProfit    = 4.0;        // v2.4.1: $5→$4 (BTC/XAG/XAU spm+4 kari al)
+      spmCloseProfit    = 5.0;        // v2.4.3: XAU TP1 +$5
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
       spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
@@ -455,7 +455,7 @@ struct SymbolProfile
       minCloseProfit    = 1.5;        // v2.2.2: $1.5 altinda kapatma (BTC spread yuksek)
       anaCloseProfit    = 5.0;        // v2.3.0: ANA +$5 → kapat
       spmTriggerLoss    = -5.0;       // BTC: -$5 tetik
-      spmCloseProfit    = 4.0;        // v2.4.1: $5→$4 (BTC/XAG/XAU spm+4 kari al)
+      spmCloseProfit    = 5.0;        // v2.4.3: BTC TP1 +$5
       fifoNetTarget     = 5.0;
       spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
       spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)

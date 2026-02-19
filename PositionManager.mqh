@@ -11,8 +11,8 @@
 //|  KURALLAR:                                                       |
 //|  1. SL YOK - ASLA (MUTLAK)                                      |
 //|  2. ANA islem SADECE FIFO ile kapanir (kasa - ANA zarar >= +$5)  |
-//|  3. AKILLI KAPATMA: Skor>=93+Mum OK → BEKLE (PeakDrop koru)    |
-//|     Zayif trend/mum ters → HEMEN KAPAT (TUM roller icin)        |
+//|  3. MUM DONUS = HEMEN KAPAT (karda ise beklemeden kapat)         |
+//|     Mum ayni yonde → PeakDrop ile koru, drop olursa kapat       |
 //|  4. SPM 3+3 yapi: max 3 BUY + 3 SELL (Acil Hedge BYPASS)       |
 //|  5. SPM yon: SPM1=ANA tersi, SPM2=SPM1 tersi, SPM3+=5-oy       |
 //|  6. SPM tetik: -$5 | SPM kar: $5 | FIFO net hedef: +$5          |
@@ -821,52 +821,50 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
       //=======================================================
       if(profit >= closeTarget)
       {
-         // Trend guclu mu? (skor >= 93 + ayni yonde)
-         bool trendGuclu = (sigValid && sigScore >= 93 && sigDir == posDir);
-         // Mum ayni yonde mi?
-         bool mumAyniYon = (candleDir == posDir);
+         // v2.4.3: Mum ters mi? Ters ise HEMEN KAPAT (bekle yok)
+         bool mumTers = (candleDir != SIGNAL_NONE && candleDir != posDir);
 
-         if(trendGuclu && mumAyniYon)
+         if(mumTers)
          {
-            //--- GUCLU TREND: Bekle, PeakDrop ile koru
-            double peakVal = (i < ArraySize(m_peakProfit)) ? m_peakProfit[i] : profit;
-            if(peakVal >= closeTarget && profit >= closeTarget)
-            {
-               double dropPct = (peakVal > 0.0) ? ((peakVal - profit) / peakVal * 100.0) : 0.0;
-               if(dropPct >= PeakDropPercent)
-               {
-                  // Peak'ten dustu → karini koru, hemen kapat
-                  PrintFormat("[PM-%s] %s PEAK DROP: Peak=$%.2f Now=$%.2f Drop=%.0f%% -> KAPAT",
-                              m_symbol, roleStr, peakVal, profit, dropPct);
+            //--- MUM DONUS: Kar hedefine ulasti + mum ters → HEMEN KAPAT
+            PrintFormat("[PM-%s] %s KAR+MUM DONUS: $%.2f >= $%.2f | Mum TERS -> HEMEN KAPAT",
+                        m_symbol, roleStr, profit, closeTarget);
 
-                  //--- Kapatma islemi
-                  SmartClosePosition(i, role, profit, StringFormat("%s_PeakDrop_%.2f", roleStr, profit));
-                  continue;
-               }
-               else
-               {
-                  // Guclu trend devam → BEKLE
-                  if(TimeCurrent() - m_lastSPMLogTime >= 30)
-                  {
-                     PrintFormat("[PM-%s] %s GUCLU TREND: $%.2f (Peak=$%.2f) Skor=%d+Mum OK -> BEKLE",
-                                 m_symbol, roleStr, profit, peakVal, sigScore);
-                     m_lastSPMLogTime = TimeCurrent();
-                  }
-                  continue;  // BU POZISYONU ATLA - kapat degil
-               }
-            }
-         }
-         else
-         {
-            //--- ZAYIF TREND / MUM TERS: Hemen kapat
-            PrintFormat("[PM-%s] %s KAR: $%.2f >= $%.2f | Trend=%s Mum=%s -> HEMEN KAPAT",
-                        m_symbol, roleStr, profit, closeTarget,
-                        trendGuclu ? "GUCLU" : "ZAYIF",
-                        mumAyniYon ? "OK" : "TERS");
-
-            SmartClosePosition(i, role, profit, StringFormat("%s_Kar_%.2f", roleStr, profit));
+            SmartClosePosition(i, role, profit, StringFormat("%s_MumKar_%.2f", roleStr, profit));
             continue;
          }
+
+         // Mum ayni yonde → PeakDrop ile koru (trend devam ediyor)
+         double peakVal = (i < ArraySize(m_peakProfit)) ? m_peakProfit[i] : profit;
+         if(peakVal >= closeTarget && profit >= closeTarget)
+         {
+            double dropPct = (peakVal > 0.0) ? ((peakVal - profit) / peakVal * 100.0) : 0.0;
+            if(dropPct >= PeakDropPercent)
+            {
+               PrintFormat("[PM-%s] %s PEAK DROP: Peak=$%.2f Now=$%.2f Drop=%.0f%% -> KAPAT",
+                           m_symbol, roleStr, peakVal, profit, dropPct);
+
+               SmartClosePosition(i, role, profit, StringFormat("%s_PeakDrop_%.2f", roleStr, profit));
+               continue;
+            }
+            else
+            {
+               // Mum ayni yonde + peak drop yok → bekle
+               if(TimeCurrent() - m_lastSPMLogTime >= 30)
+               {
+                  PrintFormat("[PM-%s] %s KAR TREND: $%.2f (Peak=$%.2f) Mum OK -> BEKLE",
+                              m_symbol, roleStr, profit, peakVal);
+                  m_lastSPMLogTime = TimeCurrent();
+               }
+               continue;
+            }
+         }
+
+         // Fallback: mum belirsiz → hemen kapat (riske atma)
+         PrintFormat("[PM-%s] %s KAR HEDEF: $%.2f >= $%.2f -> KAPAT",
+                     m_symbol, roleStr, profit, closeTarget);
+         SmartClosePosition(i, role, profit, StringFormat("%s_Kar_%.2f", roleStr, profit));
+         continue;
       }
 
       //=======================================================
@@ -897,8 +895,8 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
          }
       }
 
-      //=== Mum terse dondu + karda (herhangi bir rol) ===
-      if(newBar && profit >= MathMax(1.5, m_profile.minCloseProfit))
+      //=== v2.4.3: Mum terse dondu + karda → HEMEN KAPAT (esik yok) ===
+      if(newBar && profit >= 0.50)
       {
          bool candleAgainst = false;
          if(m_positions[i].type == POSITION_TYPE_BUY && candleDir == SIGNAL_SELL)
