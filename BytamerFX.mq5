@@ -3,16 +3,16 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.4.3 - Hedge Yok + TUM KAPAT Yok                     |
+//| BytamerFX v2.5.0 - Saf Zigzag SPM + Mum Donus + FIFO Birikim     |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
-//| FIFO +$5 Net | Dongusel SPM | Margin Tek-Poz Kapat | 5+5 Katman |
+//| FIFO +$5 Net | Zigzag SPM | Mum Donus Kar Al | 5+5 Katman       |
 //| Hesap: 262230423 (Exness) | Dinamik Profil + Haber Kontrol       |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.43"
-#property description "BytamerFX v2.4.3 - Hedge Yok + TUM KAPAT Yok"
-#property description "Hedge YOK | TUM KAPAT YOK | Margin tek-poz kapat"
+#property version     "2.50"
+#property description "BytamerFX v2.5.0 - Saf Zigzag SPM + FIFO Birikim"
+#property description "Zigzag SPM | Mum Donus Kar Al | FIFO +$5 Net"
 #property description "SL=YOK | Dinamik Profil | Pip-TP | MinProfit"
 #property description "Copyright 2026, By T@MER"
 #property strict

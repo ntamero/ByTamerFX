@@ -5,23 +5,31 @@
 //|                                    Copyright 2026, By T@MER      |
 //|                                    https://www.bytamer.com        |
 //|                                                                  |
-//|              v2.3.0 - SMART RECOVERY Sistemi                     |
-//|              FIFO + Terfi + Akilli Kapatma                       |
+//|              v2.5.0 - SAF ZIGZAG SPM + MUM DONUS + FIFO          |
+//+------------------------------------------------------------------+
+//|  SISTEM MANTIGI:                                                 |
+//|  ANA acilir (sinyal bazli) → ANA -$5 zarar → SPM1 acilir        |
+//|  SPM1 = ANA tersi yon (zigzag)                                   |
+//|  SPM1 -$5 zarar → SPM2 acilir = SPM1 tersi yon                  |
+//|  SPM1 +$5 kar → SPM1 KAPANIR, birikim kasaya eklenir            |
+//|  SPM1 kapaninca SPM2→SPM1 olur (sira kaydirma)                  |
+//|  Yeni SPM acilirsa yeni SPM1'in tersine acar                    |
+//|  FIFO: Kasa (kapanmis SPM karlari) + ANA zarar >= +$5 → ANA kap |
+//|  ANA kapaninca en eski SPM → yeni ANA (TERFI), dongu devam      |
 //+------------------------------------------------------------------+
 //|  KURALLAR:                                                       |
 //|  1. SL YOK - ASLA (MUTLAK)                                      |
-//|  2. ANA islem SADECE FIFO ile kapanir (kasa - ANA zarar >= +$5)  |
+//|  2. ANA SADECE FIFO ile kapanir (kasa + ANA zarar >= +$5)       |
 //|  3. MUM DONUS = HEMEN KAPAT (karda ise beklemeden kapat)         |
-//|     Mum ayni yonde → PeakDrop ile koru, drop olursa kapat       |
-//|  4. SPM 3+3 yapi: max 3 BUY + 3 SELL (Acil Hedge BYPASS)       |
-//|  5. SPM yon: SPM1=ANA tersi, SPM2=SPM1 tersi, SPM3+=5-oy       |
-//|  6. SPM tetik: -$5 | SPM kar: $5 | FIFO net hedef: +$5          |
-//|  7. DCA: Zarardaki SPM icin maliyet ortalama (max 1 per pozisyon)|
-//|  8. Acil Hedge: DEVRE DISI (v2.4.3)                              |
-//|  9. Kilitlenme: Log + bildirim (kapatma YOK)                    |
-//| 10. TERFI: ANA kapaninca en eski SPM -> ANA, dongu devam         |
-//| 11. Enstruman bazli parametreler (SymbolProfile)                 |
-//| 12. 30sn bekleme sonrasi sinyal+trend+mum bazli yeni islem       |
+//|  4. SPM 5+5 yapi: max 5 BUY + 5 SELL zigzag                    |
+//|  5. SPM yon: DAIMA onceki pozisyonun TERSI (zigzag)              |
+//|  6. SPM tetik: Forex -$3 | XAG/XAU/BTC -$5                      |
+//|  7. SPM kar: Forex +$3 | XAG/XAU/BTC +$5                        |
+//|  8. FIFO net hedef: +$5 (kapanmis SPM birikimi)                 |
+//|  9. HEDGE: DEVRE DISI | TUM KAPAT: YOK | Margin kapatma: YOK    |
+//| 10. TERFI: ANA kapaninca en eski SPM → ANA, kasa sifirlanir     |
+//| 11. Kilitlenme: Log + bildirim (kapatma YOK)                    |
+//| 12. Enstruman bazli parametreler (SymbolProfile)                 |
 //+------------------------------------------------------------------+
 
 #include "Config.mqh"
@@ -760,11 +768,11 @@ bool CPositionManager::CheckMarginEmergency()
 }
 
 //+------------------------------------------------------------------+
-//| ManageKarliPozisyonlar - v2.3.0 AKILLI KAPATMA                  |
-//| TUM pozisyonlar icin tekduze: ANA + SPM + DCA + HEDGE           |
-//| Kar hedefine ulasinca: Skor>=93 + Mum OK → BEKLE (PeakDrop)    |
-//|                        Aksi halde → HEMEN KAPAT                  |
-//| ANA SPM varken buraya GIRMEZ (FIFO ile kapanir)                 |
+//| ManageKarliPozisyonlar - v2.5.0 MUM DONUS KAR AL                |
+//| TUM pozisyonlar icin: ANA + SPM + DCA                            |
+//| Mum ters dondu + karda → HEMEN KAPAT (bekle yok)                |
+//| Mum ayni yonde → PeakDrop ile koru                              |
+//| ANA SPM varken FIFO ile kapanir                                  |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 {
@@ -1383,72 +1391,23 @@ double CPositionManager::CalcNetResult()
 }
 
 //+------------------------------------------------------------------+
-//| DetermineSPMDirection - 5-OY GERCEK ZAMANLI PIYASA ANALIZI      |
-//| TUM katmanlar ayni 5-oy sistemi kullanir                         |
-//| Asla parent SPM'nin tersi degil, piyasanin GERCEK yonu          |
+//| DetermineSPMDirection - v2.5.0: KULLLANILMIYOR                   |
+//| Zigzag sistemi: SPM yonu DAIMA oncekinin tersi                   |
+//| Bu fonksiyon geriye uyumluluk icin korunuyor                     |
 //+------------------------------------------------------------------+
 ENUM_SIGNAL_DIR CPositionManager::DetermineSPMDirection(int parentLayer)
 {
-   int buyVotes = 0, sellVotes = 0;
-
-   //--- OY 1: H1 Trend (EMA hizalamasi)
-   ENUM_SIGNAL_DIR trendDir = SIGNAL_NONE;
-   if(m_signalEngine != NULL)
-   {
-      trendDir = m_signalEngine.GetCurrentTrend();
-      if(trendDir == SIGNAL_BUY) buyVotes++;
-      else if(trendDir == SIGNAL_SELL) sellVotes++;
-   }
-
-   //--- OY 2: Sinyal Skoru (7-katman tam analiz)
-   if(m_signalEngine != NULL)
-   {
-      SignalData sig = m_signalEngine.Evaluate();
-      if(sig.direction == SIGNAL_BUY && sig.score >= 25) buyVotes++;
-      else if(sig.direction == SIGNAL_SELL && sig.score >= 25) sellVotes++;
-   }
-
-   //--- OY 3: M15 Mum Yonu (son kapanan mum)
-   ENUM_SIGNAL_DIR candleDir = GetCandleDirection();
-   if(candleDir == SIGNAL_BUY) buyVotes++;
-   else if(candleDir == SIGNAL_SELL) sellVotes++;
-
-   //--- OY 4: MACD Histogram Momentum
-   if(m_signalEngine != NULL)
-   {
-      double macdHist = m_signalEngine.GetMACDHist();
-      if(macdHist > 0) buyVotes++;
-      else if(macdHist < 0) sellVotes++;
-   }
-
-   //--- OY 5: DI Crossover (+DI vs -DI)
-   if(m_signalEngine != NULL)
-   {
-      double plusDI  = m_signalEngine.GetPlusDI();
-      double minusDI = m_signalEngine.GetMinusDI();
-      if(plusDI > minusDI) buyVotes++;
-      else if(minusDI > plusDI) sellVotes++;
-   }
-
-   //--- Cogunluk karari (v2.2.1: log cooldown)
-   if(TimeCurrent() - m_lastSPMLogTime >= 30)
-      PrintFormat("[PM-%s] 5-OY SPM%d: BUY=%d SELL=%d",
-                  m_symbol, parentLayer + 1, buyVotes, sellVotes);
-
-   if(buyVotes > sellVotes) return SIGNAL_BUY;
-   if(sellVotes > buyVotes) return SIGNAL_SELL;
-
-   //--- Esitlik: H1 trend yonunu kullan
-   if(trendDir != SIGNAL_NONE) return trendDir;
-
-   //--- Hala belirsiz: ANA tersine (guvenli fallback)
+   // v2.5.0: Zigzag sistemi aktif - bu fonksiyon CAGRILMIYOR
+   // SPM yonu ManageSPMSystem icinde belirlenir:
+   //   SPM1 = ANA tersi
+   //   SPM2+ = onceki SPM tersi
+   // Geriye uyumluluk: ANA tersini dondur
    int mainIdx = FindMainPosition();
    if(mainIdx >= 0)
    {
       if(m_positions[mainIdx].type == POSITION_TYPE_BUY) return SIGNAL_SELL;
       else return SIGNAL_BUY;
    }
-
    return SIGNAL_NONE;
 }
 
