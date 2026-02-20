@@ -4,6 +4,42 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v3.5.1] - 2026-02-21
+
+### Critical Bug Fixes
+- **Zigzag Distance Fix**: `ManageActiveSPMs()` mesafe hesaplaması ANA yönü yerine son SPM yönüne göre yapılır
+  - Eski: `isBuy` = ANA yönü → SELL SPM sonrası fiyat yükseldiğinde mesafe negatif → yeni SPM açılamıyordu
+  - Yeni: `lastIsBuy` = son SPM yönü → zigzag düzgün çalışır (BUY→SELL→BUY→SELL)
+- **ManageMainInLoss Dual Trigger**: Sadece ATR mesafe yerine $ zarar VEYA ATR mesafe (hangisi önce gelirse)
+  - BTC gibi yüksek ATR enstrümanlarda ilk SPM artık $ bazlı tetiklenir
+- **Discord HTTP 400**: Null terminator ve JSON çift escape sorunu düzeltildi
+  - `StringToCharArray` null byte → `ArrayResize` ile çıkarılıyor
+  - `EscapeJSON`: `\\n` literal'leri artık doğru korunuyor (placeholder yöntemi)
+
+### Minor Fixes
+- ADX log mesajı "< 15" → "< 25" düzeltildi (gerçek eşik 25)
+- SPM2+ log mesajı: `GetWorstSPMProfit()` referansı inline hesaplama ile değiştirildi
+- Mesafe ve layerSpacing değerleri SPM2+ log'a eklendi (debug kolaylığı)
+
+---
+
+## [v3.5.0] - 2026-02-20
+
+### Zigzag Grid + Net Settlement Engine (11 Kural)
+- **Zigzag SPM**: ANA BUY → SPM1 BUY → SPM2 SELL → SPM3 BUY (her SPM öncekinin tersi)
+- **Net Settlement**: Kasa + worstLoss >= $5 → en zarardaki pozisyon kapatılır
+- **SPM Denge**: Tek taraflı birikim varsa karşı yönde SPM açar
+- **Trend Hold**: ADX >= 25 + trend yönündeki pozisyon → HOLD, mum dönüşünde MAX'ta kapat
+- **ADX Grid Filtresi**: ADX < 25 = grid YOK (eski < 15)
+- **Spread Kontrol**: Spread > ortalama × 1.15 → SPM açma
+- **Tepe/Dip Koruma**: RSI > 75 veya < 25 + ADX < 30 → grid engel
+- **15sn Mum Bekleme**: Son mum kapanışından 15sn geçmeden SPM açılmaz
+- **Cooldown 60sn**: Tüm işlemler kapandıktan sonra 60sn bekleme (eski 30sn)
+- **Forex SPM Trigger**: -$3 → -$4
+- **XAG/XAU/BTC SPM TP**: $5 → $4
+
+---
+
 ## [v3.4.0] - 2026-02-20
 
 ### Post-Entry Profitability Engine
