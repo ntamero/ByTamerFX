@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "2.5.0"
-#define EA_VERSION_NUM    "2.50"
-#define EA_VERSION_NAME   "PureZigzag"
-#define EA_VERSION_FULL   "BytamerFX v2.5.0 - Saf Zigzag SPM + Mum Donus Kar Al + FIFO Birikim"
+#define EA_VERSION        "3.0.0"
+#define EA_VERSION_NUM    "3.00"
+#define EA_VERSION_NAME   "TrendGrid"
+#define EA_VERSION_FULL   "BytamerFX v3.0.0 - Trend-Grid Sistemi + ATR Mesafe + FIFO Birikim"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -68,17 +68,17 @@ input int      SignalMinScore         = 40;        // v2.0: 38→40 guclu sinyal
 input int      SignalCooldownSec      = 120;
 
 //=================================================================
-// SPM + FIFO SISTEMI (v2.0 - KAZAN-KAZAN)
+// TREND-GRID + FIFO SISTEMI (v3.0.0)
 //=================================================================
-input double   SPM_TriggerLoss        = -3.0;     // v2.4.3: SPM tetik ($) - forex -3, XAG/XAU/BTC -5
-input double   SPM_CloseProfit        = 3.0;      // v2.4.3: SPM kar hedefi ($) - forex +3
+input double   SPM_TriggerLoss        = -3.0;     // v3.0.0: Grid tetik (fallback $) - artik ATR bazli
+input double   SPM_CloseProfit        = 3.0;      // v3.0.0: Grid kar hedefi ($) - forex +3
 input double   SPM_NetTargetUSD       = 5.0;      // FIFO net hedef ($) - toplam net >= +5$
-input int      SPM_MaxBuyLayers       = 10;       // v2.5.0: Max BUY katman (10+10 yapi)
-input int      SPM_MaxSellLayers      = 10;       // v2.5.0: Max SELL katman
-input double   SPM_LotBase            = 1.0;      // v2.2.5: SPM lot carpani (1.0x = ANA ile ayni)
-input double   SPM_LotIncrement       = 0.1;      // v2.2.5: Katman basi +0.1x artis
-input double   SPM_LotCap             = 1.5;      // v2.2.5: Max carpan 1.5x
-input int      SPM_CooldownSec        = 60;       // v2.0: 45→60 SPM arasi bekleme (dropdown)
+input int      SPM_MaxBuyLayers       = 10;       // v3.0.0: Max BUY grid (10+10 yapi)
+input int      SPM_MaxSellLayers      = 10;       // v3.0.0: Max SELL grid
+input double   SPM_LotBase            = 1.0;      // Grid lot carpani (1.0x = ANA ile ayni)
+input double   SPM_LotIncrement       = 0.1;      // Katman basi +0.1x artis
+input double   SPM_LotCap             = 1.5;      // Max carpan 1.5x
+input int      SPM_CooldownSec        = 60;       // Grid arasi bekleme (sn)
 input int      SPM_WaitMaxSec         = 180;      // ANA toparlanma bekleme suresi (sn)
 
 //=================================================================

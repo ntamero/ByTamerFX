@@ -5,30 +5,29 @@
 //|                                    Copyright 2026, By T@MER      |
 //|                                    https://www.bytamer.com        |
 //|                                                                  |
-//|              v2.5.0 - SAF ZIGZAG SPM + MUM DONUS + FIFO          |
+//|              v3.0.0 - TREND-GRID Sistemi                         |
 //+------------------------------------------------------------------+
-//|  SISTEM MANTIGI:                                                 |
-//|  ANA acilir (sinyal bazli) → ANA -$5 zarar → SPM1 acilir        |
-//|  SPM1 = ANA tersi yon (zigzag)                                   |
-//|  SPM1 -$5 zarar → SPM2 acilir = SPM1 tersi yon                  |
-//|  SPM1 +$5 kar → SPM1 KAPANIR, birikim kasaya eklenir            |
-//|  SPM1 kapaninca SPM2→SPM1 olur (sira kaydirma)                  |
-//|  Yeni SPM acilirsa yeni SPM1'in tersine acar                    |
-//|  FIFO: Kasa (kapanmis SPM karlari) + ANA zarar >= +$5 → ANA kap |
-//|  ANA kapaninca en eski SPM → yeni ANA (TERFI), dongu devam      |
+//|  SISTEM MANTIGI (v3.0.0 Trend-Grid):                             |
+//|  H1 trend yonu tespit edilir (EMA50+EMA8 bazli)                  |
+//|  ANA acilir (trend yonunde) → Fiyat duserse:                     |
+//|  Grid1 acilir (AYNI yon, ATR mesafe) → Grid2, Grid3...           |
+//|  Grid karda → kapanir, kasa'ya eklenir (birikim)                 |
+//|  FIFO: Kasa (kapanmis grid karlari) + ANA zarar >= +$5 → ANA kap|
+//|  ANA kapaninca en eski Grid → yeni ANA (TERFI), dongu devam     |
+//|  Trend donerse → karli pozisyonlar kapatilir, yon degisir        |
 //+------------------------------------------------------------------+
 //|  KURALLAR:                                                       |
 //|  1. SL YOK - ASLA (MUTLAK)                                      |
 //|  2. ANA SADECE FIFO ile kapanir (kasa + ANA zarar >= +$5)       |
 //|  3. MUM DONUS = HEMEN KAPAT (karda ise beklemeden kapat)         |
-//|  4. SPM 10+10 yapi: max 10 BUY + 10 SELL zigzag                 |
-//|  5. SPM yon: DAIMA onceki pozisyonun TERSI (zigzag)              |
-//|  6. SPM tetik: Forex -$3 | XAG/XAU/BTC -$5                      |
-//|  7. SPM kar: Forex +$3 | XAG/XAU/BTC +$5                        |
-//|  8. FIFO net hedef: +$5 (kapanmis SPM birikimi)                 |
+//|  4. Grid 10+10 yapi: max 10 BUY + 10 SELL                       |
+//|  5. Grid yon: H1 trend yonunde (AYNI yon - dip/tepe toplama)     |
+//|  6. Grid tetik: ATR mesafe bazli (sembol bazli dinamik)          |
+//|  7. Grid kar: Forex +$3 | XAG/XAU/BTC +$5                       |
+//|  8. FIFO net hedef: +$5 (kapanmis grid birikimi)                |
 //|  9. HEDGE: DEVRE DISI | TUM KAPAT: YOK | Margin kapatma: YOK    |
-//| 10. TERFI: ANA kapaninca en eski SPM → ANA, kasa sifirlanir     |
-//| 11. Kilitlenme: Log + bildirim (kapatma YOK)                    |
+//| 10. TERFI: ANA kapaninca en eski Grid → ANA, kasa sifirlanir    |
+//| 11. Grid max: Bakiye bazli (margin call onleme)                  |
 //| 12. Enstruman bazli parametreler (SymbolProfile)                 |
 //+------------------------------------------------------------------+
 
@@ -124,6 +123,14 @@ private:
    int                  m_dailyTradeCount;    // Bugun acilan islem sayisi
    double               m_dayStartBalance;    // Gun basi bakiye (% hesabi icin)
 
+   //--- v3.0.0: Trend-Grid sistemi
+   ENUM_SIGNAL_DIR      m_gridDirection;      // Grid yonu (H1 trend yonu)
+   double               m_gridATR;            // Grid mesafesi icin ATR degeri
+   double               m_lastGridPrice;      // Son grid pozisyonun acilis fiyati
+   int                  m_gridCount;          // Aktif grid pozisyon sayisi
+   int                  m_hATR14;             // H1 ATR handle
+   datetime             m_lastTrendCheck;     // Son trend kontrol zamani
+
    //=================================================================
    // PRIVATE METHODS
    //=================================================================
@@ -132,11 +139,18 @@ private:
    void AdoptExistingPositions();
    void RefreshPositions();
 
-   //--- Core SPM engine
+   //--- Core engine
    void ManageKarliPozisyonlar(bool newBar);
    void ManageSPMSystem();
    void ManageMainInLoss(int mainIdx, double mainProfit);
    void ManageActiveSPMs(int mainIdx);
+
+   //--- v3.0.0: Trend-Grid
+   void ManageTrendGrid();
+   void CheckTrendDirection();
+   double GetGridATR();
+   int  GetMaxGridByBalance();
+   void ManageTrendReversal();
    void CheckFIFOTarget();
 
    //--- v2.0 YENI mekanizmalar
@@ -282,6 +296,14 @@ CPositionManager::CPositionManager()
    m_dailyTradeCount     = 0;
    m_dayStartBalance     = 0.0;
 
+   //--- v3.0.0: Trend-Grid init
+   m_gridDirection       = SIGNAL_NONE;
+   m_gridATR             = 0.0;
+   m_lastGridPrice       = 0.0;
+   m_gridCount           = 0;
+   m_hATR14              = INVALID_HANDLE;
+   m_lastTrendCheck      = 0;
+
    m_profile.SetDefault();
 }
 
@@ -308,22 +330,27 @@ void CPositionManager::Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat,
    //--- v2.0: Enstruman profili yukle
    m_profile = GetSymbolProfile(m_category, m_symbol);
 
-   PrintFormat("[PM-%s] PositionManager v2.1.0 KazanKazan Dinamik | Cat=%s | Profil=%s | Balance=%.2f",
+   PrintFormat("[PM-%s] PositionManager v3.0.0 Trend-Grid | Cat=%s | Profil=%s | Balance=%.2f",
                m_symbol, GetCatName(), m_profile.profileName, m_startBalance);
-   PrintFormat("[PM-%s] SPM: Trigger=$%.1f | Close=$%.1f | Net=$%.1f | MaxBuy=%d MaxSell=%d",
-               m_symbol, m_profile.spmTriggerLoss, m_profile.spmCloseProfit,
+   PrintFormat("[PM-%s] GRID: ATR mesafe | Close=$%.1f | FIFO Net=$%.1f | MaxBuy=%d MaxSell=%d",
+               m_symbol, m_profile.spmCloseProfit,
                m_profile.fifoNetTarget, m_profile.spmMaxBuyLayers, m_profile.spmMaxSellLayers);
-   PrintFormat("[PM-%s] SPM Lot: Base=%.1f | Inc=%.2f | Cap=%.1f | Cooldown=%ds",
+   PrintFormat("[PM-%s] GRID Lot: Base=%.1f | Inc=%.2f | Cap=%.1f | Cooldown=%ds",
                m_symbol, m_profile.spmLotBase, m_profile.spmLotIncrement,
                m_profile.spmLotCap, m_profile.spmCooldownSec);
-   PrintFormat("[PM-%s] v2.1: TP Pips: TP1=%.0f | TP2=%.0f | TP3=%.0f | Hedge(minSPM=%d, minZarar=$%.0f)",
-               m_symbol, m_profile.tp1Pips, m_profile.tp2Pips, m_profile.tp3Pips,
-               m_profile.hedgeMinSPMCount, m_profile.hedgeMinLossUSD);
-   PrintFormat("[PM-%s] v2.1: DCA(dist=%.1f ATR) | Hedge(oran=%.1f, fill=%.0f%%) | Deadlock(%dsn)",
-               m_symbol, m_profile.dcaDistanceATR,
-               Hedge_RatioTrigger, Hedge_FillPercent * 100.0, Deadlock_TimeoutSec);
-   PrintFormat("[PM-%s] KURALLAR: TERFI=AKTIF | PeakDrop=SADECE_SPM | ANA=SADECE_FIFO | SL=YOK",
+   PrintFormat("[PM-%s] TP Pips: TP1=%.0f | TP2=%.0f | TP3=%.0f",
+               m_symbol, m_profile.tp1Pips, m_profile.tp2Pips, m_profile.tp3Pips);
+   PrintFormat("[PM-%s] v3.0.0: DCA(dist=%.1f ATR) | Deadlock(%dsn)",
+               m_symbol, m_profile.dcaDistanceATR, Deadlock_TimeoutSec);
+   PrintFormat("[PM-%s] KURALLAR: TREND-GRID | TERFI=AKTIF | ANA=SADECE_FIFO | SL=YOK | HEDGE=YOK",
                m_symbol);
+
+   //--- v3.0.0: H1 ATR handle olustur (Trend-Grid mesafe hesabi icin)
+   m_hATR14 = iATR(m_symbol, PERIOD_H1, 14);
+   if(m_hATR14 == INVALID_HANDLE)
+      PrintFormat("[PM-%s] UYARI: H1 ATR handle olusturulamadi! Grid mesafesi fallback kullanilacak.", m_symbol);
+   else
+      PrintFormat("[PM-%s] v3.0.0: H1 ATR(14) handle=%d | Trend-Grid sistemi aktif", m_symbol, m_hATR14);
 
    AdoptExistingPositions();
 }
@@ -1022,36 +1049,38 @@ void CPositionManager::SmartClosePosition(int idx, ENUM_POS_ROLE role, double pr
 }
 
 //+------------------------------------------------------------------+
-//| ManageSPMSystem - v2.0: 5+5 yapi SPM motoru                      |
+//| ManageSPMSystem - v3.0.0: Trend-Grid yonlendirme                 |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageSPMSystem()
 {
-   int mainIdx = FindMainPosition();
-   if(mainIdx < 0) return;
-
-   double mainProfit = m_positions[mainIdx].profit;
-
-   // Ana karda ise SPM gerek yok
-   if(mainProfit >= 0.0) return;
-
-   // Ana zararda - SPM sistemi devreye
-   int activeSPMs = GetActiveSPMCount();
-
-   if(activeSPMs == 0)
-      ManageMainInLoss(mainIdx, mainProfit);
-   else
-      ManageActiveSPMs(mainIdx);
+   // v3.0.0: Trend-Grid sistemi
+   ManageTrendGrid();
 }
 
 //+------------------------------------------------------------------+
-//| ManageMainInLoss - v2.3.0: SPM1 DAIMA ANA tersine                |
+//| ManageMainInLoss - v3.0.0: Grid1 = ANA ile AYNI yon (Trend-Grid)|
+//| ANA zarardayken, fiyat ATR mesafe kadar dustuyse Grid1 acar      |
 //+------------------------------------------------------------------+
 void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
 {
    if(GetActiveSPMCount() > 0) return;
 
-   // Profil bazli tetik
-   if(mainProfit > m_profile.spmTriggerLoss) return;
+   // v3.0.0: ATR mesafe bazli tetik (zarar $ degil, fiyat mesafesi)
+   double gridATR = GetGridATR();
+   if(gridATR <= 0.0) return;  // ATR hesaplanamadi
+
+   double mainOpenPrice = m_positions[mainIdx].openPrice;
+   double currentPrice = SymbolInfoDouble(m_symbol, SYMBOL_BID);
+   bool isBuy = (m_positions[mainIdx].type == POSITION_TYPE_BUY);
+
+   // Fiyat mesafesi kontrol: ANA'dan ATR kadar uzaklasti mi?
+   double distance = 0.0;
+   if(isBuy)
+      distance = mainOpenPrice - currentPrice;  // BUY icin dusus
+   else
+      distance = currentPrice - mainOpenPrice;  // SELL icin cikis
+
+   if(distance < gridATR) return;  // Henuz yeterli mesafe yok
 
    // Bakiye kontrolu
    double balance = AccountInfoDouble(ACCOUNT_BALANCE);
@@ -1071,163 +1100,409 @@ void CPositionManager::ManageMainInLoss(int mainIdx, double mainProfit)
    double totalVol = GetTotalBuyLots() + GetTotalSellLots();
    if(totalVol >= MaxTotalVolume) return;
 
-   bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);
-
-   // v2.3.0: SPM1 DAIMA ANA tersine (5-oy sistemi KULLANILMAZ)
-   ENUM_SIGNAL_DIR spmDir;
-   if(m_positions[mainIdx].type == POSITION_TYPE_BUY)
-      spmDir = SIGNAL_SELL;
-   else
-      spmDir = SIGNAL_BUY;
-
-   // BUY/SELL katman limiti
-   if(spmDir == SIGNAL_BUY && GetBuyLayerCount() >= m_profile.spmMaxBuyLayers)
+   // v3.0.0: Bakiye bazli max grid limiti
+   int maxGrid = GetMaxGridByBalance();
+   if(GetActiveSPMCount() >= maxGrid)
    {
+      bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);
       if(canLog)
       {
-         PrintFormat("[PM-%s] SPM1: BUY katman limiti (%d/%d)", m_symbol, GetBuyLayerCount(), m_profile.spmMaxBuyLayers);
+         PrintFormat("[PM-%s] GRID1: Bakiye limiti (%d/%d) Balance=$%.0f",
+                     m_symbol, GetActiveSPMCount(), maxGrid, balance);
          m_lastSPMLogTime = TimeCurrent();
       }
       return;
    }
-   if(spmDir == SIGNAL_SELL && GetSellLayerCount() >= m_profile.spmMaxSellLayers)
+
+   bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);
+
+   // v3.0.0: Grid yon = ANA ile AYNI (dip/tepe toplama)
+   ENUM_SIGNAL_DIR gridDir;
+   if(isBuy)
+      gridDir = SIGNAL_BUY;   // ANA BUY → Grid de BUY (dip toplama)
+   else
+      gridDir = SIGNAL_SELL;  // ANA SELL → Grid de SELL (tepe toplama)
+
+   // BUY/SELL katman limiti
+   if(gridDir == SIGNAL_BUY && GetBuyLayerCount() >= m_profile.spmMaxBuyLayers)
    {
       if(canLog)
       {
-         PrintFormat("[PM-%s] SPM1: SELL katman limiti (%d/%d)", m_symbol, GetSellLayerCount(), m_profile.spmMaxSellLayers);
+         PrintFormat("[PM-%s] GRID1: BUY katman limiti (%d/%d)", m_symbol, GetBuyLayerCount(), m_profile.spmMaxBuyLayers);
+         m_lastSPMLogTime = TimeCurrent();
+      }
+      return;
+   }
+   if(gridDir == SIGNAL_SELL && GetSellLayerCount() >= m_profile.spmMaxSellLayers)
+   {
+      if(canLog)
+      {
+         PrintFormat("[PM-%s] GRID1: SELL katman limiti (%d/%d)", m_symbol, GetSellLayerCount(), m_profile.spmMaxSellLayers);
          m_lastSPMLogTime = TimeCurrent();
       }
       return;
    }
 
    // Lot hesapla (layer 1)
-   double spmLot = CalcSPMLot(m_positions[mainIdx].volume, 1);
+   double gridLot = CalcSPMLot(m_positions[mainIdx].volume, 1);
 
-   // Lot denge kontrolu
-   if(!CheckLotBalance(spmDir, spmLot))
+   PrintFormat("[PM-%s] GRID1 TETIK: Mesafe=%.5f >= ATR=%.5f -> %s lot=%.2f (trend yonunde)",
+               m_symbol, distance, gridATR,
+               (gridDir == SIGNAL_BUY) ? "BUY" : "SELL", gridLot);
+
+   OpenSPM(gridDir, gridLot, 1, m_positions[mainIdx].ticket);
+   m_lastGridPrice = currentPrice;  // Son grid fiyatini kaydet
+}
+
+//+------------------------------------------------------------------+
+//| ManageActiveSPMs - v3.0.0: Trend-Grid Katman Yonetimi            |
+//| Grid pozisyonlar DAIMA trend yonunde (ayni taraf)                 |
+//| Tetik: Son grid pozisyondan ATR mesafe kadar uzaklasma            |
+//| Grid = dip/tepe toplama mantigi (ortalama maliyet dusurme)        |
+//+------------------------------------------------------------------+
+void CPositionManager::ManageActiveSPMs(int mainIdx)
+{
+   bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);
+
+   // v3.0.0: ATR mesafe bazli grid
+   double gridATR = GetGridATR();
+   if(gridATR <= 0.0) return;
+
+   double currentPrice = SymbolInfoDouble(m_symbol, SYMBOL_BID);
+   bool isBuy = (m_positions[mainIdx].type == POSITION_TYPE_BUY);
+
+   // En son acilan grid pozisyonun fiyatini bul
+   double lastOpenPrice = m_positions[mainIdx].openPrice;  // Fallback: ANA fiyati
+   int highestLayer = GetHighestLayer();
+   for(int i = 0; i < m_posCount; i++)
+   {
+      if(m_positions[i].role == ROLE_SPM && m_positions[i].spmLayer == highestLayer)
+      {
+         lastOpenPrice = m_positions[i].openPrice;
+         break;
+      }
+   }
+
+   // Son grid'den ATR mesafe kadar uzaklasti mi?
+   double distance = 0.0;
+   if(isBuy)
+      distance = lastOpenPrice - currentPrice;  // BUY: fiyat dustuyse mesafe artar
+   else
+      distance = currentPrice - lastOpenPrice;  // SELL: fiyat ciktiysa mesafe artar
+
+   if(distance < gridATR) return;  // Henuz yeterli mesafe yok
+
+   int nextLayer = highestLayer + 1;
+
+   // Bakiye bazli max grid limiti
+   double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+   int maxGrid = GetMaxGridByBalance();
+   if(GetActiveSPMCount() >= maxGrid)
    {
       if(canLog)
       {
-         PrintFormat("[PM-%s] SPM1 LOT DENGE: Tek tarafli risk! Engellendi.", m_symbol);
+         PrintFormat("[PM-%s] GRID%d: Bakiye limiti (%d/%d) Balance=$%.0f",
+                     m_symbol, nextLayer, GetActiveSPMCount(), maxGrid, balance);
          m_lastSPMLogTime = TimeCurrent();
       }
       return;
    }
 
-   PrintFormat("[PM-%s] SPM1 TETIK: Ana zarar=$%.2f <= $%.2f -> %s lot=%.2f (ANA tersi)",
-               m_symbol, mainProfit, m_profile.spmTriggerLoss,
-               (spmDir == SIGNAL_BUY) ? "BUY" : "SELL", spmLot);
+   // v3.0.0: Grid yon = ANA ile AYNI (trend yonunde dip/tepe toplama)
+   ENUM_SIGNAL_DIR gridDir;
+   if(isBuy)
+      gridDir = SIGNAL_BUY;
+   else
+      gridDir = SIGNAL_SELL;
 
-   OpenSPM(spmDir, spmLot, 1, m_positions[mainIdx].ticket);
+   // Katman limiti kontrol (10+10 yapi)
+   if(gridDir == SIGNAL_BUY && GetBuyLayerCount() >= m_profile.spmMaxBuyLayers)
+   {
+      if(!m_spmLimitLogged)
+      {
+         PrintFormat("[PM-%s] GRID%d: BUY katman MAX (%d/%d)", m_symbol, nextLayer,
+                     GetBuyLayerCount(), m_profile.spmMaxBuyLayers);
+         m_spmLimitLogged = true;
+      }
+      return;
+   }
+   if(gridDir == SIGNAL_SELL && GetSellLayerCount() >= m_profile.spmMaxSellLayers)
+   {
+      if(!m_spmLimitLogged)
+      {
+         PrintFormat("[PM-%s] GRID%d: SELL katman MAX (%d/%d)", m_symbol, nextLayer,
+                     GetSellLayerCount(), m_profile.spmMaxSellLayers);
+         m_spmLimitLogged = true;
+      }
+      return;
+   }
+
+   // Kontroller
+   if(balance < MinBalanceToTrade) return;
+
+   // Cooldown
+   if(TimeCurrent() < m_lastSPMTime + m_profile.spmCooldownSec)
+   {
+      if(canLog)
+      {
+         int remaining = (int)(m_lastSPMTime + m_profile.spmCooldownSec - TimeCurrent());
+         PrintFormat("[PM-%s] GRID%d COOLDOWN: %ds kaldi", m_symbol, nextLayer, remaining);
+         m_lastSPMLogTime = TimeCurrent();
+      }
+      return;
+   }
+
+   if(IsTradingPaused()) return;
+
+   double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
+   if(marginLevel > 0.0 && marginLevel < MinMarginLevel) return;
+
+   double totalVol = GetTotalBuyLots() + GetTotalSellLots();
+   if(totalVol >= MaxTotalVolume) return;
+
+   // Lot hesabi - aktif taraf sayisina gore
+   int sideCount = (gridDir == SIGNAL_BUY) ? GetBuyLayerCount() : GetSellLayerCount();
+   int lotLayer = sideCount + 1;
+   double nextLot = CalcSPMLot(m_positions[mainIdx].volume, lotLayer);
+
+   PrintFormat("[PM-%s] GRID%d TETIK: Mesafe=%.5f >= ATR=%.5f -> %s lot=%.2f (trend yonunde)",
+               m_symbol, nextLayer, distance, gridATR,
+               (gridDir == SIGNAL_BUY) ? "BUY" : "SELL", nextLot);
+
+   OpenSPM(gridDir, nextLot, nextLayer, m_positions[mainIdx].ticket);
+   m_lastGridPrice = currentPrice;  // Son grid fiyatini guncelle
 }
 
 //+------------------------------------------------------------------+
-//| ManageActiveSPMs - v2.4.0: DONGUSEL SPM Yonu                     |
-//| TUM SPM'ler DAIMA oncekinin TERSI (5-oy KULLANILMAZ)             |
-//| SPM1=ANA tersi, SPM2=SPM1 tersi, SPM3=SPM2 tersi...              |
-//| ANA kapanana kadar bu dongu devam eder                             |
+//| ManageTrendGrid - v3.0.0: Ana Trend-Grid motoru                   |
+//| H1 trend yonunu tespit et → ANA zararda ise grid pozisyonlar ac  |
+//| Trend donerse → ManageTrendReversal devreye girer                 |
 //+------------------------------------------------------------------+
-void CPositionManager::ManageActiveSPMs(int mainIdx)
+void CPositionManager::ManageTrendGrid()
 {
-   int highestLayer = GetHighestLayer();
-   bool canLog = (TimeCurrent() - m_lastSPMLogTime >= 30);
+   int mainIdx = FindMainPosition();
+   if(mainIdx < 0) return;
 
+   double mainProfit = m_positions[mainIdx].profit;
+
+   // Her 5 dakikada bir trend yonunu kontrol et
+   CheckTrendDirection();
+
+   // v3.0.0: Trend donus kontrolu
+   // Mevcut ANA yonu ile H1 trend yonu uyumsuz mu?
+   if(m_gridDirection != SIGNAL_NONE)
+   {
+      bool mainIsBuy = (m_positions[mainIdx].type == POSITION_TYPE_BUY);
+      ENUM_SIGNAL_DIR mainDir = mainIsBuy ? SIGNAL_BUY : SIGNAL_SELL;
+
+      if(mainDir != m_gridDirection)
+      {
+         // Trend dondu! Karli pozisyonlari kapat, yeni yonde devam et
+         ManageTrendReversal();
+         return;  // Bu tick'te baska islem yapma
+      }
+   }
+
+   // Ana karda ise grid gerek yok (FIFO veya ManageKarliPozisyonlar halleder)
+   if(mainProfit >= 0.0) return;
+
+   // Ana zararda - Grid sistemi devreye
+   int activeSPMs = GetActiveSPMCount();
+
+   if(activeSPMs == 0)
+      ManageMainInLoss(mainIdx, mainProfit);
+   else
+      ManageActiveSPMs(mainIdx);
+}
+
+//+------------------------------------------------------------------+
+//| CheckTrendDirection - v3.0.0: H1 trend yonu tespit                |
+//| Her 5 dakikada SignalEngine'den H1 trend kontrolu yapar           |
+//| Sonuc: m_gridDirection guncellenir                                |
+//+------------------------------------------------------------------+
+void CPositionManager::CheckTrendDirection()
+{
+   // Her 300 saniyede (5dk) bir kontrol et
+   if(TimeCurrent() - m_lastTrendCheck < 300) return;
+   m_lastTrendCheck = TimeCurrent();
+
+   if(m_signalEngine == NULL)
+   {
+      m_gridDirection = SIGNAL_NONE;
+      return;
+   }
+
+   // H1 trend yonunu al (SignalEngine::GetCurrentTrend)
+   ENUM_SIGNAL_DIR newTrend = m_signalEngine.GetCurrentTrend();
+
+   if(newTrend != m_gridDirection && newTrend != SIGNAL_NONE)
+   {
+      PrintFormat("[PM-%s] TREND DEGISIM: %s -> %s",
+                  m_symbol,
+                  (m_gridDirection == SIGNAL_BUY) ? "BUY" :
+                  (m_gridDirection == SIGNAL_SELL) ? "SELL" : "YOK",
+                  (newTrend == SIGNAL_BUY) ? "BUY" : "SELL");
+
+      if(m_telegram != NULL)
+         m_telegram.SendMessage(StringFormat("TREND %s: %s -> %s",
+                                m_symbol,
+                                (m_gridDirection == SIGNAL_BUY) ? "BUY" :
+                                (m_gridDirection == SIGNAL_SELL) ? "SELL" : "YOK",
+                                (newTrend == SIGNAL_BUY) ? "BUY" : "SELL"));
+   }
+
+   m_gridDirection = newTrend;
+}
+
+//+------------------------------------------------------------------+
+//| GetGridATR - v3.0.0: H1 ATR(14) bazli grid mesafesi              |
+//| Dinamik per-symbol: BTC icin genis, Forex icin dar mesafe verir  |
+//| Grid mesafesi = ATR * 1.0 (1 ATR mesafe)                         |
+//+------------------------------------------------------------------+
+double CPositionManager::GetGridATR()
+{
+   if(m_hATR14 == INVALID_HANDLE)
+   {
+      // Fallback: M15 ATR'den SignalEngine uzerinden al
+      if(m_signalEngine != NULL)
+      {
+         double m15atr = m_signalEngine.GetATR();
+         if(m15atr > 0.0)
+            return m15atr * 4.0;  // M15 ATR * 4 ≈ H1 ATR
+      }
+      return 0.0;
+   }
+
+   // H1 ATR(14) degerini oku
+   double atrBuf[1];
+   if(CopyBuffer(m_hATR14, 0, 0, 1, atrBuf) <= 0)
+   {
+      PrintFormat("[PM-%s] H1 ATR okuma hatasi: %d", m_symbol, GetLastError());
+      return 0.0;
+   }
+
+   double h1ATR = atrBuf[0];
+   if(h1ATR <= 0.0) return 0.0;
+
+   // Grid mesafesi = H1 ATR × 1.0 (tam 1 ATR mesafe)
+   // Bu dinamik olarak her sembol icin otomatik dogru mesafeyi verir:
+   // BTC: ATR ~$500-1000 → Grid mesafe ~$500-1000 (genis)
+   // XAU: ATR ~$15-30 → Grid mesafe ~$15-30 (orta)
+   // XAG: ATR ~$0.20-0.40 → Grid mesafe ~$0.20-0.40 (dar)
+   // FOREX: ATR ~0.0050-0.0100 → Grid mesafe ~50-100 pip (dar)
+   m_gridATR = h1ATR;
+
+   return m_gridATR;
+}
+
+//+------------------------------------------------------------------+
+//| GetMaxGridByBalance - v3.0.0: Bakiye bazli max grid limiti        |
+//| Dusuk bakiye = az grid, yuksek bakiye = cok grid                  |
+//| Margin call'i onlemek icin agressif olmayan yapi                  |
+//+------------------------------------------------------------------+
+int CPositionManager::GetMaxGridByBalance()
+{
+   double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+
+   // Bakiye bazli dinamik grid limiti:
+   // $0-50:     max 2 grid (cok dikkatli)
+   // $50-100:   max 3 grid
+   // $100-200:  max 4 grid
+   // $200-500:  max 5 grid
+   // $500-1000: max 7 grid
+   // $1000+:    max 10 grid
+
+   int maxGrid = 2;  // Minimum 2 grid
+
+   if(balance >= 1000.0)      maxGrid = 10;
+   else if(balance >= 500.0)  maxGrid = 7;
+   else if(balance >= 200.0)  maxGrid = 5;
+   else if(balance >= 100.0)  maxGrid = 4;
+   else if(balance >= 50.0)   maxGrid = 3;
+   else                       maxGrid = 2;
+
+   // Profil limitini de kontrol et (hangisi daha dusukse)
+   int profileMax = m_profile.spmMaxBuyLayers;  // Grid tek yonde, BUY veya SELL
+   if(maxGrid > profileMax)
+      maxGrid = profileMax;
+
+   return maxGrid;
+}
+
+//+------------------------------------------------------------------+
+//| ManageTrendReversal - v3.0.0: Trend donus yonetimi                |
+//| H1 trend yonu degisti → Karli grid pozisyonlari kapat            |
+//| ANA zararda kalabilir - FIFO devam eder                           |
+//| ASLA zararina kapatma YOK                                         |
+//+------------------------------------------------------------------+
+void CPositionManager::ManageTrendReversal()
+{
+   int mainIdx = FindMainPosition();
+   if(mainIdx < 0) return;
+
+   bool mainIsBuy = (m_positions[mainIdx].type == POSITION_TYPE_BUY);
+
+   PrintFormat("[PM-%s] TREND DONUS: Mevcut ANA=%s, Yeni Trend=%s -> Karli pozisyonlar kapatiliyor",
+               m_symbol,
+               mainIsBuy ? "BUY" : "SELL",
+               (m_gridDirection == SIGNAL_BUY) ? "BUY" : "SELL");
+
+   // 1. Karli grid pozisyonlarini kapat (zarardakilere DOKUNMA)
+   int closedCount = 0;
+   double closedProfit = 0.0;
    for(int i = m_posCount - 1; i >= 0; i--)
    {
       if(m_positions[i].role != ROLE_SPM) continue;
 
-      double spmProfit = m_positions[i].profit;
-      int spmLayer = m_positions[i].spmLayer;
-
-      //--- En ust katman SPM zararda -> yeni katman ac
-      if(spmLayer == highestLayer && spmProfit <= m_profile.spmTriggerLoss)
+      if(m_positions[i].profit > m_profile.minCloseProfit)
       {
-         int nextLayer = highestLayer + 1;
-
-         // v2.4.0: DONGUSEL YON - DAIMA onceki SPM'in tersi
-         // SPM1=ANA tersi, SPM2=SPM1 tersi, SPM3=SPM2 tersi...
-         // ANA kapanana kadar bu dongu devam eder
-         ENUM_SIGNAL_DIR nextDir;
-         if(m_positions[i].type == POSITION_TYPE_BUY)
-            nextDir = SIGNAL_SELL;
-         else
-            nextDir = SIGNAL_BUY;
-
-         // Katman limiti kontrol (5+5 yapi)
-         if(nextDir == SIGNAL_BUY && GetBuyLayerCount() >= m_profile.spmMaxBuyLayers)
-         {
-            if(!m_spmLimitLogged)
-            {
-               PrintFormat("[PM-%s] SPM%d: BUY katman MAX (%d/%d)", m_symbol, nextLayer,
-                           GetBuyLayerCount(), m_profile.spmMaxBuyLayers);
-               m_spmLimitLogged = true;
-            }
-            continue;
-         }
-         if(nextDir == SIGNAL_SELL && GetSellLayerCount() >= m_profile.spmMaxSellLayers)
-         {
-            if(!m_spmLimitLogged)
-            {
-               PrintFormat("[PM-%s] SPM%d: SELL katman MAX (%d/%d)", m_symbol, nextLayer,
-                           GetSellLayerCount(), m_profile.spmMaxSellLayers);
-               m_spmLimitLogged = true;
-            }
-            continue;
-         }
-
-         // Kontroller
-         double balance = AccountInfoDouble(ACCOUNT_BALANCE);
-         if(balance < MinBalanceToTrade) continue;
-
-         //--- ACIL SPM - zarar 2x tetik asarsa cooldown ATLA
-         bool isEmergencySPM = (spmProfit <= m_profile.spmTriggerLoss * 2.0);
-         if(!isEmergencySPM && TimeCurrent() < m_lastSPMTime + m_profile.spmCooldownSec)
-         {
-            if(canLog)
-            {
-               int remaining = (int)(m_lastSPMTime + m_profile.spmCooldownSec - TimeCurrent());
-               PrintFormat("[PM-%s] SPM%d COOLDOWN: %ds kaldi (zarar=$%.2f, acil degil)",
-                           m_symbol, nextLayer, remaining, spmProfit);
-               m_lastSPMLogTime = TimeCurrent();
-            }
-            continue;
-         }
-         if(isEmergencySPM && canLog)
-            PrintFormat("[PM-%s] SPM%d ACIL: zarar=$%.2f >= 2x tetik($%.2f) -> COOLDOWN ATLANDI!",
-                        m_symbol, nextLayer, spmProfit, m_profile.spmTriggerLoss * 2.0);
-
-         if(IsTradingPaused()) continue;
-
-         double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
-         if(marginLevel > 0.0 && marginLevel < MinMarginLevel) continue;
-
-         double totalVol = GetTotalBuyLots() + GetTotalSellLots();
-         if(totalVol >= MaxTotalVolume) continue;
-
-         // v2.4.1: Lot hesabi - aktif taraf sayisina gore (katman numarasi degil)
-         // BUY acilacaksa mevcut BUY sayisi+1, SELL acilacaksa mevcut SELL sayisi+1
-         int sideCount = (nextDir == SIGNAL_BUY) ? GetBuyLayerCount() : GetSellLayerCount();
-         int lotLayer = sideCount + 1;  // Yeni pozisyon dahil kacinci olacak
-         double nextLot = CalcSPMLot(m_positions[mainIdx].volume, lotLayer);
-
-         // Lot denge kontrolu
-         if(!CheckLotBalance(nextDir, nextLot))
-         {
-            if(canLog)
-            {
-               PrintFormat("[PM-%s] SPM%d LOT DENGE: Tek tarafli risk! Engellendi.", m_symbol, nextLayer);
-               m_lastSPMLogTime = TimeCurrent();
-            }
-            continue;
-         }
-
-         PrintFormat("[PM-%s] SPM%d TETIK: SPM%d zarar=$%.2f -> %s lot=%.2f (onceki_tersi)",
-                     m_symbol, nextLayer, spmLayer, spmProfit,
-                     (nextDir == SIGNAL_BUY) ? "BUY" : "SELL", nextLot);
-
-         OpenSPM(nextDir, nextLot, nextLayer, m_positions[i].ticket);
+         closedProfit += m_positions[i].profit;
+         ClosePosWithNotification(i, "TREND_DONUS_KAR");
+         closedCount++;
       }
    }
+
+   if(closedCount > 0)
+   {
+      PrintFormat("[PM-%s] TREND DONUS: %d karli grid kapatildi, Toplam=$%.2f",
+                  m_symbol, closedCount, closedProfit);
+
+      if(m_telegram != NULL)
+         m_telegram.SendMessage(StringFormat("TREND DONUS %s: %d grid kapatildi $%.2f",
+                                m_symbol, closedCount, closedProfit));
+   }
+
+   // 2. ANA karda ise ANA'yi da kapat ve yeni yonde ANA ac
+   if(m_positions[mainIdx].profit > m_profile.minCloseProfit)
+   {
+      double anaKar = m_positions[mainIdx].profit;
+      ClosePosWithNotification(mainIdx, "TREND_DONUS_ANA_KAR");
+
+      m_totalCashedProfit += anaKar;
+      m_dailyProfit += anaKar;
+      m_mainTicket = 0;
+
+      PrintFormat("[PM-%s] TREND DONUS: ANA kapatildi kar=$%.2f -> Yeni ANA %s acilacak",
+                  m_symbol, anaKar,
+                  (m_gridDirection == SIGNAL_BUY) ? "BUY" : "SELL");
+
+      // Kalan SPM varsa terfi et
+      RefreshPositions();
+      if(GetActiveSPMCount() > 0)
+      {
+         PromoteOldestSPM();
+      }
+      else
+      {
+         // Temiz baslangic: yeni trend yonunde ANA ac
+         ResetFIFO();
+         OpenNewMainTrade(m_gridDirection, "TREND_DONUS_YeniANA");
+      }
+   }
+   // ANA zararda ise → DOKUNMA, FIFO devam eder
+   // Zarardaki ANA ASLA kapatilmaz (SL YOK kurali)
+   // Yeni grid pozisyonlari artik ACILMAYACAK (trend uyumsuz)
+   // Sadece mevcut pozisyonlarin FIFO ile kapanmasi beklenir
 }
 
 //+------------------------------------------------------------------+
@@ -1412,33 +1687,14 @@ ENUM_SIGNAL_DIR CPositionManager::DetermineSPMDirection(int parentLayer)
 }
 
 //+------------------------------------------------------------------+
-//| CheckSameDirectionBlock - MUTLAK GUVENLIK                        |
-//| SPM yonu == ANA yonu VE ANA zararda → ENGELLE                   |
-//| Asla zarardaki yonde ikiye katlanmaz                             |
+//| CheckSameDirectionBlock - v3.0.0: DEVRE DISI                     |
+//| Trend-Grid sistemde grid = ANA ile ayni yon (dip/tepe toplama)   |
+//| Bu fonksiyon artik DAIMA false doner                              |
 //+------------------------------------------------------------------+
 bool CPositionManager::CheckSameDirectionBlock(ENUM_SIGNAL_DIR proposedDir)
 {
-   int mainIdx = FindMainPosition();
-   if(mainIdx < 0) return false;
-
-   ENUM_SIGNAL_DIR mainDir = SIGNAL_NONE;
-   if(m_positions[mainIdx].type == POSITION_TYPE_BUY) mainDir = SIGNAL_BUY;
-   else mainDir = SIGNAL_SELL;
-
-   if(proposedDir == mainDir && m_positions[mainIdx].profit < 0.0)
-   {
-      //--- v2.2.1: Log cooldown - her tick basina yazma
-      if(TimeCurrent() - m_lastSPMLogTime >= 30)
-      {
-         PrintFormat("[PM-%s] SAME-DIR BLOCK: SPM %s == ANA %s, ANA P/L=$%.2f < 0 -> OVERRIDE TERS YONE",
-                     m_symbol,
-                     (proposedDir == SIGNAL_BUY) ? "BUY" : "SELL",
-                     (mainDir == SIGNAL_BUY) ? "BUY" : "SELL",
-                     m_positions[mainIdx].profit);
-         m_lastSPMLogTime = TimeCurrent();
-      }
-      return true;
-   }
+   // v3.0.0: Trend-Grid sistemde grid ayni yonde acilir
+   // Same-direction block artik gecerli degil
    return false;
 }
 
@@ -1682,72 +1938,26 @@ void CPositionManager::RenumberSPMLayers()
 }
 
 //+------------------------------------------------------------------+
-//| CheckLotBalance - v2.4.1: Lot + Katman denge kontrolu            |
-//| Tek taraf yigilmasini onler (BUY vs SELL dengeleme)               |
+//| CheckLotBalance - v3.0.0: Trend-Grid Hacim kontrolu              |
+//| Grid tek yonde acilir - sadece toplam hacim limiti kontrol edilir |
 //+------------------------------------------------------------------+
 bool CPositionManager::CheckLotBalance(ENUM_SIGNAL_DIR newDir, double newLot)
 {
    double totalBuy = GetTotalBuyLots();
    double totalSell = GetTotalSellLots();
-   int buyCount = GetBuyLayerCount();
-   int sellCount = GetSellLayerCount();
 
    double proposedBuy = totalBuy;
    double proposedSell = totalSell;
-   int proposedBuyCount = buyCount;
-   int proposedSellCount = sellCount;
 
    if(newDir == SIGNAL_BUY)
-   {
       proposedBuy += newLot;
-      proposedBuyCount++;
-   }
    else if(newDir == SIGNAL_SELL)
-   {
       proposedSell += newLot;
-      proposedSellCount++;
-   }
 
-   // v2.4.1: KATMAN SAYISI DENGE KONTROLU
-   // Tek taraf en fazla karsi taraftan 2 fazla olabilir
-   // Ornek: BUY=4, SELL=1 -> fark=3 -> ENGELLE (max fark 2)
-   int layerDiff = MathAbs(proposedBuyCount - proposedSellCount);
-   if(layerDiff > 2)
-   {
-      PrintFormat("[PM-%s] TEK TARAF DENGE: BUY=%d SELL=%d fark=%d > 2 -> %s ENGELLENDI",
-                  m_symbol, proposedBuyCount, proposedSellCount, layerDiff,
-                  (newDir == SIGNAL_BUY) ? "BUY" : "SELL");
-      return false;
-   }
+   // v3.0.0: Trend-Grid sistemde katman dengeleme KALDIRILDI
+   // Grid = tek yonde (trend yonunde) acilir, BUY/SELL dengesi gerekmez
 
-   // Tek tarafli birikim korumasi (lot bazli)
-   double oneSideMax = MaxTotalVolume * 0.7;  // v2.4.1: 0.6→0.7 katman dengeleme ile beraber
-   if(proposedSell <= 0.0 && proposedBuy > oneSideMax)
-   {
-      PrintFormat("[PM-%s] TEK TARAF KORUMA: Sadece BUY=%.2f > %.2f (MaxVol*0.7)",
-                  m_symbol, proposedBuy, oneSideMax);
-      return false;
-   }
-   if(proposedBuy <= 0.0 && proposedSell > oneSideMax)
-   {
-      PrintFormat("[PM-%s] TEK TARAF KORUMA: Sadece SELL=%.2f > %.2f (MaxVol*0.7)",
-                  m_symbol, proposedSell, oneSideMax);
-      return false;
-   }
-
-   // v2.4.1: 4.0→3.0 lot oran limiti (katman dengeleme destegi)
-   if(proposedBuy > 0 && proposedSell > 0)
-   {
-      double ratio = MathMax(proposedBuy, proposedSell) / MathMin(proposedBuy, proposedSell);
-      if(ratio > 3.0)
-      {
-         PrintFormat("[PM-%s] LOT ORAN LIMITI: BUY=%.2f SELL=%.2f oran=%.1f > 3.0",
-                     m_symbol, proposedBuy, proposedSell, ratio);
-         return false;
-      }
-   }
-
-   // Toplam hacim kontrolu
+   // Toplam hacim kontrolu (en onemli guvenlik)
    if(proposedBuy + proposedSell > MaxTotalVolume)
    {
       PrintFormat("[PM-%s] MAX HACIM: %.2f + %.2f = %.2f > %.2f",

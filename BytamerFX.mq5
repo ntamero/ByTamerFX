@@ -3,17 +3,17 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.5.0 - Saf Zigzag SPM + Mum Donus + FIFO Birikim     |
+//| BytamerFX v3.0.0 - Trend-Grid Sistemi + ATR Mesafe + FIFO        |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
-//| FIFO +$5 Net | Zigzag SPM | Mum Donus Kar Al | 5+5 Katman       |
+//| FIFO +$5 Net | Trend-Grid | Mum Donus Kar Al | 10+10 Katman     |
 //| Hesap: 262230423 (Exness) | Dinamik Profil + Haber Kontrol       |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "2.50"
-#property description "BytamerFX v2.5.0 - Saf Zigzag SPM + FIFO Birikim"
-#property description "Zigzag SPM | Mum Donus Kar Al | FIFO +$5 Net"
-#property description "SL=YOK | Dinamik Profil | Pip-TP | MinProfit"
+#property version     "3.00"
+#property description "BytamerFX v3.0.0 - Trend-Grid + ATR + FIFO Birikim"
+#property description "Trend-Grid | ATR Mesafe | Mum Donus Kar Al | FIFO +$5 Net"
+#property description "SL=YOK | Dinamik Profil | Bakiye Grid Limiti"
 #property description "Copyright 2026, By T@MER"
 #property strict
 
