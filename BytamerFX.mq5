@@ -21,6 +21,7 @@
 // TUM MODULLER
 //=================================================================
 #include "Config.mqh"
+#include "LicenseManager.mqh"
 #include "AccountSecurity.mqh"
 #include "SymbolManager.mqh"
 #include "SpreadFilter.mqh"
@@ -61,6 +62,30 @@ datetime          g_lastSignalCheck = 0;
 //+------------------------------------------------------------------+
 int OnInit()
 {
+   //--- 0. LISANS DOGRULAMA (EN ONCE)
+   long accNo = AccountInfoInteger(ACCOUNT_LOGIN);
+   if(!InitLicense(LicenseKey, accNo))
+   {
+      Print("!!! LISANS DOGRULANAMADI - EA DEVRE DISI !!!");
+      Print("Lisans Durumu: ", GetLicenseStatus());
+      Print("Lisans: ", GetLicenseKeyMasked());
+      Print("Hesap: ", IntegerToString(accNo));
+      return INIT_FAILED;
+   }
+
+   // Lisans suresi 7 gunden az ise uyari
+   if(GetLicenseDaysRemaining() <= 7 && GetLicenseDaysRemaining() > 0)
+   {
+      Print("!!! UYARI: Lisans suresi ", GetLicenseDaysRemaining(), " gun sonra doluyor! !!!");
+   }
+   else if(GetLicenseDaysRemaining() == 0 && GetLicenseHoursRemaining() > 0)
+   {
+      Print("!!! UYARI: Lisans suresi ", GetLicenseHoursRemaining(), " saat sonra doluyor! !!!");
+   }
+
+   Print("Lisans: ", GetLicenseKeyMasked(), " | Musteri: ", GetLicenseCustomerName());
+   Print("Bitis: ", GetLicenseEndDate(), " | Kalan: ", GetLicenseDaysRemaining(), " gun");
+
    //--- 1. HESAP GUVENLIK DOGRULAMASI
    g_security.Initialize(ExpectedAccountNumber);
    if(!g_security.IsVerified())
@@ -69,7 +94,6 @@ int OnInit()
       return INIT_FAILED;
    }
 
-   long accNo    = g_security.GetAccountNumber();
    string broker = g_security.GetBrokerName();
    double balance = AccountInfoDouble(ACCOUNT_BALANCE);
 
@@ -202,6 +226,18 @@ void OnDeinit(const int reason)
 void OnTick()
 {
    if(!g_initialized) return;
+
+   //--- 0. LISANS PERIYODIK KONTROL (her 1 saatte bir)
+   if(!CheckLicensePeriodically())
+   {
+      static datetime lastLicWarn = 0;
+      if(TimeCurrent() - lastLicWarn > 60)
+      {
+         Print("!!! LISANS GECERSIZ - EA DURDURULDU !!! Durum: ", GetLicenseStatus());
+         lastLicWarn = TimeCurrent();
+      }
+      return;
+   }
 
    //--- 1. Hesap tekrar dogrula (her 5 dakikada bir)
    static datetime lastRecheck = 0;

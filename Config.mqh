@@ -25,8 +25,9 @@
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
-// HESAP GUVENLIK
+// LISANS + HESAP GUVENLIK
 //=================================================================
+input string   LicenseKey             = "";           // Lisans Anahtari (BTAI-XXXXX-XXXXX-XXXXX-XXXXX)
 input long     ExpectedAccountNumber  = 262230423;
 
 //=================================================================

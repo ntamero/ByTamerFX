@@ -18,6 +18,7 @@
 #define CHART_DASHBOARD_MQH
 
 #include "Config.mqh"
+#include "LicenseManager.mqh"
 #include "SignalEngine.mqh"
 #include "PositionManager.mqh"
 #include "SpreadFilter.mqh"
@@ -595,6 +596,117 @@ private:
 
       //--- Progress bar
       CreateProgressBar("P4_FIFO_BAR", barX, y, barW, 8, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
+   }
+
+   //=================================================================
+   // LICENSE PANEL: Sag alt kose (CORNER_RIGHT_LOWER)
+   //=================================================================
+   void CreateLicensePanel()
+   {
+      int pw = 280;
+      int ph = 90;
+
+      //--- Panel background (sag alt kose)
+      string bgName = "BTFX_LIC_BG";
+      ObjectCreate(m_chartId, bgName, OBJ_RECTANGLE_LABEL, m_subWindow, 0, 0);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_XDISTANCE, 10);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_YDISTANCE, 10);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_XSIZE, pw);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_YSIZE, ph);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_BGCOLOR, CLR_PANEL_BG);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_BORDER_COLOR, CLR_PANEL_BORDER);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_BORDER_TYPE, BORDER_FLAT);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_CORNER, CORNER_RIGHT_LOWER);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_BACK, false);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(m_chartId, bgName, OBJPROP_HIDDEN, true);
+
+      int x  = 270;    // Sag koseden sola (CORNER_RIGHT_LOWER icin ters)
+      int vx = 130;    // Deger pozisyonu (sag koseden)
+      int y  = 90;     // Alt koseden yukari
+
+      //--- Row 1: EA Versiyon + Durum
+      CreateLicLabel("LIC_VER_L", x, y, "\x25B8  EA:", CLR_LABEL);
+      CreateLicLabel("LIC_VER_V", vx, y, "v" + EA_VERSION, CLR_HEADER);
+      y -= DASH_LINE_H;
+
+      //--- Row 2: Lisans NO
+      CreateLicLabel("LIC_KEY_L", x, y, "\x2713  Lisans:", CLR_LABEL);
+      CreateLicLabel("LIC_KEY_V", vx, y, "---", CLR_VALUE);
+      y -= DASH_LINE_H;
+
+      //--- Row 3: Bitis Tarihi
+      CreateLicLabel("LIC_END_L", x, y, "\x25CF  Bitis:", CLR_LABEL);
+      CreateLicLabel("LIC_END_V", vx, y, "---", CLR_VALUE);
+      y -= DASH_LINE_H;
+
+      //--- Row 4: Kalan Sure
+      CreateLicLabel("LIC_REM_L", x, y, "\x25B2  Kalan:", CLR_LABEL);
+      CreateLicLabel("LIC_REM_V", vx, y, "---", CLR_VALUE);
+      y -= DASH_LINE_H;
+
+      //--- Row 5: Durum
+      CreateLicLabel("LIC_STS_L", x, y, "\x25C6  Durum:", CLR_LABEL);
+      CreateLicLabel("LIC_STS_V", vx, y, "---", CLR_VALUE);
+   }
+
+   //=================================================================
+   // HELPER: Create label for license panel (right-lower corner)
+   //=================================================================
+   void CreateLicLabel(string name, int x, int y, string text, color clr)
+   {
+      string objName = "BTFX_" + name;
+      ObjectCreate(m_chartId, objName, OBJ_LABEL, m_subWindow, 0, 0);
+      ObjectSetInteger(m_chartId, objName, OBJPROP_XDISTANCE, x);
+      ObjectSetInteger(m_chartId, objName, OBJPROP_YDISTANCE, y);
+      ObjectSetInteger(m_chartId, objName, OBJPROP_CORNER, CORNER_RIGHT_LOWER);
+      ObjectSetString(m_chartId, objName, OBJPROP_TEXT, text);
+      ObjectSetString(m_chartId, objName, OBJPROP_FONT, DASH_FONT);
+      ObjectSetInteger(m_chartId, objName, OBJPROP_FONTSIZE, DASH_FONT_SIZE);
+      ObjectSetInteger(m_chartId, objName, OBJPROP_COLOR, clr);
+      ObjectSetInteger(m_chartId, objName, OBJPROP_BACK, false);
+      ObjectSetInteger(m_chartId, objName, OBJPROP_SELECTABLE, false);
+      ObjectSetInteger(m_chartId, objName, OBJPROP_HIDDEN, true);
+   }
+
+   //=================================================================
+   // LICENSE PANEL UPDATE
+   //=================================================================
+   void UpdateLicensePanel()
+   {
+      //--- EA Versiyon
+      string verText = "v" + EA_VERSION + " " + EA_VERSION_NAME;
+      UpdateLabel("LIC_VER_V", verText, CLR_HEADER);
+
+      //--- Lisans NO (masked)
+      string keyText = GetLicenseKeyMasked();
+      color keyClr = IsLicenseValid() ? CLR_VALUE : CLR_NEGATIVE;
+      UpdateLabel("LIC_KEY_V", keyText, keyClr);
+
+      //--- Bitis Tarihi
+      string endText = GetLicenseEndDate();
+      if(StringLen(endText) == 0) endText = "---";
+      UpdateLabel("LIC_END_V", endText, CLR_VALUE);
+
+      //--- Kalan Sure
+      int days = GetLicenseDaysRemaining();
+      int hours = GetLicenseHoursRemaining();
+      string remText;
+      if(days > 0)
+         remText = IntegerToString(days) + " gun " + IntegerToString(hours) + " saat";
+      else if(hours > 0)
+         remText = IntegerToString(hours) + " saat";
+      else
+         remText = "SURESI DOLDU";
+      color remClr = GetLicenseExpiryColor();
+      UpdateLabel("LIC_REM_V", remText, remClr);
+
+      //--- Durum
+      string stsText = GetLicenseStatus();
+      color stsClr = GetLicenseStatusColor();
+      if(IsLicenseOffline())
+         stsText += " [OFFLINE]";
+      UpdateLabel("LIC_STS_V", stsText, stsClr);
    }
 
    //=================================================================
@@ -1384,6 +1496,9 @@ public:
       CreatePanel3(x, topY + 500);            // h=140
       CreatePanel4(x, topY + 645);            // h=240 (v2.3.0)
 
+      //--- Lisans paneli (sag alt kose)
+      CreateLicensePanel();
+
       ChartRedraw(m_chartId);
 
       Print(StringFormat("[Dashboard] %s [%s] Dashboard olusturuldu. Panels=4+Banner Overlay=BB+SAR+Mom | News=%s",
@@ -1404,6 +1519,7 @@ public:
       UpdatePanel3();
       UpdatePanel4();
       UpdateNewsBanner();    // v2.2.1: Ust haber banner'i
+      UpdateLicensePanel();  // Lisans durumu (sag alt kose)
 
       //--- Update chart overlay indicators (throttled to every 2 sec)
       DrawIndicatorOverlay();
