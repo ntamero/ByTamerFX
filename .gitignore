@@ -1,5 +1,6 @@
 # MetaTrader 5 / MQL5 Generated Files
 *.ex5
+!releases/*.ex5
 *.log
 *.dat
 *.bin

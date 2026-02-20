@@ -4,6 +4,29 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v3.4.0] - 2026-02-20
+
+### Post-Entry Profitability Engine
+- **SignalMinScore**: 48 → 38 (daha fazla firsat, post-entry mekanizmalar korur)
+- **ADX Grid Kalite Filtresi**: ADX<15 grid YOK, ADX 15-20 max 3, ADX 20-30 max 7, ADX≥30 tam 10
+- **Kumulatif Zarar Limiti**: %15 grid stop, %25 en kotu SPM kapat, %10 resume
+- **Kismi Kapama (Scale-Out)**: SPM/DCA +$3'te %60 lot kapatilir, %40 devam eder
+- **Sanal Breakeven Kilidi**: SPM +$2'ye ulasinca sanal BE aktif, zarara donerse kapat
+- **Adaptif FIFO Hedefi**: Bakiye<$200: $3, $200-500: $4, $500-1000: $5, $1000+: $6
+- **Akilli Deadlock Cozumu**: 5dk sikisman + zarar>%15 → en kotu SPM otomatik kapat (max 3)
+- **Volatilite Grid Cooldown**: VOL_LOW 45sn, VOL_NORMAL 30sn, VOL_HIGH 15sn
+
+### Bug Fixes
+- Haber log spam duzeltmesi: sadece 20dk icindeki haberler loglaniyor
+
+### New Parameters
+- `EnablePartialClose`, `PartialClosePercent`, `PartialCloseTriggerUSD`
+- `EnableBreakevenLock`, `BreakevenTriggerUSD`
+- `EnableCumLossCap`, `CumLossCapStopPct`, `CumLossCapClosePct`, `CumLossCapResumePct`
+- `EnableDeadlockResolve`, `Deadlock_MaxAutoClose`
+
+---
+
 ## [v3.3.0] - 2026-02-20
 
 ### Hybrid Profitability Improvements
