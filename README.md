@@ -1,47 +1,78 @@
 # BytamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v3.3.0** - Professional automated trading system with Bi-Directional Trend-Grid technology.
+**BytamerFX v3.5.1** - Professional automated trading system with Zigzag Grid + Net Settlement technology.
 
-> **Smart Grid** | **FIFO Settlement** | **Multi-Instrument** | **License Protected**
+> **Zigzag SPM** | **Net Settlement** | **FIFO Engine** | **Trend Hold** | **Multi-Instrument** | **License Protected**
+
+---
+
+## Screenshots
+
+### BTCUSDm - Crypto Dashboard
+![BTCUSDm Dashboard](docs/screenshots/dashboard_btcusd.png)
+
+### XAGUSDm - Silver Dashboard
+![XAGUSDm Dashboard](docs/screenshots/dashboard_xagusd.png)
 
 ---
 
 ## Overview
 
-BytamerFX is a professional-grade Expert Advisor for MetaTrader 5 that combines trend-following signals with an intelligent grid management system. The EA uses a hybrid approach of signal scoring, ATR-based grid spacing, and automated position management to generate consistent returns.
+BytamerFX is a professional-grade Expert Advisor for MetaTrader 5 that combines trend-following signals with an intelligent zigzag grid management system. The EA uses a hybrid approach of signal scoring, ATR-based grid spacing, and automated position management to generate consistent returns.
 
 ## Key Features
 
-### Bi-Directional Trend-Grid System
-- H1 timeframe trend following with ATR-based dynamic grid spacing
-- Smart Position Management (SPM) for automated loss recovery
-- Progressive grid spacing (+10% per layer to prevent clustering)
-- Balance-based grid limits and lot sizing
+### Zigzag Grid System (v3.5.0+)
+- **Zigzag SPM**: ANA BUY → SPM1 BUY → SPM2 SELL → SPM3 BUY (alternating directions)
+- Every price movement benefits one side of the grid
+- Dual trigger system: $ loss OR ATR distance (whichever comes first)
+- ADX 25+ required for grid activation (strong trend filter)
 
-### FIFO Settlement Engine
-- Net profit target system with time-based dynamic targets
-- KASA (Treasury) tracking of accumulated closed profits
-- Automatic position settlement when targets are reached
+### Net Settlement Engine
+- **FIFO**: Kasa + ANA loss >= $5 → close ANA position
+- **Net Settlement**: Kasa + worst position loss >= $5 → close worst position
+- Any position (ANA, SPM, DCA) can be settled via Net Settlement
+- Automatic promotion: oldest SPM becomes new ANA after settlement
 
-### Multi-Indicator Signal Engine
+### Trend-Aware Trading
+- 3-source voting system (EMA + MACD + ADX DI) with consecutive confirmation
+- H1/H4 multi-timeframe trend filter with ±15-30% score adjustments
+- **Trend Hold**: Strong trend + position in trend direction → HOLD until candle reversal
+- **Max Close**: Close at peak value when candle reverses
+
+### 7-Layer Signal Scoring Engine
 - 12 indicator handles across M15, H1, H4 timeframes
-- 7-layer scoring system with configurable minimum threshold
-- RSI, MACD, EMA, Bollinger, Stochastic, ADX integration
+- EMA Trend (20pts), MACD Momentum (20pts), ADX Strength (15pts)
+- RSI Level (15pts), BB Position (15pts), Stochastic (10pts), ATR Volatility (5pts)
+- Minimum score threshold: 40/100
 
-### Risk Management
+### Smart Risk Management
+- **SL = NONE (ABSOLUTE)** - No stop loss, ever
 - Role-based profit protection (MAIN/SPM/DCA differentiated)
-- Smart grid cooldown system
-- Spread filtering for entry quality
-- No Stop Loss strategy with FIFO-based exits
+- Peak/Dip protection: RSI > 75 or < 25 + ADX < 30 = grid blocked
+- Spread control: rejects if spread > ATR-based normal × 1.15
+- 15-second candle wait before new grid positions
+- 60-second cooldown after all positions closed
+- Balance-based and ADX-based grid limits
 
 ### 10 Instrument Profiles
-- Forex, ForexJPY, Silver, Gold, Crypto, CryptoAlt
-- Indices, Energy, Metal, Default
-- Each with optimized parameters
+| Category | SPM Trigger | SPM TP | Examples |
+|----------|-------------|--------|----------|
+| Forex | -$4 | $3 | EURUSD, GBPUSD, AUDUSD |
+| Forex JPY | -$4 | $3 | USDJPY, EURJPY, GBPJPY |
+| Silver | -$5 | $4 | XAGUSD |
+| Gold | -$5 | $4 | XAUUSD |
+| Crypto | -$5 | $4 | BTCUSD, ETHUSD |
+
+### Real-Time Dashboard
+- 4-panel dashboard with live data (ANA BILGILER, SINYAL SKOR, TP+INDIKATORLER, BIDIR-GRID)
+- Full-width news banner with impact-based color coding
+- License panel with dynamic color (green/orange/yellow/red by days remaining)
+- Chart overlay: Bollinger Bands, Parabolic SAR dots, Momentum
 
 ### Notifications
-- Telegram integration
-- Discord webhook support
+- Telegram integration (rate limited: 15 msg/min)
+- Discord webhook with embed format
 - MT5 push notifications
 
 ---
@@ -92,10 +123,12 @@ See [LICENSE](LICENSE) for terms.
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v3.5.1 | 2026-02-21 | Zigzag distance fix, dual trigger, Discord HTTP 400 fix |
+| v3.5.0 | 2026-02-20 | Zigzag Grid + Net Settlement Engine (11 Rules) |
+| v3.4.0 | 2026-02-20 | Bi-Directional Grid + Smart Profit Engine |
 | v3.3.0 | 2026-02-20 | Hybrid profitability + Security hardening |
 | v3.2.0 | 2026-02-20 | License system + Balance-based trading |
 | v3.1.0 | 2026-02-19 | Bi-Directional Trend-Grid system |
-| v2.2.5 | 2026-02-18 | SPM lot optimization |
 | v2.0.0 | 2026-02-17 | WIN-WIN Hedge System |
 | v1.0.0 | 2026-02-17 | Initial release |
 
