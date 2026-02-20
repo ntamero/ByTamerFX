@@ -21,7 +21,7 @@
 //|  1. SL YOK - ASLA (MUTLAK)                                      |
 //|  2. ANA SADECE FIFO ile kapanir (kasa + ANA zarar >= +$5)       |
 //|  3. MUM DONUS = HEMEN KAPAT (karda ise beklemeden kapat)         |
-//|  4. SPM 5+5 yapi: max 5 BUY + 5 SELL zigzag                    |
+//|  4. SPM 10+10 yapi: max 10 BUY + 10 SELL zigzag                 |
 //|  5. SPM yon: DAIMA onceki pozisyonun TERSI (zigzag)              |
 //|  6. SPM tetik: Forex -$3 | XAG/XAU/BTC -$5                      |
 //|  7. SPM kar: Forex +$3 | XAG/XAU/BTC +$5                        |

@@ -73,8 +73,8 @@ input int      SignalCooldownSec      = 120;
 input double   SPM_TriggerLoss        = -3.0;     // v2.4.3: SPM tetik ($) - forex -3, XAG/XAU/BTC -5
 input double   SPM_CloseProfit        = 3.0;      // v2.4.3: SPM kar hedefi ($) - forex +3
 input double   SPM_NetTargetUSD       = 5.0;      // FIFO net hedef ($) - toplam net >= +5$
-input int      SPM_MaxBuyLayers       = 5;        // v2.4.0: Max BUY katman (5+5 yapi)
-input int      SPM_MaxSellLayers      = 5;        // v2.4.0: Max SELL katman
+input int      SPM_MaxBuyLayers       = 10;       // v2.5.0: Max BUY katman (10+10 yapi)
+input int      SPM_MaxSellLayers      = 10;       // v2.5.0: Max SELL katman
 input double   SPM_LotBase            = 1.0;      // v2.2.5: SPM lot carpani (1.0x = ANA ile ayni)
 input double   SPM_LotIncrement       = 0.1;      // v2.2.5: Katman basi +0.1x artis
 input double   SPM_LotCap             = 1.5;      // v2.2.5: Max carpan 1.5x
@@ -357,8 +357,8 @@ struct SymbolProfile
       spmTriggerLoss    = -3.0;       // v2.4.3: forex SPM tetik -$3
       spmCloseProfit    = 3.0;        // v2.4.3: SPM kar hedefi $3 (forex +3)
       fifoNetTarget     = 5.0;
-      spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
-      spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
+      spmMaxBuyLayers   = 10;         // v2.5.0: 10+10 yapi
+      spmMaxSellLayers  = 10;         // v2.5.0: 10+10 yapi
       spmLotBase        = 1.0;        // v2.2.5: 1.0x (ANA ile ayni)
       spmLotIncrement   = 0.1;        // v2.2.5: +0.1x artis
       spmLotCap         = 1.5;        // v2.2.5: max 1.5x
@@ -382,8 +382,8 @@ struct SymbolProfile
       spmTriggerLoss    = -3.0;       // v2.4.3: forex SPM tetik -$3
       spmCloseProfit    = 3.0;        // v2.4.3: SPM kar hedefi $3 (forex +3)
       fifoNetTarget     = 5.0;
-      spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
-      spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
+      spmMaxBuyLayers   = 10;         // v2.5.0: 10+10 yapi
+      spmMaxSellLayers  = 10;         // v2.5.0: 10+10 yapi
       spmLotBase        = 1.0;        // v2.2.5: 1.0x
       spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
       spmLotCap         = 1.5;        // v2.2.5: max 1.5x
@@ -407,8 +407,8 @@ struct SymbolProfile
       spmTriggerLoss    = -5.0;       // XAG: -$5 tetik
       spmCloseProfit    = 5.0;        // v2.4.3: XAG TP1 +$5
       fifoNetTarget     = 5.0;
-      spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
-      spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
+      spmMaxBuyLayers   = 10;         // v2.5.0: 10+10 yapi
+      spmMaxSellLayers  = 10;         // v2.5.0: 10+10 yapi
       spmLotBase        = 1.0;        // v2.2.5: 1.0x
       spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
       spmLotCap         = 1.5;        // v2.2.5: max 1.5x
@@ -432,8 +432,8 @@ struct SymbolProfile
       spmTriggerLoss    = -5.0;       // XAU: -$5 tetik
       spmCloseProfit    = 5.0;        // v2.4.3: XAU TP1 +$5
       fifoNetTarget     = 5.0;
-      spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
-      spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
+      spmMaxBuyLayers   = 10;         // v2.5.0: 10+10 yapi
+      spmMaxSellLayers  = 10;         // v2.5.0: 10+10 yapi
       spmLotBase        = 1.0;        // v2.2.5: 1.0x
       spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
       spmLotCap         = 1.5;        // v2.2.5: max 1.5x
@@ -457,8 +457,8 @@ struct SymbolProfile
       spmTriggerLoss    = -5.0;       // BTC: -$5 tetik
       spmCloseProfit    = 5.0;        // v2.4.3: BTC TP1 +$5
       fifoNetTarget     = 5.0;
-      spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
-      spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
+      spmMaxBuyLayers   = 10;         // v2.5.0: 10+10 yapi
+      spmMaxSellLayers  = 10;         // v2.5.0: 10+10 yapi
       spmLotBase        = 1.0;        // v2.2.5: 1.0x
       spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
       spmLotCap         = 1.5;        // v2.2.5: max 1.5x
@@ -482,8 +482,8 @@ struct SymbolProfile
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;        // v2.4.1: $5→$4 (spm+4 kari al)
       fifoNetTarget     = 5.0;
-      spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
-      spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
+      spmMaxBuyLayers   = 10;         // v2.5.0: 10+10 yapi
+      spmMaxSellLayers  = 10;         // v2.5.0: 10+10 yapi
       spmLotBase        = 1.0;        // v2.2.5: 1.0x
       spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
       spmLotCap         = 1.5;        // v2.2.5: max 1.5x
@@ -507,8 +507,8 @@ struct SymbolProfile
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;        // v2.4.1: $5→$4 (indices spm+4 kari al)
       fifoNetTarget     = 5.0;
-      spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
-      spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
+      spmMaxBuyLayers   = 10;         // v2.5.0: 10+10 yapi
+      spmMaxSellLayers  = 10;         // v2.5.0: 10+10 yapi
       spmLotBase        = 1.0;        // v2.2.5: 1.0x
       spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
       spmLotCap         = 1.5;        // v2.2.5: max 1.5x
@@ -532,8 +532,8 @@ struct SymbolProfile
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 4.0;
       fifoNetTarget     = 5.0;
-      spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
-      spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
+      spmMaxBuyLayers   = 10;         // v2.5.0: 10+10 yapi
+      spmMaxSellLayers  = 10;         // v2.5.0: 10+10 yapi
       spmLotBase        = 1.0;        // v2.2.5: 1.0x
       spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
       spmLotCap         = 1.5;        // v2.2.5: max 1.5x
@@ -582,8 +582,8 @@ struct SymbolProfile
       spmTriggerLoss    = -5.0;
       spmCloseProfit    = 5.0;        // v2.3.0: $4→$5
       fifoNetTarget     = 5.0;
-      spmMaxBuyLayers   = 5;          // v2.4.0: 3→5 (5+5 yapi)
-      spmMaxSellLayers  = 5;          // v2.4.0: 3→5 (5+5 yapi)
+      spmMaxBuyLayers   = 10;         // v2.5.0: 10+10 yapi
+      spmMaxSellLayers  = 10;         // v2.5.0: 10+10 yapi
       spmLotBase        = 1.0;        // v2.2.5: 1.0x
       spmLotIncrement   = 0.1;        // v2.2.5: +0.1x
       spmLotCap         = 1.5;        // v2.2.5: max 1.5x
@@ -676,7 +676,7 @@ SymbolProfile GetSymbolProfile(ENUM_SYMBOL_CATEGORY cat, string sym)
 //=================================================================
 // SABIT DEGERLER
 //=================================================================
-#define MAX_POSITIONS  20
+#define MAX_POSITIONS  25       // v2.5.0: 10+10 SPM + ANA + DCA + yedek
 
 //=================================================================
 // ALIAS TANIMLARI (PositionManager uyumu)
