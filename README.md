@@ -101,13 +101,30 @@ See [Installation Guide](docs/installation.md) for detailed instructions.
 
 ---
 
-## License
+## License & Pricing
 
-This is commercial software. A valid license key is required.
+BytamerFX is **commercial software** protected by an online license verification system.
 
-Purchase: [bytamer.com](https://bytamer.com)
+### How It Works
+- Each license key is tied to a **specific broker account number**
+- License validity is verified in real-time via `https://bytamer.com` API
+- The EA checks license status on every startup
+- Dashboard displays license status with color-coded indicators:
+  - **Green**: 15+ days remaining
+  - **Orange**: 7-14 days remaining
+  - **Yellow**: 3-6 days remaining
+  - **Red**: Less than 3 days remaining
 
-See [LICENSE](LICENSE) for terms.
+### License Plans
+- Licenses are issued on a **monthly basis** (max 30 days per cycle)
+- Each license is valid for **one MT5 account** on a specific broker
+- License renewal is required before expiration to avoid trading interruption
+
+### Get Your License
+
+> **Visit [www.bytamer.com](https://www.bytamer.com) for pricing and license purchase.**
+>
+> Start trading with BytamerFX's professional-grade Zigzag Grid + Net Settlement engine today.
 
 ---
 
@@ -115,6 +132,7 @@ See [LICENSE](LICENSE) for terms.
 
 - **Email**: info@bytamer.com
 - **Telegram**: @ByTamerAI_Support
+- **Twitter/X**: [@ntamero](https://twitter.com/ntamero)
 - **Website**: [bytamer.com](https://bytamer.com)
 
 ---
