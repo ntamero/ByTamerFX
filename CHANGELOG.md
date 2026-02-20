@@ -4,6 +4,33 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v3.2.0] - 2026-02-20
+
+### Lisans Sistemi Iyilestirmeleri
+
+#### 1. Lisans Input Penceresi
+- Lisans bos/gecersiz ise MessageBox ile uyari gosterilir
+- EA otomatik grafikten kaldirilir (ExpertRemove)
+- Kullanici tekrar surukleyince MT5 input penceresi acilir - lisans koda dokunmadan girilebilir
+- LicenseKey ve ExpectedAccountNumber default deger bos (musteriye dagitim icin)
+
+#### 2. Cache Invalidation Duzeltmlesi
+- Init() baslangicinda tum state sifirlaniyor (m_isValid, m_status, m_daysRemaining vb.)
+- Lisans anahtari degistiginde eski cache gecersiz (DJB2 hash eslesmez → cache siliniyor)
+- Global nesne eski deger tasima bug'i giderildi
+
+#### 3. Periyodik Lisans Kontrolu
+- m_checkInterval = 300 saniye (5 dakika)
+- Tum lisans tipleri icin ayni aralık
+
+#### 4. API Uyumlulugu
+- EA artik hem "active" hem "valid" status kabul eder
+- Flat ve nested JSON yanit destegi
+- hours_remaining/license_type yoksa end_date'den hesaplama
+- Minimum key uzunlugu 28 karakter (sunucu 28 char uretir)
+
+---
+
 ## [v2.3.0] - 2026-02-19
 
 ### Major: Smart Recovery Sistemi
