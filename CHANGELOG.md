@@ -4,6 +4,37 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v3.3.0] - 2026-02-20
+
+### Hybrid Profitability Improvements
+- **SignalMinScore**: 40 → 48 (daha az ama daha kaliteli giris)
+- **SPM_CooldownSec**: 60 → 30 (hizli grid yakalama)
+- **LotReductionPerGrid**: %5 → %3 (son gridler daha guclu)
+- **Zaman Bazli FIFO Hedef**: Pozisyon acik kalma suresine gore dinamik hedef
+  - 0-60dk: $5 (tam hedef)
+  - 60-120dk: $4
+  - 120-240dk: $3
+  - 240+dk: $2 (minimum)
+- **Rol Bazli PeakDrop**: ANA %35, SPM %45, DCA %55 (farkli kar koruma)
+- **Kademeli Grid Mesafe**: Her katmanda +%10 genisleme (kumelenme onleme)
+
+### Security Hardening
+- **XOR String Sifreleme**: API URL, hata mesajlari, cache dosya adlari sifreli
+- **Daginik Lisans Kontrolleri**: OpenSPM, OpenNewMainTrade, CheckFIFOTarget
+- **Integrity Check**: EA dosya boyut dogrulama (anti-tamper)
+- **Offline Mod Sikilastirma**: 24 saat → 4 saat cache suresi
+- **Anti-Clockback**: Saat geri alma tespiti ile cache manipulasyonu onleme
+- **Cache Hash Guclendirme**: Timestamp dahil hash dogrulama
+
+### Repository Structure
+- Kaynak kod (.mqh/.mq5) git tracking'den kaldirildi
+- Public repo: sadece .ex5 binary + dokumantasyon
+- .gitignore: kaynak dosya korumasi eklendi
+- LICENSE: Ticari lisans dosyasi eklendi
+- docs/: Kurulum ve ozellik dokumantasyonu
+
+---
+
 ## [v3.2.0] - 2026-02-20
 
 ### Lisans Sistemi Iyilestirmeleri

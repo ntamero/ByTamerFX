@@ -5,6 +5,12 @@
 *.bin
 *.raw
 
+# !! KAYNAK KOD KORUMASI - PUBLIC REPO !!
+# Kaynak dosyalar PRIVATE repo'da tutulur
+# Public repo sadece derlemis .ex5 ve dokumanlar icerir
+*.mqh
+*.mq5
+
 # MetaTrader Cache
 MQL5/Files/
 Logs/
@@ -23,3 +29,7 @@ desktop.ini
 # Backup files
 *.bak
 *~
+
+# Compile scripts (guvenlik)
+compile_mt5.ps1
+compile.ps1
