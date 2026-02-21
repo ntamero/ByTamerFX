@@ -32,5 +32,4 @@
 
 ## Notifications
 - Telegram integration
-- Discord webhook support
 - MT5 push notifications

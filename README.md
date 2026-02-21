@@ -72,7 +72,6 @@ BytamerFX is a professional-grade Expert Advisor for MetaTrader 5 that combines 
 
 ### Notifications
 - Telegram integration (rate limited: 15 msg/min)
-- Discord webhook with embed format
 - MT5 push notifications
 
 ---
@@ -141,7 +140,8 @@ BytamerFX is **commercial software** protected by an online license verification
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v3.5.1 | 2026-02-21 | Zigzag distance fix, dual trigger, Discord HTTP 400 fix |
+| v3.5.2 | 2026-02-21 | Security hardening, notification cleanup |
+| v3.5.1 | 2026-02-21 | Zigzag distance fix, dual trigger |
 | v3.5.0 | 2026-02-20 | Zigzag Grid + Net Settlement Engine (11 Rules) |
 | v3.4.0 | 2026-02-20 | Bi-Directional Grid + Smart Profit Engine |
 | v3.3.0 | 2026-02-20 | Hybrid profitability + Security hardening |

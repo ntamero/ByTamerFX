@@ -4,6 +4,16 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v3.5.2] - 2026-02-21
+
+### Security
+- Discord integration completely removed
+- Telegram bot token rotated (old token compromised via git history)
+- All hardcoded credentials removed from source code
+- Git history cleaned with `git filter-repo` (all .mqh/.mq5 removed from history)
+
+---
+
 ## [v3.5.1] - 2026-02-21
 
 ### Critical Bug Fixes
@@ -12,9 +22,6 @@ All notable changes to this project are documented in this file.
   - Yeni: `lastIsBuy` = son SPM yönü → zigzag düzgün çalışır (BUY→SELL→BUY→SELL)
 - **ManageMainInLoss Dual Trigger**: Sadece ATR mesafe yerine $ zarar VEYA ATR mesafe (hangisi önce gelirse)
   - BTC gibi yüksek ATR enstrümanlarda ilk SPM artık $ bazlı tetiklenir
-- **Discord HTTP 400**: Null terminator ve JSON çift escape sorunu düzeltildi
-  - `StringToCharArray` null byte → `ArrayResize` ile çıkarılıyor
-  - `EscapeJSON`: `\\n` literal'leri artık doğru korunuyor (placeholder yöntemi)
 
 ### Minor Fixes
 - ADX log mesajı "< 15" → "< 25" düzeltildi (gerçek eşik 25)
@@ -218,7 +225,7 @@ All notable changes to this project are documented in this file.
 ## [v2.2.4] - 2026-02-18
 
 ### Critical Fixes
-- **Deadlock Kapatma Kaldirildi**: CheckDeadlock artik pozisyon KAPATMIYOR. Sadece log + Telegram/Discord uyari gonderiyor. Kilitlenme durumunda pozisyon korunur, yeniden izleme baslar.
+- **Deadlock Kapatma Kaldirildi**: CheckDeadlock artik pozisyon KAPATMIYOR. Sadece log + Telegram uyari gonderiyor. Kilitlenme durumunda pozisyon korunur, yeniden izleme baslar.
 - **LOT DENGE Limiti Genisletildi**: Oran limiti 2.5:1 → 4.0:1. Daha fazla SPM katmani acilabilir, kilitlenmeye girme riski azalir.
 - **EmergencyHedge Kosulu Gevsedi**: `zarar_taraf_buyuk` sarti kaldirildi. Artik toplam net zarar < 0 VE lot orani > 2.0 ise hedge tetiklenir. ANA kucuk lot ile zarardayken bile hedge acilir.
 - **LOT DENGE Log Spam Giderildi**: CheckLotBalance fonksiyonundan PrintFormat kaldirildi.
@@ -287,13 +294,13 @@ All notable changes to this project are documented in this file.
 ### New Features
 - **Universal News Intelligence**: MQL5 CalendarValueHistory API integration for economic calendar
 - **Dynamic Lot Calculation**: 8-factor lot engine (balance, volatility, risk, margin, DD, correlation, streak, time)
-- **Emoji Notifications**: Automatic emoji and balance/equity info in Telegram + Discord messages
+- **Emoji Notifications**: Automatic emoji and balance/equity info in Telegram messages
 - **Dashboard News Panel**: Live news info on chart (impact colors, countdown timer)
 
 ### Changes
 - Added `NewsManager.mqh`: News loader, currency detection, impact-based trade blocking
 - `ChartDashboard.mqh`: 5-panel dashboard (news panel added)
-- `TelegramMsg.mqh` / `DiscordMsg.mqh`: Emoji + balance/equity info
+- `TelegramMsg.mqh`: Emoji + balance/equity info
 
 ---
 
@@ -363,7 +370,6 @@ All notable changes to this project are documented in this file.
 - ATR percentile ranking
 
 ### Fixes
-- Discord embed description JSON escape fix
 - Telegram SendMessage public access fix
 
 ---
@@ -375,6 +381,6 @@ All notable changes to this project are documented in this file.
 - SPM+FIFO position management system
 - Escalating protection system
 - 4-panel chart dashboard
-- Telegram + Discord notification system
+- Telegram notification system
 - Account security verification
 - Dynamic lot calculation
