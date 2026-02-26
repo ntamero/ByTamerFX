@@ -3,17 +3,17 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v3.0.0 - Trend-Grid Sistemi + ATR Mesafe + FIFO        |
+//| BytamerFX v3.2.0 - Bi-Directional Trend-Grid + Akilli Kar        |
 //| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
-//| FIFO +$5 Net | Trend-Grid | Mum Donus Kar Al | 10+10 Katman     |
-//| Hesap: 262230423 (Exness) | Dinamik Profil + Haber Kontrol       |
+//| BiDir-Grid | Adaptif ATR | Akilli Kar | Ters Piramit | Lisans    |
+//| Hesap: 262230423 (Exness) | Dinamik Profil + Haber + Lisans      |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "3.00"
-#property description "BytamerFX v3.0.0 - Trend-Grid + ATR + FIFO Birikim"
-#property description "Trend-Grid | ATR Mesafe | Mum Donus Kar Al | FIFO +$5 Net"
-#property description "SL=YOK | Dinamik Profil | Bakiye Grid Limiti"
+#property version     "4.20"                     // !!! Config.mqh EA_VERSION_NUM ile senkron tut !!!
+#property description "BytamerFX v4.2.0 - KazanKazan Pro (Net-Exposure SPM + Grid Reset + FIFO Enhance)"  // !!! Config.mqh EA_VERSION_FULL ile senkron tut !!!
+#property description "KazanKazan-Pro | Agirlikli 5-Oy SPM | FIFO Sadece ANA Kapat | Sonraki Mum Bekleme"
+#property description "SL=YOK | Lisans Sistemi | Haber Entegrasyonu"
 #property description "Copyright 2026, By T@MER"
 #property strict
 
@@ -70,7 +70,34 @@ int OnInit()
       Print("Lisans Durumu: ", GetLicenseStatus());
       Print("Lisans: ", GetLicenseKeyMasked());
       Print("Hesap: ", IntegerToString(accNo));
-      return INIT_FAILED;
+
+      // Lisans bos veya format hatali ise grafik uzerinde uyari goster
+      // INIT_SUCCEEDED don ki EA grafikte kalsin (g_initialized=false, OnTick calisMAZ)
+      // Kullanici sag tik > Ozellikler > Girisler ile lisans girince OnInit tekrar calisir
+      ENUM_LICENSE_STATUS licStat = GetLicenseStatusEnum();
+      if(licStat == LICENSE_EMPTY || licStat == LICENSE_INVALID)
+      {
+         Comment("\n\n",
+                 "     ╔══════════════════════════════════════════╗\n",
+                 "     ║      BYTAMERFX - LISANS GEREKLI          ║\n",
+                 "     ╠══════════════════════════════════════════╣\n",
+                 "     ║                                          ║\n",
+                 "     ║  Lisans anahtari bos veya gecersiz!      ║\n",
+                 "     ║                                          ║\n",
+                 "     ║  Lisans girmek icin:                     ║\n",
+                 "     ║  1. Grafige SAG TIKLAYIN                 ║\n",
+                 "     ║  2. Uzman Danismanlar > Ozellikler       ║\n",
+                 "     ║  3. Girisler sekmesi > LicenseKey        ║\n",
+                 "     ║                                          ║\n",
+                 "     ║  Format: BTAI-XXXXX-XXXXX-XXXXX-XXXXX   ║\n",
+                 "     ║                                          ║\n",
+                 "     ╚══════════════════════════════════════════╝\n");
+         return INIT_SUCCEEDED;  // EA grafikte KALIR, OnTick calisMAZ (g_initialized=false)
+      }
+
+      // Diger hatalar (expired, revoked, baglanti vs.) icin de grafikte kal
+      Comment("\n\n     BYTAMERFX: ", GetLicenseStatus(), "\n     Lisans girmek icin: Sag tik > Ozellikler > Girisler");
+      return INIT_SUCCEEDED;
    }
 
    // Lisans suresi 7 gunden az ise uyari
@@ -106,8 +133,11 @@ int OnInit()
          SignalMinScore, SPM_TriggerLoss, SPM_CloseProfit));
    Print(StringFormat("SPM LotBase=%.1f | LotIncrement=%.2f | MaxBuy=%d MaxSell=%d",
          SPM_LotBase, SPM_LotIncrement, SPM_MaxBuyLayers, SPM_MaxSellLayers));
-   Print(StringFormat("v2.2: DCA=%d | Hedge=%.0f%% | Deadlock=%dsn | NewsFilter=%s",
-         DCA_MaxPerPosition, Hedge_FillPercent * 100.0, Deadlock_TimeoutSec,
+   Print(StringFormat("v%s: BiDir=%s | TrendCheck=%dsn | Confirm=%d | LotReduce=%.0f%% | NewsWiden=%d%%",
+         EA_VERSION, EnableReverseGrid ? "AKTIF" : "KAPALI", TrendCheckIntervalSec, TrendConfirmCount,
+         LotReductionPerGrid * 100.0, NewsGridWidenPercent));
+   Print(StringFormat("v%s: DCA=%d | Deadlock=%dsn | NewsFilter=%s",
+         EA_VERSION, DCA_MaxPerPosition, Deadlock_TimeoutSec,
          EnableNewsFilter ? "AKTIF" : "KAPALI"));
    Print("Dinamik Profil: Sembol bazli TP/SPM/Hedge parametreleri");
    Print("================================================");
@@ -149,11 +179,7 @@ int OnInit()
    g_telegram.Initialize(TelegramToken, TelegramChatID, EnableTelegram);
    g_discord.Initialize(DiscordWebhookURL, EnableDiscord);
 
-   //--- 9. POZISYON YONETICI (SPM+FIFO)
-   g_posMgr.Initialize(_Symbol, g_category, g_executor, g_signalEngine,
-                        g_telegram, g_discord);
-
-   //--- 9b. v2.2: HABER SISTEMI (Universal News Intelligence)
+   //--- 9b. v2.2: HABER SISTEMI (Universal News Intelligence) - PosMgr'dan ONCE init et
    if(EnableNewsFilter)
    {
       g_newsMgr.Initialize(_Symbol, g_category);
@@ -164,6 +190,11 @@ int OnInit()
    {
       Print("Haber Filtresi: DEVRE DISI");
    }
+
+   //--- 9c. POZISYON YONETICI (SPM+FIFO) - v3.4.0: NewsManager referansi eklendi
+   CNewsManager *newsMgrPtr = EnableNewsFilter ? GetPointer(g_newsMgr) : NULL;
+   g_posMgr.Initialize(_Symbol, g_category, g_executor, g_signalEngine,
+                        g_telegram, g_discord, newsMgrPtr);
 
    //--- 10. DASHBOARD (v2.2: News referansi eklendi)
    CNewsManager *newsPtr = EnableNewsFilter ? GetPointer(g_newsMgr) : NULL;

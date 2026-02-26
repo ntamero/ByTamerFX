@@ -110,6 +110,14 @@ private:
    //=== DATA VALIDITY FLAGS ===
    bool m_dataReady;
 
+   //=== v3.1.0: Confirmed Trend + Volatility ===
+   ENUM_SIGNAL_DIR      m_confirmedTrend;     // Onaylanmis trend yonu
+   int                  m_trendConfirmCount;  // Ardisik ayni yon sayaci
+   ENUM_SIGNAL_DIR      m_pendingTrend;       // Bekleyen trend (henuz onaylanmamis)
+   ENUM_VOLATILITY_REGIME m_volRegime;        // Mevcut volatilite rejimi
+   int                  m_hMacdH1;            // MACD(12,26,9) on H1 (trend onay icin)
+   int                  m_hAdxH1;             // ADX(14) on H1 (trend onay icin)
+
 public:
    //+------------------------------------------------------------------+
    //| Constructor                                                       |
@@ -130,7 +138,13 @@ public:
       m_hAtr(INVALID_HANDLE),
       m_hEmaH1(INVALID_HANDLE),
       m_hRsiH1(INVALID_HANDLE),
-      m_hEmaH4(INVALID_HANDLE)
+      m_hEmaH4(INVALID_HANDLE),
+      m_confirmedTrend(SIGNAL_NONE),
+      m_trendConfirmCount(0),
+      m_pendingTrend(SIGNAL_NONE),
+      m_volRegime(VOL_NORMAL),
+      m_hMacdH1(INVALID_HANDLE),
+      m_hAdxH1(INVALID_HANDLE)
    {
       ArrayInitialize(m_emaFastBuf, 0);
       ArrayInitialize(m_emaMidBuf, 0);
@@ -184,13 +198,18 @@ public:
       //--- H4 indicator (1 handle)
       m_hEmaH4   = iMA(symbol, m_tfHigher, 50, 0, MODE_EMA, PRICE_CLOSE);
 
-      //--- Validate all 12 handles
+      //--- v3.1.0: H1 MACD + ADX (trend onay icin)
+      m_hMacdH1  = iMACD(symbol, m_tfTrend, 12, 26, 9, PRICE_CLOSE);
+      m_hAdxH1   = iADX(symbol, m_tfTrend, 14);
+
+      //--- Validate all 14 handles
       if(m_hEmaFast == INVALID_HANDLE || m_hEmaMid == INVALID_HANDLE ||
          m_hEmaSlow == INVALID_HANDLE || m_hMacd == INVALID_HANDLE   ||
          m_hAdx == INVALID_HANDLE     || m_hRsi == INVALID_HANDLE    ||
          m_hBB == INVALID_HANDLE      || m_hStoch == INVALID_HANDLE  ||
          m_hAtr == INVALID_HANDLE     || m_hEmaH1 == INVALID_HANDLE  ||
-         m_hRsiH1 == INVALID_HANDLE   || m_hEmaH4 == INVALID_HANDLE)
+         m_hRsiH1 == INVALID_HANDLE   || m_hEmaH4 == INVALID_HANDLE  ||
+         m_hMacdH1 == INVALID_HANDLE  || m_hAdxH1 == INVALID_HANDLE)
       {
          Print("!!! BHSS ERROR: Failed to create indicator handles for ", symbol);
          return false;
@@ -400,7 +419,7 @@ public:
    }
 
    //+------------------------------------------------------------------+
-   //| GetCurrentTrend - H1 trend direction                              |
+   //| GetCurrentTrend - H1 trend direction (basit, geriye uyumluluk)    |
    //+------------------------------------------------------------------+
    ENUM_SIGNAL_DIR GetCurrentTrend()
    {
@@ -410,6 +429,115 @@ public:
       if(price < m_emaH1 && m_emaFast < m_emaSlow)
          return SIGNAL_SELL;
       return SIGNAL_NONE;
+   }
+
+   //+------------------------------------------------------------------+
+   //| GetConfirmedTrend - v3.1.0: Coklu kaynak + ardisik onay           |
+   //| 3 kaynaktan 2'si ayni yonu gostermeli:                            |
+   //|   1. EMA hizalanma (price vs EMA50 H1)                            |
+   //|   2. MACD histogram H1 (pozitif/negatif)                          |
+   //|   3. ADX DI yonu H1 (+DI vs -DI)                                  |
+   //| Ardisik requiredConfirms kez ayni yon = trend ONAYLANDI            |
+   //+------------------------------------------------------------------+
+   ENUM_SIGNAL_DIR GetConfirmedTrend(int requiredConfirms = 2)
+   {
+      // 3 kaynak oy sistemi
+      int buyVotes = 0;
+      int sellVotes = 0;
+
+      // Kaynak 1: EMA hizalanma (price vs H1 EMA50)
+      double price = SymbolInfoDouble(m_symbol, SYMBOL_BID);
+      if(price > m_emaH1)  buyVotes++;
+      if(price < m_emaH1)  sellVotes++;
+
+      // Kaynak 2: H1 MACD histogram
+      if(m_hMacdH1 != INVALID_HANDLE)
+      {
+         double macdHist[1];
+         if(CopyBuffer(m_hMacdH1, 2, 0, 1, macdHist) > 0)  // buffer 2 = histogram
+         {
+            if(macdHist[0] > 0) buyVotes++;
+            else if(macdHist[0] < 0) sellVotes++;
+         }
+      }
+
+      // Kaynak 3: H1 ADX DI yonu (+DI vs -DI)
+      if(m_hAdxH1 != INVALID_HANDLE)
+      {
+         double plusDI[1], minusDI[1];
+         if(CopyBuffer(m_hAdxH1, 1, 0, 1, plusDI) > 0 &&
+            CopyBuffer(m_hAdxH1, 2, 0, 1, minusDI) > 0)
+         {
+            if(plusDI[0] > minusDI[0]) buyVotes++;
+            else if(minusDI[0] > plusDI[0]) sellVotes++;
+         }
+      }
+
+      // En az 2/3 oy gerekli
+      ENUM_SIGNAL_DIR currentReading = SIGNAL_NONE;
+      if(buyVotes >= 2)  currentReading = SIGNAL_BUY;
+      if(sellVotes >= 2) currentReading = SIGNAL_SELL;
+
+      // Ardisik onay mekanizmasi (whipsaw korunmasi)
+      if(currentReading == SIGNAL_NONE)
+      {
+         m_trendConfirmCount = 0;
+         return m_confirmedTrend;  // Mevcut onaylanmis trendi dondur
+      }
+
+      if(currentReading == m_pendingTrend)
+      {
+         m_trendConfirmCount++;
+      }
+      else
+      {
+         m_pendingTrend = currentReading;
+         m_trendConfirmCount = 1;
+      }
+
+      // Yeterli onay → trend degisimi onayla
+      if(m_trendConfirmCount >= requiredConfirms && m_confirmedTrend != currentReading)
+      {
+         m_confirmedTrend = currentReading;
+      }
+
+      return m_confirmedTrend;
+   }
+
+   //+------------------------------------------------------------------+
+   //| GetVolatilityRegime - v3.1.0: M15 ATR oran bazli                  |
+   //| M15 ATR'nin 50-bar ortalamasina oranini hesaplar                  |
+   //| < 0.8x = LOW | 0.8-1.5x = NORMAL | 1.5-2.5x = HIGH | >2.5x = EX|
+   //+------------------------------------------------------------------+
+   ENUM_VOLATILITY_REGIME GetVolatilityRegime()
+   {
+      if(!m_dataReady) return VOL_NORMAL;
+
+      // M15 ATR 50-bar ortalamasi
+      double atrSum = 0.0;
+      int validCount = 0;
+      for(int i = 0; i < 50; i++)
+      {
+         if(m_atrBuf[i] > 0.0)
+         {
+            atrSum += m_atrBuf[i];
+            validCount++;
+         }
+      }
+      if(validCount < 10) return VOL_NORMAL;
+
+      double atrAvg = atrSum / validCount;
+      if(atrAvg <= 0.0) return VOL_NORMAL;
+
+      // Mevcut ATR / ortalama ATR orani
+      double ratio = m_atr / atrAvg;
+
+      if(ratio > 2.5)      m_volRegime = VOL_EXTREME;
+      else if(ratio > 1.5) m_volRegime = VOL_HIGH;
+      else if(ratio < 0.8) m_volRegime = VOL_LOW;
+      else                 m_volRegime = VOL_NORMAL;
+
+      return m_volRegime;
    }
 
    //+------------------------------------------------------------------+
@@ -429,6 +557,8 @@ public:
    double         GetPlusDI()          const { return m_plusDI; }
    double         GetMinusDI()         const { return m_minusDI; }
    double         GetMACDHist()        const { return m_macdHist; }
+   ENUM_SIGNAL_DIR      GetConfirmedTrendValue() const { return m_confirmedTrend; }
+   ENUM_VOLATILITY_REGIME GetVolRegime()         const { return m_volRegime; }
    ScoreBreakdown GetBreakdown()       const { return m_lastBreakdown; }
    ScoreBreakdown GetBuyBreakdown()    const { return m_buyBreakdown; }
    ScoreBreakdown GetSellBreakdown()   const { return m_sellBreakdown; }

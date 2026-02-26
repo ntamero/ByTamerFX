@@ -21,6 +21,15 @@ private:
    string m_chatId;
    bool   m_enabled;
 
+   //--- v3.5.3: Rate limiting
+   datetime m_msgTimestamps[];       // Son mesaj zamanlari (rate limit icin)
+   int      m_msgCount;              // Dakikadaki mesaj sayisi
+   datetime m_rateLimitReset;        // Rate limit reset zamani
+   string   m_lastMsgHash;           // Son mesaj hash (duplicate onleme)
+   datetime m_lastMsgTime;           // Son mesaj zamani
+   int      m_retryAfter;            // Telegram 429 retry_after (saniye)
+   datetime m_retryUntil;            // Telegram 429 bekleme bitis
+
    //--- Emoji cache
    string m_rocket, m_chart, m_money, m_dollar, m_target;
    string m_shield, m_fire, m_muscle, m_star, m_warning;
@@ -29,7 +38,12 @@ private:
    string m_line, m_moneybag, m_sparkle;
 
 public:
-   CTelegramMsg() : m_enabled(false) {}
+   CTelegramMsg() : m_enabled(false), m_msgCount(0), m_rateLimitReset(0),
+                    m_lastMsgTime(0), m_retryAfter(0), m_retryUntil(0)
+   {
+      m_lastMsgHash = "";
+      ArrayResize(m_msgTimestamps, 0);
+   }
 
    void Initialize(string token, string chatId, bool enabled)
    {
@@ -38,7 +52,7 @@ public:
       m_enabled = enabled;
       CacheEmojis();
       if(m_enabled)
-         Print("Telegram Mesaj: AKTIF");
+         Print("Telegram Mesaj: AKTIF (Rate limit: 15 msg/dk)");
    }
 
    //========================================
@@ -260,15 +274,58 @@ private:
    }
 
    //========================================
-   // MESAJ GONDER (internal)
+   // MESAJ GONDER (internal) — v3.5.3: Rate limit + Duplicate suppress
    //========================================
    void SendMsg(string text)
    {
       if(!m_enabled || StringLen(m_token) < 10) return;
 
+      datetime now = TimeCurrent();
+
+      //--- v3.5.3: Telegram 429 retry_after bekleme
+      if(m_retryUntil > 0 && now < m_retryUntil)
+      {
+         PrintFormat("Telegram: 429 bekleme aktif, %d sn kaldi", (int)(m_retryUntil - now));
+         return;
+      }
+      m_retryUntil = 0;
+
+      //--- v3.5.3: Duplicate mesaj onleme (3 saniye icinde ayni mesaj)
+      string msgHash = StringSubstr(text, 0, 100);  // Ilk 100 karakter hash
+      if(msgHash == m_lastMsgHash && (now - m_lastMsgTime) < 3)
+      {
+         return;  // Sessizce atla — log spam yapma
+      }
+
+      //--- v3.5.3: Rate limiting (15 mesaj/dakika)
+      // Eski timestamplari temizle (60sn oncesi)
+      int validCount = 0;
+      for(int i = 0; i < ArraySize(m_msgTimestamps); i++)
+      {
+         if(now - m_msgTimestamps[i] < 60)
+         {
+            if(i != validCount)
+               m_msgTimestamps[validCount] = m_msgTimestamps[i];
+            validCount++;
+         }
+      }
+      ArrayResize(m_msgTimestamps, validCount);
+
+      if(validCount >= 15)
+      {
+         PrintFormat("Telegram: Rate limit (15/dk) asildi, mesaj atlandi");
+         return;
+      }
+
+      // Timestamp kaydet
+      ArrayResize(m_msgTimestamps, validCount + 1);
+      m_msgTimestamps[validCount] = now;
+      m_lastMsgHash = msgHash;
+      m_lastMsgTime = now;
+
+      //--- HTTP istegi
       string url = "https://api.telegram.org/bot" + m_token + "/sendMessage";
 
-      // JSON body
       string json = "{";
       json += "\"chat_id\":\"" + m_chatId + "\",";
       json += "\"text\":\"" + EscapeJSON(text) + "\",";
@@ -283,18 +340,44 @@ private:
 
       StringToCharArray(json, data, 0, WHOLE_ARRAY, CP_UTF8);
 
-      // Son byte null ise cikar
       int dataLen = ArraySize(data);
       if(dataLen > 0 && data[dataLen - 1] == 0) dataLen--;
-
-      Print(StringFormat("Telegram mesaj uzunlugu: %d | JSON: %d", StringLen(text), dataLen));
 
       int res = WebRequest("POST", url, headers, 5000, data, result, resultHeaders);
 
       if(res == 200)
-         Print("Telegram mesaj gonderildi!");
+      {
+         // Basarili — sessiz (log spam onleme)
+      }
+      else if(res == 429)
+      {
+         //--- Telegram rate limit: retry_after parse et
+         string resultStr = CharArrayToString(result, 0, WHOLE_ARRAY, CP_UTF8);
+         int retryPos = StringFind(resultStr, "retry_after");
+         if(retryPos >= 0)
+         {
+            string retryPart = StringSubstr(resultStr, retryPos + 13, 5);
+            // Sayi parcasini al
+            string numStr = "";
+            for(int c = 0; c < StringLen(retryPart); c++)
+            {
+               ushort ch = StringGetCharacter(retryPart, c);
+               if(ch >= '0' && ch <= '9') numStr += ShortToString(ch);
+               else break;
+            }
+            m_retryAfter = (int)StringToInteger(numStr);
+            if(m_retryAfter <= 0) m_retryAfter = 30;
+         }
+         else
+            m_retryAfter = 30;
+
+         m_retryUntil = now + m_retryAfter;
+         PrintFormat("Telegram 429: %d sn bekleme", m_retryAfter);
+      }
       else
-         Print(StringFormat("Telegram HATA: HTTP %d | %s", res, CharArrayToString(result, 0, WHOLE_ARRAY, CP_UTF8)));
+      {
+         PrintFormat("Telegram HATA: HTTP %d", res);
+      }
    }
 
    string EscapeJSON(string text)

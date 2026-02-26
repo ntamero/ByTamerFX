@@ -47,6 +47,7 @@
 #define CLR_PROGRESS_BG     C'40,40,55'
 #define CLR_BUY_DIR         C'0,200,100'
 #define CLR_SELL_DIR        C'255,60,60'
+#define CLR_NEUTRAL         C'120,120,140'
 
 //+------------------------------------------------------------------+
 //| Layout Constants                                                  |
@@ -525,7 +526,7 @@ private:
    void CreatePanel4(int baseX, int baseY)
    {
       int pw = DASH_PANEL_W;
-      int ph = 240;  // v2.3.0: 220→240 (satir araligi acildi)
+      int ph = 310;  // v3.1.0: 240→310 (bi-dir + vol satiri eklendi)
       CreatePanel("P4", baseX, baseY, pw, ph);
 
       int x    = baseX + DASH_INDENT;
@@ -535,8 +536,8 @@ private:
       int y    = baseY + 6;
       int lh   = 18;  // v2.3.0: satir araligi 16→18 (Panel 4 ozel)
 
-      //--- Header (v2.3.0: BMP Unicode)
-      CreateLabel("P4_HDR", x, y, "\x25A0  KAZAN-KAZAN v2.3", CLR_HEADER, DASH_HEADER_SIZE);  // ■
+      //--- Header (v3.1.0: BiDir-Grid)
+      CreateLabel("P4_HDR", x, y, "\x25A0  BIDIR-GRID v3.1.0", CLR_HEADER, DASH_HEADER_SIZE);  // ■
       y += lh + 2;
 
       //--- v2.3.0: Gunluk Kar
@@ -596,6 +597,21 @@ private:
 
       //--- Progress bar
       CreateProgressBar("P4_FIFO_BAR", barX, y, barW, 8, 0.0, CLR_PROGRESS_FILL, CLR_PROGRESS_BG);
+      y += 14;
+
+      //--- v3.1.0: Bi-Dir durum
+      CreateLabel("P4_BDIR_L", x, y, "\x21C4  BiDir:", CLR_LABEL);            // ⇄
+      CreateLabel("P4_BDIR_V", vx, y, "KAPALI", CLR_VALUE);
+      y += lh;
+
+      //--- v3.1.0: Volatilite rejimi
+      CreateLabel("P4_VOL_L", x, y, "\x26A1  Volatilite:", CLR_LABEL);        // ⚡
+      CreateLabel("P4_VOL_V", vx, y, "NORMAL", CLR_VALUE);
+      y += lh;
+
+      //--- v3.1.0: Grid spacing
+      CreateLabel("P4_GSPC_L", x, y, "\x21D4  Grid:", CLR_LABEL);              // ⇔
+      CreateLabel("P4_GSPC_V", vx, y, "0.0", CLR_VALUE);
    }
 
    //=================================================================
@@ -1115,6 +1131,35 @@ private:
       else if(progress >= 25.0) barClr = CLR_WARNING;
       else                      barClr = CLR_NEGATIVE;
       UpdateProgressBar("P4_FIFO_BAR", progress, barClr);
+
+      //--- v3.1.0: Bi-Dir durum
+      if(fifo.biDirectionalMode)
+      {
+         UpdateLabel("P4_BDIR_V",
+                     StringFormat("A:%s(%d) L:%s(%d)",
+                                  fifo.activeGridDirStr, fifo.activeGridCount,
+                                  fifo.legacyGridDirStr, fifo.legacyGridCount),
+                     clrGold);
+      }
+      else
+      {
+         UpdateLabel("P4_BDIR_V", EnableReverseGrid ? "HAZIR" : "KAPALI",
+                     EnableReverseGrid ? CLR_VALUE : CLR_NEUTRAL);
+      }
+
+      //--- v3.1.0: Volatilite rejimi
+      color volClr = CLR_VALUE;
+      if(fifo.volatilityRegime == "LOW")          volClr = clrDodgerBlue;
+      else if(fifo.volatilityRegime == "NORMAL")  volClr = CLR_POSITIVE;
+      else if(fifo.volatilityRegime == "HIGH")    volClr = CLR_WARNING;
+      else if(fifo.volatilityRegime == "EXTREME") volClr = CLR_NEGATIVE;
+      UpdateLabel("P4_VOL_V", fifo.volatilityRegime, volClr);
+
+      //--- v3.1.0: Grid spacing
+      if(fifo.adaptiveSpacing > 0.0)
+         UpdateLabel("P4_GSPC_V", StringFormat("%.5f", fifo.adaptiveSpacing), CLR_VALUE);
+      else
+         UpdateLabel("P4_GSPC_V", "N/A", CLR_NEUTRAL);
    }
 
    //=================================================================

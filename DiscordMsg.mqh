@@ -27,7 +27,11 @@ public:
    void Initialize(string webhookUrl, bool enabled)
    {
       m_webhookUrl = webhookUrl;
-      m_enabled    = enabled;
+      // v3.5.4: Webhook URL bossa Discord'u devre disi birak (HTTP -1 hatasi onleme)
+      if(StringLen(webhookUrl) < 10)
+         m_enabled = false;
+      else
+         m_enabled = enabled;
       if(m_enabled)
          Print("Discord Mesaj: AKTIF");
    }
@@ -196,7 +200,12 @@ private:
 
       StringToCharArray(json, data, 0, WHOLE_ARRAY, CP_UTF8);
       int dataLen = ArraySize(data);
-      if(dataLen > 0 && data[dataLen - 1] == 0) dataLen--;
+      // Null terminator'i cikar - Discord bunu kabul etmez (HTTP 400)
+      if(dataLen > 0 && data[dataLen - 1] == 0)
+      {
+         dataLen--;
+         ArrayResize(data, dataLen);
+      }
 
       int res = WebRequest("POST", m_webhookUrl, headers, 5000, data, result, resultHeaders);
 
@@ -211,10 +220,15 @@ private:
    string EscapeJSON(string text)
    {
       string out = text;
+      // v3.5.1: Oncelikle \\n literal'lerini placeholder'a cevir (korunacak)
+      StringReplace(out, "\\n", "\x01NEWLINE\x01");
+      // Simdi gercek escape islemlerini yap
       StringReplace(out, "\\", "\\\\");
       StringReplace(out, "\"", "\\\"");
-      StringReplace(out, "\n", "\\n");
+      StringReplace(out, "\n", "\\n");   // gercek newline -> JSON newline
       StringReplace(out, "\r", "");
+      // Placeholder'lari geri JSON newline yap
+      StringReplace(out, "\x01NEWLINE\x01", "\\n");
       return out;
    }
 };

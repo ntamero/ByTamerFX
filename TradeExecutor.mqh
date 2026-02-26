@@ -87,6 +87,48 @@ public:
       return false;
    }
 
+   //--- v3.5.3: Kismi kapatma (Partial Close)
+   bool ClosePositionPartial(ulong ticket, double volume)
+   {
+      if(!PositionSelectByTicket(ticket)) return false;
+
+      double currentVol = PositionGetDouble(POSITION_VOLUME);
+      double minVol = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_MIN);
+      double volStep = SymbolInfoDouble(m_symbol, SYMBOL_VOLUME_STEP);
+
+      // Kapatilacak lot'u step'e yuvarla
+      if(volStep > 0)
+         volume = MathFloor(volume / volStep) * volStep;
+
+      // Min lot kontrolu (kalan lot min altina dusmesin)
+      double remaining = currentVol - volume;
+      if(remaining < minVol)
+      {
+         // Kalan min lot'un altinda kalir → tam kapat
+         return ClosePosition(ticket);
+      }
+      if(volume < minVol) return false;  // Kapatilacak miktar cok az
+
+      double profit = PositionGetDouble(POSITION_PROFIT) + PositionGetDouble(POSITION_SWAP);
+      ENUM_POSITION_TYPE posType = (ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE);
+
+      bool result = false;
+      if(posType == POSITION_TYPE_BUY)
+         result = m_trade.Sell(volume, m_symbol, 0, 0, 0, "PartialClose");
+      else
+         result = m_trade.Buy(volume, m_symbol, 0, 0, 0, "PartialClose");
+
+      if(result)
+      {
+         Print(StringFormat("KISMI KAPAMA: Ticket=%d | %.2f/%.2f lot kapatildi | P/L=$%.2f",
+               ticket, volume, currentVol, profit));
+         return true;
+      }
+
+      Print(StringFormat("KISMI KAPAMA HATASI: Ticket=%d | %s", ticket, m_trade.ResultRetcodeDescription()));
+      return false;
+   }
+
    //--- TP guncelle (SL her zaman 0)
    bool UpdateTP(ulong ticket, double newTP)
    {

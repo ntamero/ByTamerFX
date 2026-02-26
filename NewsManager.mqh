@@ -406,7 +406,9 @@ public:
 
       if(total <= 0)
       {
-         PrintFormat("[NEWS-%s] Yaklasan haber bulunamadi (24 saat icinde)", m_symbol);
+         // v3.5.3: Sadece ilk yuklemede logla, tekrarda spam yapma
+         static bool firstLoad = true;
+         if(firstLoad) { PrintFormat("[NEWS-%s] Yaklasan haber bulunamadi (24 saat icinde)", m_symbol); firstLoad = false; }
          return;
       }
 
@@ -449,9 +451,11 @@ public:
          m_eventCount++;
 
          string impactStr = GetImpactStr(ne.impact);
-         PrintFormat("[NEWS-%s] %s | %s | %s | %s",
-                     m_symbol, TimeToString(ne.eventTime, TIME_DATE|TIME_MINUTES),
-                     ne.currency, impactStr, ne.title);
+         // v3.5.3: Sadece CRITICAL/HIGH haberleri logla (spam onleme)
+         if(ne.impact >= NEWS_HIGH)
+            PrintFormat("[NEWS-%s] %s | %s | %s | %s",
+                        m_symbol, TimeToString(ne.eventTime, TIME_DATE|TIME_MINUTES),
+                        ne.currency, impactStr, ne.title);
       }
    }
 

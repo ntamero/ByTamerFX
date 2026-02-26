@@ -4,6 +4,142 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.2.0] - 2026-02-26
+
+### Net-Exposure SPM + Grid Reset + FIFO Enhance
+
+**Backtester sonuclari:** BTC +$93 (+93%), GBP +$18 (+18%), Toplam +$111
+
+#### 1. Net-Exposure SPM Dengeleme (KRITIK)
+- **Eski**: SPM1 = ANA yonunde DCA, SPM2 = SPM1 tersi
+- **Yeni**: SPM yonu = BUY/SELL DENGESI (fazla olan tarafin tersi acilir)
+- `GetNetExposureDirection()`: Tum acik pozisyonlarin BUY/SELL sayisini hesaplar
+- 3+ SPM ayni yonde birikmesi IMKANSIZ → tek yonlu batma onlendi
+- SPM acilislarinda BUY/SELL zigzag pattern olusur
+
+#### 2. Grid Reset Mekanizmasi (YENi)
+- `CheckGridHealth()`: Toplam floating loss esik asarsa tum grid sifirlanir
+- Esik: `-max(GridLossMinUSD, equity * GridLossPercent)` (default: -max($30, %25))
+- Islem: Karli SPM'ler once kapatilir (kasa koruma), sonra kalan kapatilir
+- Cooldown + Telegram/Discord bildirim
+- Yeni inputlar: `GridLossPercent=0.25`, `GridLossMinUSD=30.0`
+- ManageTrendGrid() baslangicinda cagirilir (warmup sonrasi)
+
+#### 3. EQUITY_ACIL Recovery Mode Fix (KRITIK BUG FIX)
+- **Bug**: EQUITY_ACIL tetiklendikten sonra `peak_balance` sifirlanmiyordu
+- `equity/peak_balance < 30%` her tick'te true → EA surekli EQUITY_ACIL → sonsuz kilit
+- **Fix**: EQUITY_ACIL sonrasi `m_recoveryMode = true` aktif edilir
+- Recovery mode: 24 saat veya bakiye %50 toparlaninca cikis
+- Olum spirali onlendi (eski: $100 → $36 → $13 → $1.18)
+
+#### 4. SPM Max 3 Katman
+- **Eski**: Sabit max 2 SPM (SPM1 + SPM2)
+- **Yeni**: Profil bazli `spmMaxLayers = 3` (Config input: `SPM_MaxLayers`)
+- SPM2 tetik: ANA zarar bazli (eski: SPM1 zarar bazli)
+- SPM3 tetik: ANA zarar * 1.5 (daha derin zarar gerekli)
+
+#### 5. SPM Hizli Kasa Birikimi
+- SPM/DCA icin min close threshold %50 dusuruldu
+- `minCloseThreshold = max(0.5, minCloseProfit * 0.5)`
+- Daha hizli kasa dolumu → FIFO daha erken tetiklenir
+
+### Tasarim Felsefesi
+- **SL = YOK (MUTLAK)** — Hicbir pozisyona Stop Loss konulmaz
+- **Zararina satis YOK** — Normal operasyonda pozisyon zararda kapatilmaz
+- **SPM/FIFO ile zarar yonetimi** — Zarar SPM birikimi + FIFO ile telafi edilir
+- Grid Reset ve EQUITY_ACIL sadece asiri durumlarda son care guvenlik agidir
+
+### Files Changed
+- `Config.mqh`: v4.2.0, 3 yeni input, SymbolProfile 3 yeni alan, 10 profil guncelleme
+- `PositionManager.mqh`: GetNetExposureDirection(), CheckGridHealth(), ManageMainInLoss net-exposure, ManageActiveSPMs max 3 + net-exposure, CheckMarginEmergency recovery, ManageKarliPozisyonlar %50 esik
+- `BytamerFX.mq5`: v4.20
+
+---
+
+## [v4.1.0] - 2026-02-24
+
+### BiDir Fix + Forex 0.03 + FIFO Fix + SPM Enhance
+
+#### Degisiklikler
+- FIFO sadece ANA kapatir (SPM'ler acik kalir, terfi devam)
+- Sonraki mum bekleme: FIFO tamamlandiktan sonra yeni islem bekler
+- Forex min lot 0.03 (kucuk hesap uyumu)
+- BiDir Legacy tracking fix
+- SPM Warmup 45sn
+
+---
+
+## [v4.0.0] - 2026-02-23
+
+### Major: KazanKazan-Pro Signal Redesign
+
+#### Degisiklikler
+- SignalEngine: 7→12 indicator (SuperTrend, Ichimoku, Keltner, MFI, SAR eklendi)
+- CandleAnalyzer: Bagimsiz modul (Pin Bar, Engulfing, Doji, Inside Bar, Three Soldiers/Crows)
+- BytamerFX combo scoring (tum 12 indikatoru birlestiren ozel skor)
+- v3.7.1 Tepe/Dip koruma: ADX>=45 trend yonu, ADX<=40 30sn cooldown
+- v3.7.0 Kademeli Kurtarma: SPM1=DCA, SPM2=SPM1 tersi, ADX>=20 filtre
+- v3.8.0 Gercek equity+margin koruma (3 seviye: %30/%150/%300)
+- Rescue Hedge: SPM2 -$7 → ANA * 1.3 lot hedge
+- HEDGE PeakDrop: peak >= $8 + %25 dusus → kapat
+
+---
+
+## [v3.5.0] - 2026-02-21
+
+### Net Settlement + Zigzag Grid Engine
+
+#### Degisiklikler
+- Net Settlement: kasa + worstLoss >= $5 → worst pozisyon kapat
+- Zigzag SPM: ANA→SPM1(ayni)→SPM2(ters)→SPM3(ayni)...
+- ADX 25+ grid filtresi (ADX<25 → grid acilmaz)
+- Spread kontrolu: ATR normalize * MaxSpreadMultiplier
+- Trend Hold: ADX>=25 + trend yonunde → PeakDrop YAPMA
+- Adaptif grid mesafesi (volatilite bazli)
+- Bi-Directional Grid: trend degisince iki yon aktif
+- Post-Entry Karlilik: Kismi kapama (%60) + Sanal BE kilidi
+
+---
+
+## [v3.3.0] - 2026-02-21
+
+### Grid Performans Iyilestirmeleri
+
+#### Degisiklikler
+- SPM cooldown 60→30sn (yakalama +%40)
+- Lot azaltma grid basi %5→%3 (Grid10 = %70 kalir)
+- Kategori bazli SPM kar hedefleri ayarlandi
+- Min close profit arttirildi (spread sonrasi yetersiz kapatma onlendi)
+
+---
+
+## [v3.2.0] - 2026-02-20
+
+### Lisans Sistemi Iyilestirmeleri
+
+#### 1. Lisans Input Penceresi
+- Lisans bos/gecersiz ise MessageBox ile uyari gosterilir
+- EA otomatik grafikten kaldirilir (ExpertRemove)
+- Kullanici tekrar surukleyince MT5 input penceresi acilir - lisans koda dokunmadan girilebilir
+- LicenseKey ve ExpectedAccountNumber default deger bos (musteriye dagitim icin)
+
+#### 2. Cache Invalidation Duzeltmlesi
+- Init() baslangicinda tum state sifirlaniyor (m_isValid, m_status, m_daysRemaining vb.)
+- Lisans anahtari degistiginde eski cache gecersiz (DJB2 hash eslesmez → cache siliniyor)
+- Global nesne eski deger tasima bug'i giderildi
+
+#### 3. Periyodik Lisans Kontrolu
+- m_checkInterval = 300 saniye (5 dakika)
+- Tum lisans tipleri icin ayni aralık
+
+#### 4. API Uyumlulugu
+- EA artik hem "active" hem "valid" status kabul eder
+- Flat ve nested JSON yanit destegi
+- hours_remaining/license_type yoksa end_date'den hesaplama
+- Minimum key uzunlugu 28 karakter (sunucu 28 char uretir)
+
+---
+
 ## [v2.3.0] - 2026-02-19
 
 ### Major: Smart Recovery Sistemi

@@ -4,13 +4,15 @@
 //|                                  Copyright 2026, By T@MER        |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| Lisans Dogrulama Sistemi:                                        |
-//| - Web API dogrulama (bytamer.com/api/license.php)                |
-//| - Offline cache (24 saat)                                        |
-//| - Periyodik kontrol (1 saat)                                     |
+//| Lisans Dogrulama Sistemi v3.3.0:                                 |
+//| - Web API dogrulama (sifreli endpoint)                           |
+//| - Offline cache (4 saat - sikila stirilmis)                      |
+//| - Periyodik kontrol (5 dakika)                                   |
 //| - Broker hesap eslestirme                                        |
 //| - Sureli lisans (saatlik/gunluk)                                 |
-//| - Eski suresi dolan lisans tekrar CALISMAZ                       |
+//| - XOR string sifreleme (anti-reverse)                            |
+//| - Integrity check (dosya boyut dogrulama)                        |
+//| - Daginik kontrol noktalari (anti-crack)                         |
 //| Format: BTAI-XXXXX-XXXXX-XXXXX-XXXXX                            |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, By T@MER"
@@ -22,6 +24,114 @@
 #define LICENSE_MANAGER_MQH
 
 #include "Config.mqh"
+
+//+------------------------------------------------------------------+
+//| B2b: XOR String Sifreleme - derlemede string aramayi zorlastirir |
+//| Her string farkli anahtar ile sifrelenir                         |
+//+------------------------------------------------------------------+
+namespace CryptoStr
+{
+   // XOR cozucu - anahtar ile string'i desifreler
+   string Decode(const uchar &encoded[], int len, uchar key)
+   {
+      string result = "";
+      for(int i = 0; i < len; i++)
+      {
+         uchar ch = (uchar)(encoded[i] ^ key);
+         result += CharToString(ch);
+      }
+      return result;
+   }
+
+   // API URL: "https://bytamer.com/api/license.php"
+   // XOR key: 0x5A
+   string GetApiUrl()
+   {
+      uchar enc[] = {0x32,0x2E,0x2E,0x2A,0x29,0x60,0x75,0x75,
+                     0x38,0x23,0x2E,0x3B,0x37,0x3F,0x28,0x74,
+                     0x39,0x35,0x37,0x75,0x3B,0x2A,0x33,0x75,
+                     0x36,0x33,0x39,0x3F,0x34,0x29,0x3F,0x74,
+                     0x2A,0x32,0x2A};
+      return Decode(enc, 35, 0x5A);
+   }
+
+   // Anahtar prefix: "BTAI-"
+   // XOR key: 0x3C
+   string GetKeyPrefix()
+   {
+      uchar enc[] = {0x7E,0x68,0x7D,0x75,0x11};
+      return Decode(enc, 5, 0x3C);
+   }
+
+   // Hata: "Lisans anahtari bos veya cok kisa"
+   // XOR key: 0x47
+   string GetEmptyError()
+   {
+      uchar enc[] = {0x0B,0x2E,0x34,0x26,0x29,0x34,0x67,0x26,
+                     0x29,0x26,0x2F,0x33,0x26,0x35,0x2E,0x67,
+                     0x25,0x28,0x34,0x67,0x31,0x22,0x3E,0x26,
+                     0x67,0x24,0x28,0x2C,0x67,0x2C,0x2E,0x34,0x26};
+      return Decode(enc, 33, 0x47);
+   }
+
+   // Cache dosya prefix: "bytamerfx_license_"
+   // XOR key: 0x29
+   string GetCachePrefix()
+   {
+      uchar enc[] = {0x4B,0x50,0x5D,0x48,0x44,0x4C,0x5B,0x4F,
+                     0x51,0x76,0x45,0x40,0x4A,0x4C,0x47,0x5A,
+                     0x4C,0x76};
+      return Decode(enc, 18, 0x29);
+   }
+
+   // Destek email: "info@bytamer.com"
+   // XOR key: 0x71
+   string GetSupportEmail()
+   {
+      uchar enc[] = {0x18,0x1F,0x17,0x1E,0x31,0x13,0x08,0x05,
+                     0x10,0x1C,0x14,0x03,0x5F,0x12,0x1E,0x1C};
+      return Decode(enc, 16, 0x71);
+   }
+}
+
+//+------------------------------------------------------------------+
+//| B2c: Integrity Check - EA dosya boyut dogrulama                  |
+//+------------------------------------------------------------------+
+namespace IntegrityCheck
+{
+   // EA kendi boyutunu kontrol eder
+   // Derlendikten sonra gercek boyut buraya yazilir
+   // Varsayilan: 0 = kontrol devre disi (ilk derleme icin)
+   long EXPECTED_FILE_SIZE = 0;  // Derleme sonrasi guncellenir
+
+   bool Verify()
+   {
+      // Boyut tanimlanmadiysa atla (ilk derleme)
+      if(EXPECTED_FILE_SIZE == 0) return true;
+
+      string eaPath = MQLInfoString(MQL_PROGRAM_PATH);
+      if(eaPath == "") return true;
+
+      // Dosya boyutu al
+      long fileHandle = FileOpen(eaPath, FILE_READ|FILE_BIN);
+      if(fileHandle == INVALID_HANDLE)
+      {
+         // Dosya acilamadiysa -> kontrol edilemiyor, devam et
+         return true;
+      }
+      long fileSize = FileSize((int)fileHandle);
+      FileClose((int)fileHandle);
+
+      // Boyut kontrolu (+/- 512 byte tolerans)
+      if(MathAbs(fileSize - EXPECTED_FILE_SIZE) > 512)
+      {
+         Print("[INTEGRITY] Dosya boyut uyumsuzlugu! Beklenen:", EXPECTED_FILE_SIZE, " Gercek:", fileSize);
+         return false;
+      }
+
+      return true;
+   }
+}
 
 //+------------------------------------------------------------------+
 //| Lisans Durumlari                                                  |
@@ -73,7 +183,7 @@ public:
     {
         m_licenseKey = "";
         m_brokerAccount = "";
-        m_apiUrl = "https://bytamer.com/api/license.php";
+        m_apiUrl = CryptoStr::GetApiUrl();  // v3.3.0: XOR sifreli
         m_isValid = false;
         m_status = LICENSE_EMPTY;
         m_daysRemaining = 0;
@@ -82,7 +192,7 @@ public:
         m_endDate = "";
         m_maxSymbols = 0;
         m_lastCheck = 0;
-        m_checkInterval = 3600;       // 1 saat
+        m_checkInterval = 300;        // 5 dakika
         m_lastError = "";
         m_failedAttempts = 0;
         m_maxFailedAttempts = 3;
@@ -97,14 +207,50 @@ public:
     //+------------------------------------------------------------------+
     bool Init(string licenseKey, long brokerAccount)
     {
+        // v3.3.0 B2c: Integrity check - dosya degistirilmis mi?
+        if(!IntegrityCheck::Verify())
+        {
+            m_status = LICENSE_INVALID;
+            m_isValid = false;
+            m_lastError = "Dosya butunlugu dogrulanamadi";
+            return false;
+        }
+
+        // Onceki durumu tamamen sifirla (EA tekrar yuklendiginde eski deger kalmasin)
+        m_isValid = false;
+        m_status = LICENSE_EMPTY;
+        m_daysRemaining = 0;
+        m_hoursRemaining = 0;
+        m_customerName = "";
+        m_endDate = "";
+        m_maxSymbols = 0;
+        m_lastCheck = 0;
+        m_lastError = "";
+        m_failedAttempts = 0;
+        m_offlineMode = false;
+        m_offlineExpiry = 0;
+        m_cacheExpiry = 0;
+        m_licenseType = "";
+
+        // v3.3.0: API URL'yi sifreli kaynaktan yukle
+        m_apiUrl = CryptoStr::GetApiUrl();
+
         m_licenseKey = licenseKey;
         m_brokerAccount = IntegerToString(brokerAccount);
+
+        // Bosluk ve gorunmez karakterleri temizle
+        StringTrimLeft(m_licenseKey);
+        StringTrimRight(m_licenseKey);
+
+        // Debug
+        Print("[LICENSE] Girilen anahtar uzunluk: ", StringLen(m_licenseKey),
+              " | Deger: '", m_licenseKey, "'");
 
         // Bos kontrol
         if(StringLen(m_licenseKey) < 10)
         {
             m_status = LICENSE_EMPTY;
-            m_lastError = "Lisans anahtari bos veya cok kisa";
+            m_lastError = CryptoStr::GetEmptyError();  // v3.3.0: sifreli string
             PrintLicenseError();
             return false;
         }
@@ -113,7 +259,7 @@ public:
         if(!ValidateKeyFormat(m_licenseKey))
         {
             m_status = LICENSE_INVALID;
-            m_lastError = "Lisans formati hatali (BTAI-XXXXX-XXXXX-XXXXX-XXXXX)";
+            m_lastError = "Lisans formati hatali (" + CryptoStr::GetKeyPrefix() + "XXXXX-XXXXX-XXXXX-XXXXX)";
             PrintLicenseError();
             return false;
         }
@@ -153,11 +299,11 @@ public:
     //+------------------------------------------------------------------+
     bool ValidateKeyFormat(string key)
     {
-        // Minimum uzunluk: BTAI-XXXXX-XXXXX-XXXXX-XXXXX = 29 karakter
-        if(StringLen(key) < 29) return false;
+        // Minimum uzunluk: BTAI-XXXXX-XXXXX-XXXXX-XXXXX = 28+ karakter
+        if(StringLen(key) < 28) return false;
 
-        // BTAI- ile baslamali
-        if(StringSubstr(key, 0, 5) != "BTAI-") return false;
+        // BTAI- ile baslamali (v3.3.0: sifreli prefix)
+        if(StringSubstr(key, 0, 5) != CryptoStr::GetKeyPrefix()) return false;
 
         // 4 tire olmali (BTAI-X-X-X-X)
         int dashCount = 0;
@@ -207,12 +353,12 @@ public:
             Print("[LICENSE] MT5: Araclar -> Ayarlar -> Expert Advisors -> WebRequest icin izin ver");
             Print("[LICENSE] URL ekleyin: ", m_apiUrl);
 
-            // Offline mod
+            // Offline mod - v3.3.0: 24 saat → 4 saat (B2d sikilastirma)
             if(m_failedAttempts >= m_maxFailedAttempts && LoadFromCache())
             {
                 m_offlineMode = true;
-                m_offlineExpiry = TimeCurrent() + 86400; // 24 saat offline izin
-                Print("[LICENSE] Offline mod aktif (24 saat)");
+                m_offlineExpiry = TimeCurrent() + 14400; // 4 saat offline izin (v3.3.0)
+                Print("[LICENSE] Offline mod aktif (4 saat)");
                 return m_isValid;
             }
 
@@ -243,6 +389,8 @@ public:
         string status = GetJsonString(json, "status");
         string message = GetJsonString(json, "message");
 
+        Print("[LICENSE] API Response - success:", success, " status:", status);
+
         m_lastError = message;
         m_lastCheck = TimeCurrent();
         m_failedAttempts = 0;
@@ -269,21 +417,49 @@ public:
             return false;
         }
 
-        // Basarili - verileri al
+        // Basarili - "active" veya "valid" kabul et
+        if(status != "valid" && status != "active")
+        {
+            m_status = LICENSE_INVALID;
+            m_isValid = false;
+            m_lastError = "Beklenmeyen status: " + status;
+            PrintLicenseError();
+            return false;
+        }
+
         m_isValid = true;
         m_status = LICENSE_VALID;
+
+        // API flat veya nested ("data":{}) donebilir - her ikisini de destekle
         m_daysRemaining = (int)GetJsonInt(json, "days_remaining");
-        m_hoursRemaining = (int)GetJsonInt(json, "hours_remaining");
-        m_maxSymbols = (int)GetJsonInt(json, "max_symbols");
         m_endDate = GetJsonString(json, "end_date");
+        m_maxSymbols = (int)GetJsonInt(json, "max_symbols");
         m_customerName = GetJsonString(json, "customer");
+        m_hoursRemaining = (int)GetJsonInt(json, "hours_remaining");
         m_licenseType = GetJsonString(json, "license_type");
 
-        // Periyodik kontrol araligi: saatlik lisans = 30dk, gunluk = 1 saat
-        if(m_licenseType == "hourly")
-            m_checkInterval = 1800;  // 30 dakika
-        else
-            m_checkInterval = 3600;  // 1 saat
+        // Eger license_type bos ise gun sayisina gore hesapla
+        if(m_licenseType == "")
+        {
+            if(m_daysRemaining <= 1)       m_licenseType = "hourly";
+            else if(m_daysRemaining <= 7)  m_licenseType = "daily";
+            else                           m_licenseType = "monthly";
+        }
+
+        // Eger hours_remaining 0 ve days 0 ise end_date'den hesapla
+        if(m_hoursRemaining == 0 && m_daysRemaining == 0 && m_endDate != "")
+        {
+            datetime endTime = StringToTime(m_endDate);
+            if(endTime > TimeCurrent())
+            {
+                int diff = (int)(endTime - TimeCurrent());
+                m_daysRemaining = diff / 86400;
+                m_hoursRemaining = (diff % 86400) / 3600;
+            }
+        }
+
+        // Periyodik kontrol araligi: her lisans tipi icin 5 dakika
+        m_checkInterval = 300;  // 5 dakika
 
         // Onbellege kaydet
         SaveToCache();
@@ -517,15 +693,16 @@ private:
     //+------------------------------------------------------------------+
     void SaveToCache()
     {
-        string filename = "bytamerfx_license_" + m_brokerAccount + ".dat";
+        string filename = CryptoStr::GetCachePrefix() + m_brokerAccount + ".dat";  // v3.3.0: sifreli
         int handle = FileOpen(filename, FILE_WRITE|FILE_BIN|FILE_COMMON);
 
         if(handle != INVALID_HANDLE)
         {
-            // Hash olustur (manipulasyona karsi)
+            // Hash olustur (manipulasyona karsi) - v3.3.0: server timestamp eklendi
             string data = m_licenseKey + "|" + m_brokerAccount + "|" +
                           IntegerToString(m_daysRemaining) + "|" +
-                          IntegerToString(m_hoursRemaining) + "|" + m_endDate;
+                          IntegerToString(m_hoursRemaining) + "|" + m_endDate + "|" +
+                          IntegerToString(TimeCurrent());  // saat geri almayi engeller
             string hash = GenerateHash(data);
 
             // Verileri yaz
@@ -536,7 +713,8 @@ private:
             FileWriteString(handle, m_customerName + "\n");
             FileWriteString(handle, IntegerToString(m_maxSymbols) + "\n");
             FileWriteString(handle, m_licenseType + "\n");
-            FileWriteString(handle, IntegerToString(TimeCurrent() + 86400) + "\n"); // 24 saat gecerli
+            FileWriteString(handle, IntegerToString(TimeCurrent() + 14400) + "\n"); // v3.3.0: 4 saat gecerli (24→4)
+            FileWriteString(handle, IntegerToString(TimeCurrent()) + "\n");  // v3.3.0: kayit zamani (anti-clockback)
 
             FileClose(handle);
         }
@@ -547,7 +725,7 @@ private:
     //+------------------------------------------------------------------+
     bool LoadFromCache()
     {
-        string filename = "bytamerfx_license_" + m_brokerAccount + ".dat";
+        string filename = CryptoStr::GetCachePrefix() + m_brokerAccount + ".dat";  // v3.3.0: sifreli
 
         if(!FileIsExist(filename, FILE_COMMON))
             return false;
@@ -566,6 +744,7 @@ private:
         string maxSymbols = FileReadString(handle);
         string licType = FileReadString(handle);
         string expiry = FileReadString(handle);
+        string savedTimestamp = FileReadString(handle);  // v3.3.0: kayit zamani
 
         FileClose(handle);
 
@@ -578,6 +757,7 @@ private:
         StringTrimRight(maxSymbols);
         StringTrimRight(licType);
         StringTrimRight(expiry);
+        StringTrimRight(savedTimestamp);
 
         // Cache suresi dolmus mu?
         if(StringToInteger(expiry) < TimeCurrent())
@@ -587,8 +767,17 @@ private:
             return false;
         }
 
-        // Hash dogrula (manipulasyona karsi)
-        string data = m_licenseKey + "|" + m_brokerAccount + "|" + days + "|" + hours + "|" + endDate;
+        // v3.3.0 B2d: Anti-clockback - saat geri alinmis mi?
+        datetime saveTime = (datetime)StringToInteger(savedTimestamp);
+        if(saveTime > 0 && TimeCurrent() < saveTime - 300)  // 5dk tolerans
+        {
+            FileDelete(filename, FILE_COMMON);
+            Print("[LICENSE] Saat geri alimi tespit edildi! Cache silindi.");
+            return false;
+        }
+
+        // Hash dogrula (manipulasyona karsi) - v3.3.0: timestamp dahil
+        string data = m_licenseKey + "|" + m_brokerAccount + "|" + days + "|" + hours + "|" + endDate + "|" + savedTimestamp;
         string expectedHash = GenerateHash(data);
 
         if(savedHash != expectedHash)
@@ -628,7 +817,7 @@ private:
     //+------------------------------------------------------------------+
     void DeleteCache()
     {
-        string filename = "bytamerfx_license_" + m_brokerAccount + ".dat";
+        string filename = CryptoStr::GetCachePrefix() + m_brokerAccount + ".dat";  // v3.3.0: sifreli
         if(FileIsExist(filename, FILE_COMMON))
         {
             FileDelete(filename, FILE_COMMON);
@@ -662,7 +851,7 @@ private:
         Print("   Hesap: ", m_brokerAccount);
         Print("   Anahtar: ", GetLicenseKeyMasked());
         Print("============================================================");
-        Print("   Destek: info@bytamer.com");
+        Print("   Destek: ", CryptoStr::GetSupportEmail());
         Print("   Telegram: @ByTamerAI_Support");
         Print("   Web: https://bytamer.com");
         Print("============================================================");
