@@ -4,6 +4,50 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.3.0] - 2026-02-26
+
+### Telegram Rich Messages + Daily Report + Token Validation
+
+#### 1. Telegram Mesaj Sistemi Tam Yeniden Yazim
+- **10 Mesaj Tipi**: Startup, Shutdown, TradeOpen, TradeClose, SPM, Hedge, FIFO, GridReset, DailyReport, Generic
+- Her mesajda: Hesap No, Bakiye, Equity, Surum, Tarih/Saat
+- Zengin format: Emoji + cerceve + bolumler + HTML
+- Progress bar (FIFO ilerleme gostergesi)
+- Otomatik icon secimi (mesaj icerigine gore)
+
+#### 2. Token Dogrulama (v4.3 NEW)
+- `ValidateToken()`: Initialize sirasinda `/getMe` API ile token dogrulama
+- HTTP 401 → "TOKEN GECERSIZ" uyarisi + BotFather yonlendirmesi
+- WebRequest hatasi → URL listesi uyarisi
+- Detayli hata loglama: Response body dahil
+
+#### 3. EA Kapanis Bildirimi (SendShutdown - NEW)
+- `OnDeinit()` icinde: Seans ozeti mesaji gonderilir
+- Kapatilan islem sayisi, seans kari, calisma suresi, kapanis sebebi
+
+#### 4. Gun Sonu Raporu (SendDailyReport - NEW)
+- Her gun 23:55'te otomatik gonderilir
+- Finansal ozet, islem istatistikleri, sistem sagligi
+- Karli/zararda islem sayisi, win rate yuzdeleri
+
+#### 5. Pozisyon Haritasi (GetPositionMapHTML - NEW)
+- SPM, FIFO, Hedge mesajlarinda tam pozisyon haritasi
+- Her pozisyon: Rol + Yon + Lot + P/L
+
+#### 6. Zengin Olay Mesajlari
+- `SendSPMEvent()`: SPM acilis/kapanis + pozisyon haritasi + FIFO ilerleme cubugu
+- `SendHedgeEvent()`: Rescue hedge + pozisyon haritasi
+- `SendFIFOEvent()`: ANA kapanis + SPM kasa + net sonuc + terfi bilgisi
+- `SendGridReset()`: Floating loss + esik + kapatilan pozisyonlar
+
+### Files Changed
+- `TelegramMsg.mqh`: Tamamen yeniden yazildi (10 mesaj tipi + token dogrulama + format helpers)
+- `PositionManager.mqh`: GetPositionMapHTML(), GetCategoryName(), 4 key SendMessage→zengin method
+- `BytamerFX.mq5`: v4.30, SendShutdown, DailyReport timer, seans istatistikleri
+- `Config.mqh`: v4.3.0
+
+---
+
 ## [v4.2.0] - 2026-02-26
 
 ### Net-Exposure SPM + Grid Reset + FIFO Enhance

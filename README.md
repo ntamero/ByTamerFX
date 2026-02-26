@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.2.0** - Professional automated forex trading system with hybrid signal engine.
+**BytamerFX v4.3.0** - Professional automated forex trading system with hybrid signal engine.
 
 > **NO SL** | **Never close at a loss** | **Net-Exposure SPM** | **FIFO Strategy** | **Grid Reset Safety**
 
@@ -114,7 +114,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.2.0** | **2026-02-26** | **Net-Exposure SPM + Grid Reset + EQUITY_ACIL Fix** |
+| **v4.3.0** | **2026-02-26** | **Telegram Rich Messages + Daily Report + Token Validation** |
+| v4.2.0 | 2026-02-26 | Net-Exposure SPM + Grid Reset + EQUITY_ACIL Fix |
 | v4.1.0 | 2026-02-24 | BiDir Fix + Forex 0.03 + FIFO Fix |
 | v4.0.0 | 2026-02-23 | KazanKazan-Pro: 12 indicator + Kademeli Kurtarma |
 | v3.5.0 | 2026-02-21 | Net Settlement + Zigzag Grid Engine |

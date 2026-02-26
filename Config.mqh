@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "4.2.0"
-#define EA_VERSION_NUM    "4.20"
+#define EA_VERSION        "4.3.0"
+#define EA_VERSION_NUM    "4.30"
 #define EA_VERSION_NAME   "KazanKazan-Pro"
-#define EA_VERSION_FULL   "BytamerFX v4.2.0 - KazanKazan Pro (Net-Exposure SPM + Grid Reset + FIFO Enhance)"
+#define EA_VERSION_FULL   "BytamerFX v4.3.0 - KazanKazan Pro (Telegram Rich + Daily Report + Token Validation)"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================

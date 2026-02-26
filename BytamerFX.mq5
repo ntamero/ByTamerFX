@@ -10,8 +10,8 @@
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "4.20"                     // !!! Config.mqh EA_VERSION_NUM ile senkron tut !!!
-#property description "BytamerFX v4.2.0 - KazanKazan Pro (Net-Exposure SPM + Grid Reset + FIFO Enhance)"  // !!! Config.mqh EA_VERSION_FULL ile senkron tut !!!
+#property version     "4.30"                     // !!! Config.mqh EA_VERSION_NUM ile senkron tut !!!
+#property description "BytamerFX v4.3.0 - KazanKazan Pro (Telegram Rich + Daily Report + Token Validation)"  // !!! Config.mqh EA_VERSION_FULL ile senkron tut !!!
 #property description "KazanKazan-Pro | Agirlikli 5-Oy SPM | FIFO Sadece ANA Kapat | Sonraki Mum Bekleme"
 #property description "SL=YOK | Lisans Sistemi | Haber Entegrasyonu"
 #property description "Copyright 2026, By T@MER"
@@ -56,6 +56,18 @@ bool              g_initialized = false;
 ENUM_SYMBOL_CATEGORY g_category = CAT_UNKNOWN;
 datetime          g_lastNewBarTime = 0;
 datetime          g_lastSignalCheck = 0;
+
+//--- v4.3: Seans istatistikleri (Telegram Shutdown + DailyReport)
+datetime          g_sessionStartTime = 0;
+double            g_sessionStartBalance = 0;
+int               g_sessionClosedTrades = 0;
+double            g_sessionProfit = 0;
+int               g_dailyWins = 0;
+int               g_dailyLosses = 0;
+double            g_dailyWinAmount = 0;
+double            g_dailyLossAmount = 0;
+bool              g_dailyReportSent = false;
+datetime          g_lastDailyReportDate = 0;
 
 //+------------------------------------------------------------------+
 //| Expert initialization function                                     |
@@ -211,6 +223,18 @@ int OnInit()
    //--- 12. TIMER (dashboard guncelleme icin)
    EventSetTimer(1);  // Her 1 saniye
 
+   //--- v4.3: Seans istatistikleri basla
+   g_sessionStartTime    = TimeCurrent();
+   g_sessionStartBalance = balance;
+   g_sessionClosedTrades = 0;
+   g_sessionProfit       = 0;
+   g_dailyWins           = 0;
+   g_dailyLosses         = 0;
+   g_dailyWinAmount      = 0;
+   g_dailyLossAmount     = 0;
+   g_dailyReportSent     = false;
+   g_lastDailyReportDate = 0;
+
    g_initialized = true;
    Print(EA_VERSION_FULL + " basariyla yuklendi.");
 
@@ -245,6 +269,18 @@ void OnDeinit(const int reason)
    }
 
    Print(StringFormat("%s DURDURULUYOR | Sebep: %s (%d)", EA_VERSION_FULL, reasonStr, reason));
+
+   //--- v4.3: Telegram Shutdown bildirimi
+   if(g_initialized)
+   {
+      double shutdownBalance = AccountInfoDouble(ACCOUNT_BALANCE);
+      int runMinutes = (int)((TimeCurrent() - g_sessionStartTime) / 60);
+      double sesProfit = shutdownBalance - g_sessionStartBalance;
+      long accNo = AccountInfoInteger(ACCOUNT_LOGIN);
+
+      g_telegram.SendShutdown(_Symbol, accNo, shutdownBalance,
+                               reasonStr, g_sessionClosedTrades, sesProfit, runMinutes);
+   }
 
    //--- Bildirim
    if(EnablePushNotification)
@@ -380,6 +416,35 @@ void OnTimer()
    //--- v2.2: Haber kontrolu (timer ile de calistir - tick gelmese bile)
    if(EnableNewsFilter)
       g_newsMgr.OnTick();
+
+   //--- v4.3: Gun sonu raporu (23:55 - her gun 1 kez)
+   MqlDateTime dt;
+   TimeCurrent(dt);
+   datetime today = StringToTime(IntegerToString(dt.year) + "." +
+                                  IntegerToString(dt.mon) + "." +
+                                  IntegerToString(dt.day));
+
+   if(dt.hour == 23 && dt.min >= 55 && today != g_lastDailyReportDate)
+   {
+      g_lastDailyReportDate = today;
+
+      long   accNo   = AccountInfoInteger(ACCOUNT_LOGIN);
+      string broker  = AccountInfoString(ACCOUNT_COMPANY);
+      double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+      double equity  = AccountInfoDouble(ACCOUNT_EQUITY);
+      double floating = equity - balance;
+      double dailyPL = balance - g_sessionStartBalance;
+      double dailyPct = (g_sessionStartBalance > 0) ? (dailyPL / g_sessionStartBalance * 100.0) : 0;
+      int    totalClosed = g_dailyWins + g_dailyLosses;
+
+      g_telegram.SendDailyReport(accNo, broker, balance, equity,
+                                  dailyPL, dailyPct, floating,
+                                  totalClosed, g_dailyWins, g_dailyLosses,
+                                  g_dailyWinAmount, g_dailyLossAmount,
+                                  "", "");  // activePositions ve topPerformers opsiyonel
+
+      PrintFormat("[DAILY] Gun sonu raporu gonderildi: P/L=$%.2f (%.1f%%)", dailyPL, dailyPct);
+   }
 }
 
 //+------------------------------------------------------------------+

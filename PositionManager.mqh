@@ -276,6 +276,10 @@ private:
    ENUM_SIGNAL_DIR GetNetExposureDirection(int mainIdx);  // BUY/SELL dengesi → SPM yonu
    bool   CheckGridHealth();                              // Grid saglik kontrolu → reset
 
+   //--- v4.3.0: Telegram zengin mesaj yardimcilari
+   string GetPositionMapHTML();    // Pozisyon haritasi (HTML)
+   string GetCategoryName();      // Kategori adi
+
    //--- v3.7.1: Tepe/Dip koruma
    bool   CheckPeakDipGate(ENUM_SIGNAL_DIR &dirOverride);  // Tepe/Dip → ADX bazli yon/cooldown
    double GetTotalBuyLots();
@@ -2364,10 +2368,11 @@ void CPositionManager::CheckFIFOTarget()
    PrintFormat("[PM-%s] FIFO YOL-B: ANA #%llu kapatildi. Net=$%.2f realize edildi.",
                m_symbol, m_positions[mainIdx].ticket, net);
 
-   // Bildirim
+   // v4.3: Zengin FIFO bildirimi
+   double fifoMainLoss = m_positions[mainIdx].profit;  // ANA'nin zarari (kapanis oncesi)
    if(m_telegram != NULL)
-      m_telegram.SendMessage(StringFormat("FIFO %s: ANA kapatildi Net=$%.2f | TERFI kontrol...",
-                                          m_symbol, net));
+      m_telegram.SendFIFOEvent(m_symbol, GetCategoryName(), fifoMainLoss,
+                                m_spmClosedProfitTotal, net, "");
    if(m_discord != NULL)
       m_discord.SendMessage(StringFormat("FIFO %s: ANA kapatildi Net=$%.2f | TERFI kontrol...",
                                          m_symbol, net));
@@ -2696,9 +2701,19 @@ void CPositionManager::OpenSPM(ENUM_SIGNAL_DIR dir, double lot, int layer, ulong
                   m_symbol, layer, (int)newTicket,
                   (dir == SIGNAL_BUY) ? "BUY" : "SELL", lot, (int)parentTicket);
 
+      //--- v4.3: Zengin SPM bildirimi
       if(m_telegram != NULL)
-         m_telegram.SendMessage(StringFormat("SPM%d %s: %s Lot=%.2f #%d",
-                                layer, m_symbol, (dir == SIGNAL_BUY) ? "BUY" : "SELL", lot, (int)newTicket));
+      {
+         RefreshPositions();
+         string posMap = GetPositionMapHTML();
+         double mainLoss = 0;
+         for(int p = 0; p < m_posCount; p++)
+            if(m_positions[p].role == ROLE_MAIN && m_positions[p].profit < 0)
+               mainLoss = m_positions[p].profit;
+         double fifoTarget = (mainLoss < 0) ? MathAbs(mainLoss) + SPM_NetTargetUSD : 0;
+         m_telegram.SendSPMEvent(m_symbol, GetCategoryName(), layer, "ACILDI",
+                                  posMap, m_spmClosedProfitTotal, fifoTarget);
+      }
       if(m_discord != NULL)
          m_discord.SendMessage(StringFormat("SPM%d %s: %s Lot=%.2f #%d",
                                layer, m_symbol, (dir == SIGNAL_BUY) ? "BUY" : "SELL", lot, (int)newTicket));
@@ -3176,13 +3191,61 @@ bool CPositionManager::CheckGridHealth()
    // Cooldown
    SetProtectionCooldown("GRID_RESET");
 
-   // Telegram/Discord bildirim
-   string msg = StringFormat("GRID RESET %s: Floating=$%.2f < $%.2f → Tum kapatildi",
-                              m_symbol, totalFloating, gridLossLimit);
-   if(m_telegram != NULL) m_telegram.SendMessage(msg);
-   if(m_discord != NULL)  m_discord.SendMessage(msg);
+   // v4.3: Zengin Grid Reset bildirimi
+   if(m_telegram != NULL)
+      m_telegram.SendGridReset(m_symbol, GetCategoryName(), totalFloating, gridLossLimit, "");
+   string gridMsg = StringFormat("GRID RESET %s: Floating=$%.2f < $%.2f → Tum kapatildi",
+                                  m_symbol, totalFloating, gridLossLimit);
+   if(m_discord != NULL) m_discord.SendMessage(gridMsg);
 
    return true;
+}
+
+//+------------------------------------------------------------------+
+//| v4.3.0: Pozisyon haritasi (Telegram HTML formatinda)              |
+//+------------------------------------------------------------------+
+string CPositionManager::GetPositionMapHTML()
+{
+   string map = "";
+   for(int i = 0; i < m_posCount; i++)
+   {
+      string roleStr = "";
+      switch(m_positions[i].role)
+      {
+         case ROLE_MAIN:  roleStr = "ANA";   break;
+         case ROLE_SPM:   roleStr = "SPM" + IntegerToString(m_positions[i].spmLayer); break;
+         case ROLE_DCA:   roleStr = "DCA";   break;
+         case ROLE_HEDGE: roleStr = "HEDGE"; break;
+         default:         roleStr = "???";   break;
+      }
+      string dirStr = (m_positions[i].type == POSITION_TYPE_BUY) ? "BUY " : "SELL";
+      string plStr;
+      if(m_positions[i].profit >= 0)
+         plStr = "+$" + DoubleToString(m_positions[i].profit, 2);
+      else
+         plStr = "-$" + DoubleToString(MathAbs(m_positions[i].profit), 2);
+
+      map += "<code>" + roleStr + ": " + dirStr + " " +
+             DoubleToString(m_positions[i].volume, 2) + " [" + plStr + "]</code>\n";
+   }
+   return map;
+}
+
+//+------------------------------------------------------------------+
+//| v4.3.0: Kategori adi                                              |
+//+------------------------------------------------------------------+
+string CPositionManager::GetCategoryName()
+{
+   switch(m_category)
+   {
+      case CAT_FOREX:   return "Forex";
+      case CAT_METAL:   return "Metal";
+      case CAT_CRYPTO:  return "Crypto";
+      case CAT_INDICES: return "Indices";
+      case CAT_STOCKS:  return "Stocks";
+      case CAT_ENERGY:  return "Energy";
+      default:          return "Default";
+   }
 }
 
 //+------------------------------------------------------------------+
@@ -4281,10 +4344,14 @@ void CPositionManager::CheckRescueHedge()
 
    OpenHedge(hedgeDir, rescueLot);
 
+   //--- v4.3: Zengin Hedge bildirimi
    if(m_telegram != NULL)
-      m_telegram.SendMessage(StringFormat("RESCUE HEDGE %s: SPM2=$%.2f | %s %.2f lot (1.3x KURALSIZ)",
-                              m_symbol, spm2Loss,
-                              (hedgeDir == SIGNAL_BUY) ? "BUY" : "SELL", rescueLot));
+   {
+      RefreshPositions();
+      string hedgePosMap = GetPositionMapHTML();
+      m_telegram.SendHedgeEvent(m_symbol, GetCategoryName(), "ACILDI",
+                                 (hedgeDir == SIGNAL_BUY) ? "BUY" : "SELL", rescueLot, hedgePosMap);
+   }
    if(m_discord != NULL)
       m_discord.SendMessage(StringFormat("RESCUE HEDGE %s: SPM2=$%.2f | %s %.2f lot",
                              m_symbol, spm2Loss,
