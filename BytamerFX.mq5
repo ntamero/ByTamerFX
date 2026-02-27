@@ -3,16 +3,16 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v4.5.0 - SPM Dongusu (SPM-Cycle)                       |
+//| BytamerFX v4.6.0 - NightGuard                                    |
 //| M15 Timeframe | SL=YOK (MUTLAK) | Hibrit Sinyal + SPM Yonetimi  |
-//| Zorla Kapatma YOK | Saf SPM Dongusu | MIA Entegrasyonu           |
+//| Gece Modu: Crypto Haric 20:00 Engel + 23:00 Zorla Kapanis       |
 //| Hesap: 262230423 (Exness) | Dinamik Profil + Haber + Lisans      |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "4.50"                     // !!! Config.mqh EA_VERSION_NUM ile senkron tut !!!
-#property description "BytamerFX v4.5.0 - SPM Dongusu (Limit Yok + Saf SPM Yonetimi + MIA Entegrasyonu)"  // !!! Config.mqh EA_VERSION_FULL ile senkron tut !!!
-#property description "SPM-Cycle | Agirlikli 5-Oy SPM | FIFO Sadece ANA Kapat | Zorla Kapatma YOK"
+#property version     "4.60"                     // !!! Config.mqh EA_VERSION_NUM ile senkron tut !!!
+#property description "BytamerFX v4.6.0 - NightGuard (Gece Modu + SPM Dongusu + MIA Entegrasyonu)"  // !!! Config.mqh EA_VERSION_FULL ile senkron tut !!!
+#property description "NightGuard | Crypto 7/24 | Non-Crypto 20:00 Engel + 23:00 Kapanis"
 #property description "SL=YOK | Lisans Sistemi | Haber Entegrasyonu"
 #property description "Copyright 2026, By T@MER"
 #property strict
@@ -185,7 +185,7 @@ int OnInit()
    g_signalEngine.SetProfile(signalProfile);
 
    //--- 7. ISLEM YURUTME
-   g_executor.Initialize(_Symbol);
+   g_executor.Initialize(_Symbol, g_category);
 
    //--- 8. BILDIRIMLER
    g_telegram.Initialize(TelegramToken, TelegramChatID, EnableTelegram);
@@ -452,6 +452,15 @@ void OnTimer()
 //+------------------------------------------------------------------+
 void CheckForNewSignal()
 {
+   //--- v4.6.0: Gece modu ek guvenlik (TradeExecutor'da da var)
+   if(NightModeEnabled && g_category != CAT_CRYPTO)
+   {
+      MqlDateTime lt;
+      TimeToStruct(TimeLocal(), lt);
+      if(lt.hour >= NightModeStartHour)
+         return;
+   }
+
    //--- Cooldown kontrolu
    if(TimeCurrent() - g_lastSignalCheck < SignalCooldownSec)
       return;

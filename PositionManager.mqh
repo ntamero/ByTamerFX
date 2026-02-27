@@ -5,7 +5,7 @@
 //|                                    Copyright 2026, By T@MER      |
 //|                                    https://www.bytamer.com        |
 //|                                                                  |
-//|              v4.5.0 - SPM Dongusu (Zorla Kapatma YOK)            |
+//|              v4.6.0 - NightGuard + SPM Dongusu                    |
 //+------------------------------------------------------------------+
 //|  SISTEM MANTIGI (v4.5.0 SPM-Cycle):                              |
 //|  H1 trend 3-kaynak oylama ile tespit (EMA+MACD+ADX) + ardisik   |
@@ -270,6 +270,9 @@ private:
    void   SmartClosePosition(int idx, ENUM_POS_ROLE role, double profit, string reason);
    void   SetProtectionCooldown(string reason);
    void   PrintDetailedStatus();
+
+   //--- v4.6.0: Gece modu
+   void   CheckNightModeClose();     // 23:00 karli non-crypto pozisyon kapanis
 
    //--- v3.7.0: Kademeli Kurtarma yardimci fonksiyonlari
    bool   HasDirectionSupport(ENUM_SIGNAL_DIR dir);   // trend/sinyal/mum'dan en az 1 destek
@@ -543,6 +546,9 @@ void CPositionManager::OnTick()
 
    //--- 3b. Sembol bazli toplam kayip limiti — v4.0: DEVRE DISI
    // if(CheckSymbolLossLimit()) return;
+
+   //--- 3c. v4.6.0: Gece modu — 23:00 karli pozisyon kapatma
+   CheckNightModeClose();
 
    //--- 4. Yeni bar kontrolu
    bool newBar = m_candle.CheckNewBar();
@@ -1433,6 +1439,44 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
                continue;
             }
          }
+      }
+   }
+}
+
+//+------------------------------------------------------------------+
+//| v4.6.0: Gece Modu — 23:00 karli pozisyon kapatma                |
+//| Crypto haric tum semboller: +$1 karli pozisyonlar kapatilir      |
+//+------------------------------------------------------------------+
+void CPositionManager::CheckNightModeClose()
+{
+   if(!NightModeEnabled) return;
+   if(m_category == CAT_CRYPTO) return;  // Crypto = 7/24 aktif
+
+   MqlDateTime localTime;
+   TimeToStruct(TimeLocal(), localTime);
+
+   if(localTime.hour < NightModeCloseHour) return;  // Henuz 23:00 degil
+
+   // 23:00+ → Karli pozisyonlari kapat
+   for(int i = m_posCount - 1; i >= 0; i--)
+   {
+      if(!PositionSelectByTicket(m_positions[i].ticket)) continue;
+
+      double profit = PositionGetDouble(POSITION_PROFIT)
+                    + PositionGetDouble(POSITION_SWAP);
+
+      if(profit >= NightModeMinProfit)  // +$1.00 veya ustu
+      {
+         PrintFormat("[GECE MODU] %s: Saat %02d:%02d → %s #%llu kapatiliyor ($%.2f >= $%.2f)",
+                     m_symbol, localTime.hour, localTime.min,
+                     (m_positions[i].role == ROLE_MAIN) ? "ANA" :
+                     (m_positions[i].role == ROLE_SPM)  ? "SPM" :
+                     (m_positions[i].role == ROLE_DCA)  ? "DCA" : "HEDGE",
+                     m_positions[i].ticket, profit, NightModeMinProfit);
+
+         SmartClosePosition(i, m_positions[i].role, profit,
+            StringFormat("GeceModu_%02d:%02d_$%.2f",
+                         localTime.hour, localTime.min, profit));
       }
    }
 }

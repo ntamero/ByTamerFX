@@ -20,25 +20,45 @@ class CTradeExecutor
 private:
    CTrade   m_trade;
    string   m_symbol;
+   ENUM_SYMBOL_CATEGORY m_category;  // v4.6.0: Gece modu icin
 
 public:
-   CTradeExecutor() {}
+   CTradeExecutor() : m_category(CAT_FOREX) {}
 
-   void Initialize(string symbol)
+   void Initialize(string symbol, ENUM_SYMBOL_CATEGORY cat)
    {
       m_symbol = symbol;
+      m_category = cat;  // v4.6.0
       m_trade.SetExpertMagicNumber(MagicNumber);
       m_trade.SetDeviationInPoints(MaxSlippage);
       m_trade.SetTypeFilling(ORDER_FILLING_IOC);
       m_trade.SetTypeFillingBySymbol(symbol);
 
-      Print(StringFormat("Trade Executor: %s | Magic=%d | Slip=%d | SL=YOK (MUTLAK)",
-            symbol, MagicNumber, MaxSlippage));
+      Print(StringFormat("Trade Executor: %s | Magic=%d | Slip=%d | SL=YOK (MUTLAK) | Cat=%d | GeceModu=%s",
+            symbol, MagicNumber, MaxSlippage, (int)cat, NightModeEnabled ? "AKTIF" : "KAPALI"));
    }
 
    //--- Pozisyon ac (SL PARAMETRESI HER ZAMAN 0)
    ulong OpenPosition(ENUM_SIGNAL_DIR dir, double lot, double tp, double sl, string comment)
    {
+      // v4.6.0: GECE MODU — Crypto haric yeni islem engeli
+      if(NightModeEnabled && m_category != CAT_CRYPTO)
+      {
+         MqlDateTime localTime;
+         TimeToStruct(TimeLocal(), localTime);
+         if(localTime.hour >= NightModeStartHour)
+         {
+            static datetime lastNightLog = 0;
+            if(TimeCurrent() - lastNightLog >= 300)  // 5dk'da bir logla
+            {
+               PrintFormat("[GECE MODU] %s: Saat %02d:%02d >= %02d:00 → ISLEM ENGELLENDI (%s)",
+                           m_symbol, localTime.hour, localTime.min, NightModeStartHour, comment);
+               lastNightLog = TimeCurrent();
+            }
+            return 0;  // Islem acilmadi
+         }
+      }
+
       // SL=0 MUTLAK KURAL - sl parametresi IGNORE edilir
       sl = 0;
 

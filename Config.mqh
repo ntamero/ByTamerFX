@@ -3,7 +3,7 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v4.5.0 - SPM Dongusu                                  |
+//| BytamerFX v4.6.0 - NightGuard                                    |
 //| Merkezi Konfigurasyon                                            |
 //| VERSIYON TEK KAYNAKTAN OKUNUR - Diger dosyalar buradan alir     |
 //+------------------------------------------------------------------+
@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "4.5.0"
-#define EA_VERSION_NUM    "4.50"
-#define EA_VERSION_NAME   "SPM-Cycle"
-#define EA_VERSION_FULL   "BytamerFX v4.5.0 - SPM Dongusu (Limit Yok + Saf SPM Yonetimi + MIA Entegrasyonu)"
+#define EA_VERSION        "4.6.0"
+#define EA_VERSION_NUM    "4.60"
+#define EA_VERSION_NAME   "NightGuard"
+#define EA_VERSION_FULL   "BytamerFX v4.6.0 - Gece Modu (Crypto Haric 20:00 Engel + 23:00 Zorla Kapanis)"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -163,6 +163,16 @@ input bool     EnableNewsFilter       = true;       // Haber filtresi aktif
 input int      NewsBlockBeforeMin     = 20;         // Haber oncesi blok (dakika)
 input int      NewsBlockAfterMin      = 5;          // Haber sonrasi blok (dakika)
 input int      NewsAlertBeforeMin     = 30;         // Haber oncesi bildirim (dakika)
+
+//=================================================================
+// v4.6.0: GECE MODU (Night Session Protection)
+// Crypto haric tum semboller 20:00'den sonra yeni islem acmaz
+// 23:00'de +$1 karli tum non-crypto pozisyonlar kapatilir
+//=================================================================
+input bool     NightModeEnabled       = true;       // Gece modu aktif
+input int      NightModeStartHour     = 20;         // Yeni islem engel saati (yerel saat)
+input int      NightModeCloseHour     = 23;         // Karli pozisyon kapatma saati (yerel)
+input double   NightModeMinProfit     = 1.0;        // 23:00 kapatma icin min kar ($)
 
 //=================================================================
 // GORSEL

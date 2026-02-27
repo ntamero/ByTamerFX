@@ -4,6 +4,35 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.6.0] - 2026-02-27
+
+### NightGuard — Gece Modu (Night Session Protection)
+
+**Amac:** Bolgesel borsa acilislarindaki yuksek volatilite ve ters spread riskine karsi koruma.
+
+#### 1. Yeni Islem Engeli (20:00+)
+- Crypto HARIC tum semboller: 20:00'den sonra yeni islem acilmaz
+- ANA, SPM, DCA, HEDGE dahil — hicbir yeni pozisyon acilmaz
+- TradeExecutor tek bogaz noktasinda engellenir (6 farkli acilis noktasi korunur)
+- Mevcut pozisyonlar normal yonetilir (kapanis mekanizmalari calisir)
+
+#### 2. Zorla Kapanis (23:00+)
+- Crypto HARIC: +$1.00 karli tum pozisyonlar kapatilir
+- Zarardaki pozisyonlar dokunulmaz — sadece karlilar kapanir
+- Kapanis nedeni: "GeceModu_HH:MM_$X.XX" formatinda loglanir
+
+#### 3. Crypto Istisna
+- Crypto semboller (BTC, ETH vb.) 7/24 aktif kalir
+- Gece modu Crypto'yu HICBIR sekilde etkilemez
+
+#### 4. Input Parametreleri
+- `NightModeEnabled` (true) — Gece modu aktif/pasif
+- `NightModeStartHour` (20) — Yeni islem engel saati (yerel)
+- `NightModeCloseHour` (23) — Karli pozisyon kapatma saati (yerel)
+- `NightModeMinProfit` ($1.0) — Kapatma icin minimum kar
+
+---
+
 ## [v4.5.0] - 2026-02-27
 
 ### SPM Dongusu — Limit Yok + Saf SPM Yonetimi
