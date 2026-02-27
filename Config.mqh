@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "4.4.0"
-#define EA_VERSION_NUM    "4.40"
-#define EA_VERSION_NAME   "SurvivalInstinct"
-#define EA_VERSION_FULL   "BytamerFX v4.4.0 - Hayatta Kalma Icgudusu (Trailing Floor + Cift Mum Teyit + Momentum Koruma + Grace Period)"
+#define EA_VERSION        "4.5.0"
+#define EA_VERSION_NUM    "4.50"
+#define EA_VERSION_NAME   "SPM-Cycle"
+#define EA_VERSION_FULL   "BytamerFX v4.5.0 - SPM Dongusu (Limit Yok + Saf SPM Yonetimi + MIA Entegrasyonu)"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================

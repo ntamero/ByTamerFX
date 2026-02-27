@@ -4,6 +4,37 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.5.0] - 2026-02-27
+
+### SPM Dongusu — Limit Yok + Saf SPM Yonetimi
+
+**Hedef:** Tum zorla kapatma mekanizmalari kaldirildi. Sadece SPM dongusu calisir.
+
+#### 1. Zorla Kapatma Mekanizmalari KALDIRILDI
+- **STOP-LOSS**: Tamamen devre disi — SPM sistemi pozisyon yonetimini yapar
+- **EQUITY_EMERGENCY**: Devre disi — sadece margin call seviyesinde (1%)
+- **PEAK_DROP**: Devre disi — kar buyurken zorla kapatma yok
+- **DD_EMERGENCY**: Devre disi — SPM dongusu zarari yonetir
+- **MARGIN_EMERGENCY**: Sadece broker seviyesi (20%) — bilgilendirme logu
+
+#### 2. SPM Dongusu (Tek Yonetim Mekanizmasi)
+- ANA pozisyon zarar >= $3-4 → SPM ters yonde acilir
+- SPM toplam kar - ANA zarar >= +$5 → grup kapanir
+- Geride kalan SPM yeni ANA olur → dongu tekrar baslar
+- Zarina satis YOK — mumlar terse donene kadar beklenir
+
+#### 3. MIA v5.2.0 Entegrasyonu
+- MIA Dashboard tum zorla kapatma limitleri kaldirildi (config.py + agents.py)
+- RiskAgent/SpeedAgent sadece loglama yapar, kapatma YAPMAZ
+- Telegram/Discord bildirim sistemi aktif
+
+#### 4. Versiyon Senkronizasyonu
+- EA: v4.5.0 SPM-Cycle
+- MIA: v5.2.0 SPM-Only Position Management
+- Tum dashboard HTML dosyalari v5.2.0 guncellendi
+
+---
+
 ## [v4.4.0] - 2026-02-26
 
 ### Hayatta Kalma Icgudusu + Kazanma Hirsi
