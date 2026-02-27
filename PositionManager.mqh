@@ -4635,15 +4635,17 @@ void CPositionManager::ManageHedgePositions()
 
          // v3.6.2: Daha siki kosullar
          //   ANA zarari spmTriggerLoss/2'den iyi olmali (gercek toparlanma)
-         //   HEDGE karda veya sifirda olmali (ASLA zararda kapatma)
+         //   v4.6.0: HEDGE minimum $1.50 karda olmali (eski: $0.00 → komik kapanislar!)
+         //   HEDGE korumadir, dusuk karda kapatmak korumayi anlamsiz kilar
          double recoveryLevel = m_profile.spmTriggerLoss / 2.0;  // XAG: -$2.5
-         if(confirmedTrend == mainDir && mainProfit > recoveryLevel && hedgeProfit >= 0.0)
+         double hedgeMinProfit = QuickProfitUSD;  // v4.6.0: Min $1.50 kar (eski: $0.00)
+         if(confirmedTrend == mainDir && mainProfit > recoveryLevel && hedgeProfit >= hedgeMinProfit)
          {
-            PrintFormat("[PM-%s] HEDGE TREND KAPAT: Trend=%s = ANA=%s | ANA=$%.2f (esik=$%.1f) | HEDGE=$%.2f (KARDA) → HEDGE kapat",
+            PrintFormat("[PM-%s] HEDGE TREND KAPAT: Trend=%s = ANA=%s | ANA=$%.2f (esik=$%.1f) | HEDGE=$%.2f >= $%.2f → HEDGE kapat",
                         m_symbol,
                         (confirmedTrend == SIGNAL_BUY) ? "BUY" : "SELL",
                         mainIsBuy ? "BUY" : "SELL",
-                        mainProfit, recoveryLevel, hedgeProfit);
+                        mainProfit, recoveryLevel, hedgeProfit, hedgeMinProfit);
 
             m_totalCashedProfit += hedgeProfit;
             m_spmClosedProfitTotal += hedgeProfit;
