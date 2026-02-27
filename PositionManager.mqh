@@ -537,13 +537,12 @@ void CPositionManager::OnTick()
       return;
    }
 
-   //--- 3. Margin + Equity acil durum (v3.8.0: gercek koruma)
-   if(CheckMarginEmergency())
-      return;
+   //--- 3. Margin + Equity acil durum — v4.5.0: DEVRE DISI
+   //--- SPM dongusu yonetir, zorla kapatma YOK
+   // if(CheckMarginEmergency()) return;
 
-   //--- 3b. v3.8.0: Sembol bazli toplam kayip limiti
-   if(CheckSymbolLossLimit())
-      return;
+   //--- 3b. Sembol bazli toplam kayip limiti — v4.0: DEVRE DISI
+   // if(CheckSymbolLossLimit()) return;
 
    //--- 4. Yeni bar kontrolu
    bool newBar = m_candle.CheckNewBar();
@@ -1723,8 +1722,9 @@ void CPositionManager::ManageTrendGrid()
       return;
    }
 
-   // v4.2.0: Grid saglik kontrolu — floating loss esigi asarsa RESET
-   if(CheckGridHealth()) return;
+   // v4.2.0: Grid saglik kontrolu — v4.5.0: DEVRE DISI
+   // SPM dongusu yonetir, GRID RESET YOK, zarina satis YOK
+   // if(CheckGridHealth()) return;
 
    // v3.7.0: HEDGE aktifken SPM'e IZIN VER (kasa doldurma icin)
    // HEDGE aktif olsa bile max 2 SPM acilabilir (kasa dolsun → FIFO calissin)
