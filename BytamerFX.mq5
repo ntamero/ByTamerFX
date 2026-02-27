@@ -3,9 +3,9 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v3.2.0 - Bi-Directional Trend-Grid + Akilli Kar        |
-//| M15 Timeframe | SL=YOK (MUTLAK) | 7 Katman Hibrit Sinyal        |
-//| BiDir-Grid | Adaptif ATR | Akilli Kar | Ters Piramit | Lisans    |
+//| BytamerFX v4.5.0 - SPM Dongusu (SPM-Cycle)                       |
+//| M15 Timeframe | SL=YOK (MUTLAK) | Hibrit Sinyal + SPM Yonetimi  |
+//| Zorla Kapatma YOK | Saf SPM Dongusu | MIA Entegrasyonu           |
 //| Hesap: 262230423 (Exness) | Dinamik Profil + Haber + Lisans      |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"

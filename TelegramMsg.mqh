@@ -3,7 +3,7 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| Telegram Mesaj Sistemi v4.4.0 - Zengin Format + Token Dogrulama  |
+//| Telegram Mesaj Sistemi v4.5.0 - Zengin Format + Token Dogrulama  |
 //| 10 Mesaj Tipi: Startup, Shutdown, TradeOpen, TradeClose,         |
 //|   SPM, Hedge, FIFO, GridReset, DailyReport, Generic              |
 //+------------------------------------------------------------------+

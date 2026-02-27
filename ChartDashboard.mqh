@@ -3,12 +3,12 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.3.0 - 4 Panel + Top News Banner + Chart Overlay      |
+//| BytamerFX v4.5.0 - 4 Panel + Top News Banner + Chart Overlay      |
 //| Real-time EA information display with indicator overlays          |
 //| Banner: Tam genislik haber serit (ust)                            |
 //| Panels: ANA BILGILER, SINYAL SKOR, TP+INDIKATOR, SPM+FIFO       |
 //| Overlay: Bollinger Bands, Parabolic SAR, Momentum                |
-//| v2.2.2: Emoji + Renkli Dashboard + Tooltip                       |
+//| Emoji + Renkli Dashboard + Tooltip                                |
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2026, By T@MER"
 #property link      "https://www.bytamer.com"

@@ -5,9 +5,9 @@
 //|                                    Copyright 2026, By T@MER      |
 //|                                    https://www.bytamer.com        |
 //|                                                                  |
-//|              v3.4.0 - Bi-Directional Trend-Grid + Akilli Kar     |
+//|              v4.5.0 - SPM Dongusu (Zorla Kapatma YOK)            |
 //+------------------------------------------------------------------+
-//|  SISTEM MANTIGI (v3.4.0 BiDir-Grid):                             |
+//|  SISTEM MANTIGI (v4.5.0 SPM-Cycle):                              |
 //|  H1 trend 3-kaynak oylama ile tespit (EMA+MACD+ADX) + ardisik   |
 //|  onay (whipsaw korunmasi). Trend degisince:                      |
 //|   - Yeni trend yonunde grid acar (AKTIF GRUP)                    |

@@ -3,7 +3,7 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.0 - KAZAN-KAZAN Hedge Sistemi                      |
+//| BytamerFX v4.5.0 - SPM Dongusu                                  |
 //| Merkezi Konfigurasyon                                            |
 //| VERSIYON TEK KAYNAKTAN OKUNUR - Diger dosyalar buradan alir     |
 //+------------------------------------------------------------------+

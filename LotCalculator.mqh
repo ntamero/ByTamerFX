@@ -3,7 +3,7 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v2.2 - Dinamik Lot Hesaplayici                         |
+//| BytamerFX v4.5.0 - Dinamik Lot Hesaplayici                       |
 //| 8 Faktor: Balance + Score + Trend + Category + ATR + Margin      |
 //|           + Toplam Acik Lot Dengeleme + Broker Bilgi              |
 //+------------------------------------------------------------------+

@@ -4,7 +4,7 @@
 //|                                  Copyright 2026, By T@MER        |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| Lisans Dogrulama Sistemi v3.3.0:                                 |
+//| Lisans Dogrulama Sistemi v4.5.0:                                 |
 //| - Web API dogrulama (sifreli endpoint)                           |
 //| - Offline cache (4 saat - sikila stirilmis)                      |
 //| - Periyodik kontrol (5 dakika)                                   |

@@ -3,7 +3,7 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| UNIVERSAL NEWS INTELLIGENCE SYSTEM v2.2                          |
+//| UNIVERSAL NEWS INTELLIGENCE SYSTEM v4.5.0                        |
 //| Multi-Category, Multi-Tier Haber Yonetim Sistemi                 |
 //| Kategori bazli haber filtreleme + islem kontrolu                 |
 //| Telegram/Discord entegre bildirim sistemi                        |
