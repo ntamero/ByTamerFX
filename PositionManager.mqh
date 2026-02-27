@@ -5,7 +5,7 @@
 //|                                    Copyright 2026, By T@MER      |
 //|                                    https://www.bytamer.com        |
 //|                                                                  |
-//|              v4.6.0 - NightGuard + SPM Dongusu                    |
+//|              v4.6.1 - NightGuard + HEDGE Min Kar                  |
 //+------------------------------------------------------------------+
 //|  SISTEM MANTIGI (v4.5.0 SPM-Cycle):                              |
 //|  H1 trend 3-kaynak oylama ile tespit (EMA+MACD+ADX) + ardisik   |

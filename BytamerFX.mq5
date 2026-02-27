@@ -3,15 +3,15 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v4.6.0 - NightGuard                                    |
+//| BytamerFX v4.6.1 - NightGuard                                    |
 //| M15 Timeframe | SL=YOK (MUTLAK) | Hibrit Sinyal + SPM Yonetimi  |
-//| Gece Modu: Crypto Haric 20:00 Engel + 23:00 Zorla Kapanis       |
+//| Gece Modu + HEDGE Min Kar Esigi ($1.50)                          |
 //| Hesap: 262230423 (Exness) | Dinamik Profil + Haber + Lisans      |
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "4.60"                     // !!! Config.mqh EA_VERSION_NUM ile senkron tut !!!
-#property description "BytamerFX v4.6.0 - NightGuard (Gece Modu + SPM Dongusu + MIA Entegrasyonu)"  // !!! Config.mqh EA_VERSION_FULL ile senkron tut !!!
+#property version     "4.61"                     // !!! Config.mqh EA_VERSION_NUM ile senkron tut !!!
+#property description "BytamerFX v4.6.1 - NightGuard + HEDGE Min Kar Esigi"  // !!! Config.mqh EA_VERSION_FULL ile senkron tut !!!
 #property description "NightGuard | Crypto 7/24 | Non-Crypto 20:00 Engel + 23:00 Kapanis"
 #property description "SL=YOK | Lisans Sistemi | Haber Entegrasyonu"
 #property description "Copyright 2026, By T@MER"

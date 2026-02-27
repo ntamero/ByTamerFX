@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.6.1] - 2026-02-27
+
+### HEDGE Minimum Kar Esigi
+
+- FIX: HEDGE trend kapatma esigi $0.00 → $1.50 (QuickProfitUSD)
+- ManageHedgePositions Durum 3: hedgeProfit >= 0.0 → hedgeProfit >= $1.50
+- HEDGE koruma pozisyonudur, komik karlarda ($0.27) kapatmak korumayi yok eder
+- v4.4.0 iyilestirmeleri ManageKarliPozisyonlar'a uygulanmisti, HEDGE ayri fonksiyonu atlanmisti
+
+---
+
 ## [v4.6.0] - 2026-02-27
 
 ### NightGuard — Gece Modu (Night Session Protection)

@@ -3,7 +3,7 @@
 //|                              Copyright 2026, By T@MER            |
 //|                              https://www.bytamer.com             |
 //+------------------------------------------------------------------+
-//| BytamerFX v4.6.0 - NightGuard                                    |
+//| BytamerFX v4.6.1 - NightGuard                                    |
 //| Merkezi Konfigurasyon                                            |
 //| VERSIYON TEK KAYNAKTAN OKUNUR - Diger dosyalar buradan alir     |
 //+------------------------------------------------------------------+
@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "4.6.0"
-#define EA_VERSION_NUM    "4.60"
+#define EA_VERSION        "4.6.1"
+#define EA_VERSION_NUM    "4.61"
 #define EA_VERSION_NAME   "NightGuard"
-#define EA_VERSION_FULL   "BytamerFX v4.6.0 - Gece Modu (Crypto Haric 20:00 Engel + 23:00 Zorla Kapanis)"
+#define EA_VERSION_FULL   "BytamerFX v4.6.1 - NightGuard + HEDGE Min Kar Esigi"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
