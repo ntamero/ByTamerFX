@@ -125,6 +125,27 @@ public:
 
       return 0;
    }
+
+   //--- v4.4.0: Son mumun govde buyuklugu (mutlak deger, price olarak)
+   double GetLastBody()
+   {
+      double open1  = iOpen(m_symbol, m_tf, 1);
+      double close1 = iClose(m_symbol, m_tf, 1);
+      return MathAbs(close1 - open1);
+   }
+
+   //--- v4.4.0: Basit ATR (son 14 mum range ortalamasi)
+   double GetATR(int period = 14)
+   {
+      double total = 0;
+      for(int j = 1; j <= period; j++)
+      {
+         double h = iHigh(m_symbol, m_tf, j);
+         double l = iLow(m_symbol, m_tf, j);
+         total += (h - l);
+      }
+      return (period > 0) ? total / period : 0.0;
+   }
 };
 
 #endif

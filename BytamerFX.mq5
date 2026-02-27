@@ -10,9 +10,9 @@
 //+------------------------------------------------------------------+
 #property copyright   "Copyright 2026, By T@MER"
 #property link        "https://www.bytamer.com"
-#property version     "4.30"                     // !!! Config.mqh EA_VERSION_NUM ile senkron tut !!!
-#property description "BytamerFX v4.3.0 - KazanKazan Pro (Telegram Rich + Daily Report + Token Validation)"  // !!! Config.mqh EA_VERSION_FULL ile senkron tut !!!
-#property description "KazanKazan-Pro | Agirlikli 5-Oy SPM | FIFO Sadece ANA Kapat | Sonraki Mum Bekleme"
+#property version     "4.40"                     // !!! Config.mqh EA_VERSION_NUM ile senkron tut !!!
+#property description "BytamerFX v4.4.0 - Hayatta Kalma Icgudusu (Trailing Floor + Cift Mum Teyit + Momentum Koruma)"  // !!! Config.mqh EA_VERSION_FULL ile senkron tut !!!
+#property description "SurvivalInstinct | Agirlikli 5-Oy SPM | FIFO Sadece ANA Kapat | Grace Period"
 #property description "SL=YOK | Lisans Sistemi | Haber Entegrasyonu"
 #property description "Copyright 2026, By T@MER"
 #property strict

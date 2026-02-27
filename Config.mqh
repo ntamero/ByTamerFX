@@ -18,10 +18,10 @@
 // MERKEZI VERSIYON - TEK KAYNAK
 // BytamerFX.mq5 #property satirlari ELLE guncellenmeli (MQL5 kisiti)
 //=================================================================
-#define EA_VERSION        "4.3.0"
-#define EA_VERSION_NUM    "4.30"
-#define EA_VERSION_NAME   "KazanKazan-Pro"
-#define EA_VERSION_FULL   "BytamerFX v4.3.0 - KazanKazan Pro (Telegram Rich + Daily Report + Token Validation)"
+#define EA_VERSION        "4.4.0"
+#define EA_VERSION_NUM    "4.40"
+#define EA_VERSION_NAME   "SurvivalInstinct"
+#define EA_VERSION_FULL   "BytamerFX v4.4.0 - Hayatta Kalma Icgudusu (Trailing Floor + Cift Mum Teyit + Momentum Koruma + Grace Period)"
 #define EA_BUILD_DATE     __DATE__
 
 //=================================================================
@@ -33,7 +33,7 @@ input long     ExpectedAccountNumber  = 262230423;               // Broker Hesap
 //=================================================================
 // TELEGRAM
 //=================================================================
-input string   TelegramToken          = "8477394899:AAGKBCVlX5EFljY7AjtrDmOijnLwhkrqnsQ";  // Telegram Bot Token (@BotFather)
+input string   TelegramToken          = "7682893549:AAFCRCMLRF8TQmw3U7NZvj1upqeIvSs5dMA";  // Telegram Bot Token (@BotFather)
 input string   TelegramChatID         = "-1003212753244";                                  // Telegram Chat/Group ID
 
 //=================================================================
@@ -140,9 +140,9 @@ input double   MinMarginLevel         = 300.0;    // v2.4.3: Min margin seviyesi
 //=================================================================
 input bool     EnablePartialClose     = true;      // v3.4.0: Kismi kapama (scale-out) ON/OFF
 input double   PartialClosePercent    = 60.0;      // v3.4.0: Kismi kapama yuzde (%60 kapat, %40 devam)
-input double   PartialCloseTriggerUSD = 3.0;       // v3.4.0: Kismi kapama tetik ($3 kar)
+input double   PartialCloseTriggerUSD = 5.0;       // v4.4.0: Kismi kapama tetik ($5 kar) (eski $3)
 input bool     EnableBreakevenLock    = true;       // v3.4.0: Sanal breakeven kilidi ON/OFF
-input double   BreakevenTriggerUSD    = 2.0;        // v3.4.0: BE kilidi tetik ($2 kar)
+input double   BreakevenTriggerUSD    = 3.0;        // v4.4.0: Trailing Floor baslangic ($3 kar) (eski $2)
 
 //=================================================================
 // KAR YONETIMI
@@ -151,7 +151,7 @@ input double   QuickProfitUSD         = 1.5;      // Hizli kar hedefi ($)
 input double   TrailActivateUSD       = 1.0;      // Trailing aktif ($)
 input double   TrailStepUSD           = 0.30;     // Trailing step ($)
 input double   PeakDropPercent        = 45.0;     // v3.3.0: %50→%45 base (ANA=%35, SPM=%45, DCA=%55)
-input double   PeakMinProfit          = 1.0;      // Peak drop icin min kar ($)
+input double   PeakMinProfit          = 2.0;      // v4.4.0: Peak drop icin min kar ($) (eski $1)
 input double   HedgePeakDropPercent   = 25.0;     // v3.6.4: HEDGE PeakDrop - tepe dusus yüzdesi (25%=tepeden %25 dusunce kapat)
 input double   HedgePeakMinProfit     = 8.0;      // v3.6.4: HEDGE PeakDrop - minimum tepe kar ($) (peak >= $8 olmadan tetiklenmez)
 input int      RescueHedgeMinScore    = 80;        // v3.6.5: Sinyal >= 80 + ANA yonu → HEDGE acma (guclu destek)
@@ -423,11 +423,11 @@ struct SymbolProfile
    {
       profileName       = "FOREX";
       minLotOverride    = 0.03;       // Forex: min 0.03 lot (v4.0: $100 bakiye uyumu)
-      minCloseProfit    = 2.0;        // v3.5.3: $2 min (eski $1 spread sonrasi yetersiz)
+      minCloseProfit    = 2.5;        // v4.4.0: $2.5 min (eski $2)
       anaCloseProfit    = 5.0;        // v3.5.3: ANA +$5 → kapat (eski $4)
       spmTriggerLoss    = -4.0;       // v3.7.0: ANA -$4 → SPM1 (Forex)
       spm2TriggerLoss   = -5.0;       // v3.7.0: SPM1 -$5 → SPM2 (Forex)
-      spmCloseProfit    = 3.0;        // v3.7.0: TP1 $3 (Forex)
+      spmCloseProfit    = 4.0;        // v4.4.0: TP1 $4 (eski $3)
       fifoNetTarget     = 5.0;        // v3.7.0: FIFO net $5
       spmMaxBuyLayers   = 1;          // v3.7.0: max 1 SPM per side
       spmMaxSellLayers  = 1;          // v3.7.0: max 1 SPM per side
@@ -446,9 +446,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 1.50;
-      candleCloseModerate = 3.00;
-      candleCloseStrong = 5.00;
+      candleCloseWeak   = 3.00;       // v4.4.0: (eski $1.50)
+      candleCloseModerate = 4.50;     // v4.4.0: (eski $3.00)
+      candleCloseStrong = 7.00;       // v4.4.0: (eski $5.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;
@@ -465,11 +465,11 @@ struct SymbolProfile
    {
       profileName       = "FOREX_JPY";
       minLotOverride    = 0.03;       // JPY: min 0.03 lot (v4.0: $100 bakiye uyumu)
-      minCloseProfit    = 2.0;        // v3.5.3: $2 min (eski $1 spread sonrasi yetersiz)
+      minCloseProfit    = 2.5;        // v4.4.0: $2.5 min (eski $2)
       anaCloseProfit    = 5.0;        // v3.5.3: ANA +$5 (eski $4)
       spmTriggerLoss    = -4.0;       // v3.7.0: ANA -$4 → SPM1 (Forex JPY)
       spm2TriggerLoss   = -5.0;       // v3.7.0: SPM1 -$5 → SPM2
-      spmCloseProfit    = 3.0;        // v3.7.0: TP1 $3 (Forex)
+      spmCloseProfit    = 4.0;        // v4.4.0: TP1 $4 (eski $3)
       fifoNetTarget     = 5.0;        // v3.7.0: FIFO net $5
       spmMaxBuyLayers   = 1;          // v3.7.0: max 1 SPM per side
       spmMaxSellLayers  = 1;          // v3.7.0: max 1 SPM per side
@@ -487,9 +487,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 1.50;
-      candleCloseModerate = 3.00;
-      candleCloseStrong = 5.00;
+      candleCloseWeak   = 3.00;       // v4.4.0: (eski $1.50)
+      candleCloseModerate = 4.50;     // v4.4.0: (eski $3.00)
+      candleCloseStrong = 7.00;       // v4.4.0: (eski $5.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;
@@ -528,9 +528,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 2.00;       // v3.5.3: min $2 (eski $0.50)
-      candleCloseModerate = 4.00;     // v3.5.3: $4 (eski $1.50)
-      candleCloseStrong = 6.00;       // v3.5.3: $6 (eski $3)
+      candleCloseWeak   = 3.50;       // v4.4.0: (eski $2.00)
+      candleCloseModerate = 5.50;     // v4.4.0: (eski $4.00)
+      candleCloseStrong = 8.00;       // v4.4.0: (eski $6.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;
@@ -569,9 +569,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 2.00;       // v3.5.3: min $2 (eski $1)
-      candleCloseModerate = 4.00;     // v3.5.3: $4 (eski $2.50)
-      candleCloseStrong = 7.00;       // v3.5.3: $7 (eski $5)
+      candleCloseWeak   = 3.50;       // v4.4.0: (eski $2.00)
+      candleCloseModerate = 5.50;     // v4.4.0: (eski $4.00)
+      candleCloseStrong = 9.00;       // v4.4.0: (eski $7.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;
@@ -592,7 +592,7 @@ struct SymbolProfile
       anaCloseProfit    = 8.0;        // v3.5.2: ANA +$8 → kapat (eski $5 yetersizdi)
       spmTriggerLoss    = -7.0;       // v3.7.0: ANA -$7 → SPM1 (BTC)
       spm2TriggerLoss   = -7.0;       // v3.7.0: SPM1 -$7 → SPM2 (BTC)
-      spmCloseProfit    = 5.0;        // v3.7.0: SPM TP +$5 (BTC)
+      spmCloseProfit    = 6.0;        // v4.4.0: SPM TP +$6 (eski $5)
       fifoNetTarget     = 5.0;        // v3.7.0: FIFO net $5 (BTC)
       spmMaxBuyLayers   = 1;          // v3.7.0: max 1 SPM per side
       spmMaxSellLayers  = 1;          // v3.7.0: max 1 SPM per side
@@ -610,9 +610,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 3.00;       // v3.5.2: BTC zayif trend min $3 (eski $1.50 spread'i karsilamiyordu)
-      candleCloseModerate = 5.00;     // v3.5.2: BTC orta trend min $5 (eski $3)
-      candleCloseStrong = 8.00;       // v3.5.2: BTC guclu trend min $8 (eski $5)
+      candleCloseWeak   = 5.00;       // v4.4.0: (eski $3.00)
+      candleCloseModerate = 7.00;     // v4.4.0: (eski $5.00)
+      candleCloseStrong = 10.00;      // v4.4.0: (eski $8.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;
@@ -651,9 +651,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 2.00;       // v3.5.3: min $2 (eski $1)
-      candleCloseModerate = 4.00;     // v3.5.3: $4 (eski $2)
-      candleCloseStrong = 6.00;       // v3.5.3: $6 (eski $4)
+      candleCloseWeak   = 3.50;       // v4.4.0: (eski $2.00)
+      candleCloseModerate = 5.50;     // v4.4.0: (eski $4.00)
+      candleCloseStrong = 8.00;       // v4.4.0: (eski $6.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;
@@ -692,9 +692,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 2.00;       // v3.5.3: min $2 (eski $1)
-      candleCloseModerate = 4.00;     // v3.5.3: $4 (eski $2)
-      candleCloseStrong = 6.00;       // v3.5.3: $6 (eski $4)
+      candleCloseWeak   = 3.50;       // v4.4.0: (eski $2.00)
+      candleCloseModerate = 5.50;     // v4.4.0: (eski $4.00)
+      candleCloseStrong = 8.00;       // v4.4.0: (eski $6.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;
@@ -733,9 +733,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 1.50;       // v3.5.3: min $1.50 (eski $0.50)
-      candleCloseModerate = 3.00;     // v3.5.3: $3 (eski $1.50)
-      candleCloseStrong = 5.00;       // v3.5.3: $5 (eski $3)
+      candleCloseWeak   = 3.00;       // v4.4.0: (eski $1.50)
+      candleCloseModerate = 4.50;     // v4.4.0: (eski $3.00)
+      candleCloseStrong = 7.00;       // v4.4.0: (eski $5.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;
@@ -774,9 +774,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 1.50;       // v3.5.3: min $1.50 (eski $0.50)
-      candleCloseModerate = 3.00;     // v3.5.3: $3 (eski $1.50)
-      candleCloseStrong = 5.00;       // v3.5.3: $5 (eski $3)
+      candleCloseWeak   = 3.00;       // v4.4.0: (eski $1.50)
+      candleCloseModerate = 4.50;     // v4.4.0: (eski $3.00)
+      candleCloseStrong = 7.00;       // v4.4.0: (eski $5.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;
@@ -815,9 +815,9 @@ struct SymbolProfile
       gridATRMultLow    = 1.0;
       gridATRMultNormal = 1.5;
       gridATRMultHigh   = 2.0;
-      candleCloseWeak   = 2.00;       // v3.5.3: min $2 (eski $0.50)
-      candleCloseModerate = 4.00;     // v3.5.3: $4 (eski $1.50)
-      candleCloseStrong = 6.00;       // v3.5.3: $6 (eski $3)
+      candleCloseWeak   = 3.50;       // v4.4.0: (eski $2.00)
+      candleCloseModerate = 5.50;     // v4.4.0: (eski $4.00)
+      candleCloseStrong = 8.00;       // v4.4.0: (eski $6.00)
       trendCloseMultModerate = 1.3;
       trendCloseMultStrong = 1.8;
       trendConfirmBars  = 2;

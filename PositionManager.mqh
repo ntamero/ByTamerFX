@@ -164,6 +164,10 @@ private:
    bool                 m_breakevenLocked[];  // Breakeven kilidi aktif mi
    double               m_breakevenPrice[];   // Breakeven fiyat (entry price)
 
+   //--- v4.4.0: Hayatta Kalma Icgudusu + Kazanma Hirsi
+   int                  m_candleAgainstCount[];  // Ardisik ters mum sayaci (pozisyon bazli)
+   double               m_lastProfit[];          // Onceki tick kar degeri (momentum koruma)
+
    //=================================================================
    // PRIVATE METHODS
    //=================================================================
@@ -358,6 +362,12 @@ CPositionManager::CPositionManager()
    ArrayInitialize(m_breakevenLocked, false);
    ArrayResize(m_breakevenPrice, MAX_POSITIONS);
    ArrayInitialize(m_breakevenPrice, 0.0);
+
+   // v4.4.0: Hayatta Kalma dizileri
+   ArrayResize(m_candleAgainstCount, MAX_POSITIONS);
+   ArrayInitialize(m_candleAgainstCount, 0);
+   ArrayResize(m_lastProfit, MAX_POSITIONS);
+   ArrayInitialize(m_lastProfit, 0.0);
 
    m_adoptionDone        = false;
    m_mainTicket          = 0;
@@ -934,6 +944,28 @@ void CPositionManager::RefreshPositions()
             m_peakProfit[idx] = m_positions[idx].profit;
       }
 
+      // v4.3.1 FIX: BE lock state - ticket degisirse BE sifirla (eski pozisyon BE mirasi engelle)
+      // BUG: Eski SPM'nin BE lock'u yeni SPM'ye miras kaliyor → $0'da aninda kapatiyordu
+      if(idx < ArraySize(m_breakevenLocked))
+      {
+         if(m_breakevenLocked[idx] && m_positions[idx].ticket != m_peakTicket[idx])
+         {
+            m_breakevenLocked[idx] = false;   // Yeni pozisyon, eski BE lock GECERSIZ
+            m_breakevenPrice[idx] = 0.0;
+         }
+      }
+
+      // v4.4.0: Hayatta Kalma dizileri - ticket degisirse sifirla
+      if(idx < ArraySize(m_candleAgainstCount))
+      {
+         if(idx < ArraySize(m_peakTicket) && m_peakTicket[idx] != ticket)
+         {
+            m_candleAgainstCount[idx] = 0;
+            if(idx < ArraySize(m_lastProfit))
+               m_lastProfit[idx] = 0.0;
+         }
+      }
+
       m_posCount++;
    }
 }
@@ -1065,6 +1097,40 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
       else if(role == ROLE_DCA)    roleStr = "DCA";
       else                         roleStr = "HEDGE";
 
+      //=======================================================
+      // v4.4.0 DEGISIKLIK 6: ZAMAN KORUMASI (GRACE PERIOD)
+      // Yeni acilan pozisyonlar < 2 dakika ise kapatilmaz
+      // Grid Reset haric tum kapatma mekanizmalari engellenir
+      //=======================================================
+      datetime posOpenTime = (datetime)PositionGetInteger(POSITION_TIME);
+      int posAgeSec = (int)(TimeCurrent() - posOpenTime);
+      if(posAgeSec < 120 && profit > 0)  // < 2 dakika VE karda
+      {
+         // Grace period - kapatma mekanizmalari atlanir
+         continue;
+      }
+
+      //=======================================================
+      // v4.4.0 DEGISIKLIK 3: MOMENTUM KORUMA (Buyuyen Kar Korumasi)
+      // Son tick'e gore kar artiyorsa → kapatma mekanizmalari engellenir
+      // Grid Reset haric (Grid Reset ayri fonksiyonda)
+      //=======================================================
+      bool profitGrowing = false;
+      if(i < ArraySize(m_lastProfit))
+      {
+         profitGrowing = (profit > m_lastProfit[i] + 0.10);  // $0.10+ artis = buyuyor
+         m_lastProfit[i] = profit;
+      }
+      if(profitGrowing && profit > 0)
+      {
+         // Buyuyen karda → kapatma mekanizmalarini atla
+         // Peak tracking yap ama kapatma YOK
+         if(i < ArraySize(m_peakProfit))
+            if(profit > m_peakProfit[i])
+               m_peakProfit[i] = profit;
+         continue;  // Sonraki pozisyona gec
+      }
+
       // Peak tracking
       if(i < ArraySize(m_peakProfit))
          if(profit > m_peakProfit[i])
@@ -1099,13 +1165,12 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
       // v2.3.1: ANA SPM varken de AKILLI KAPATMA aktif
 
       //=======================================================
-      // v4.2.0: SPM/DCA MUM DONUS KAR AL — Karli ise HEMEN KAPAT
-      // v4.2.0: SPM/DCA icin min close threshold %50 dusuruldu (hizli kasa)
-      // TP hedefini bekleme, mum donusu oncelikli (kar koruma)
+      // v4.4.0: SPM/DCA MUM DONUS KAR AL — Karli ise HEMEN KAPAT
+      // v4.4.0: SPM/DCA icin min close threshold = spmCloseProfit (profil bazli)
+      // ESKI: %50 dusuk esik → SPM $1-2'de kapaniyordu → kasa birikemiyordu
+      // YENI: spmCloseProfit esigi (Forex=$4, BTC=$6) → daha buyuk kar hedefi
       //=======================================================
-      double minCloseThreshold = m_profile.minCloseProfit;
-      if(role == ROLE_SPM || role == ROLE_DCA)
-         minCloseThreshold = MathMax(0.5, m_profile.minCloseProfit * 0.5);  // v4.2.0: %50 dusuk esik
+      double minCloseThreshold = m_profile.spmCloseProfit;  // v4.4.0: Profil bazli SPM TP esigi
 
       if((role == ROLE_SPM || role == ROLE_DCA) && profit > minCloseThreshold)
       {
@@ -1237,7 +1302,9 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
       //        XAG ANA -$3, SPM=$8 kasa → FIFO: $8+(-$3)=$5 → ANA kapanir (iyi!)
       if(role == ROLE_MAIN && GetActiveSPMCount() > 0) continue;
 
+      //=== v4.4.0 DEGISIKLIK 5: TREND_DONUS GUCLENDIRME ===
       //=== Trend ANA yonune donuyor + pozisyon ANA tersi + karda ===
+      //=== v4.4.0: Sadece GUCLU trend (skor >= 55) SPM kapatabilir ===
       if(role != ROLE_MAIN && profit >= MathMax(1.0, m_profile.minCloseProfit))
       {
          int mainIdx = FindMainPosition();
@@ -1251,16 +1318,37 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 
             if(trendDir == mainDir && posDir != mainDir)
             {
-               PrintFormat("[PM-%s] TREND DONUS: %s karda ($%.2f), trend ANA yonune -> KARLI KAPAT",
-                           m_symbol, roleStr, profit);
+               // v4.4.0: Zayif trend donusu SPM KAPATMAZ
+               int trendScore = 0;
+               if(m_signalEngine != NULL)
+                  trendScore = (int)m_signalEngine.GetBreakdown().totalScore;
 
-               SmartClosePosition(i, role, profit, StringFormat("TrendDonus_%s_%.2f", roleStr, profit));
-               continue;
+               if(trendScore < 55)
+               {
+                  // Zayif sinyal → kapatma, sadece logla
+                  static datetime lastWeakLog = 0;
+                  if(TimeCurrent() - lastWeakLog >= 120)
+                  {
+                     PrintFormat("[PM-%s] TREND_DONUS: %s karda ($%.2f) ama sinyal zayif (%d<55) → KAPATILMADI",
+                                 m_symbol, roleStr, profit, trendScore);
+                     lastWeakLog = TimeCurrent();
+                  }
+                  // continue YAPMA - sonraki kontrollere gec
+               }
+               else
+               {
+                  // Guclu trend → kapat
+                  PrintFormat("[PM-%s] TREND DONUS GUCLU: %s karda ($%.2f), skor=%d >= 55 -> KARLI KAPAT",
+                              m_symbol, roleStr, profit, trendScore);
+                  SmartClosePosition(i, role, profit, StringFormat("TrendDonus_Guclu_%d_%s_%.2f", trendScore, roleStr, profit));
+                  continue;
+               }
             }
          }
       }
 
-      //=== v3.4.0: Mum terse dondu + karda → HEMEN KAPAT (esik trend gucune gore) ===
+      //=== v4.4.0 DEGISIKLIK 2: CIFT MUM TEYIT (MUM_DONUS) ===
+      //=== 2 ardisik ters mum gerekli. Istisna: Guclu engulfing tek mumda kapatir ===
       double candleCloseMin = GetSmartCandleCloseMin();
       if(newBar && profit >= candleCloseMin)
       {
@@ -1272,11 +1360,37 @@ void CPositionManager::ManageKarliPozisyonlar(bool newBar)
 
          if(candleAgainst)
          {
-            PrintFormat("[PM-%s] MUM DONUS: %s #%d karda ($%.2f) + mum ters -> KAPAT",
-                        m_symbol, roleStr, (int)ticket, profit);
+            if(i < ArraySize(m_candleAgainstCount))
+               m_candleAgainstCount[i]++;
 
-            SmartClosePosition(i, role, profit, StringFormat("MumDonus_%s_%.2f", roleStr, profit));
-            continue;
+            // Guclu engulfing → 1 mumda kapat (istisna)
+            bool strongReversal = (MathAbs(m_candle.GetLastBody()) > m_candle.GetATR() * 1.2);
+
+            int againstCnt = (i < ArraySize(m_candleAgainstCount)) ? m_candleAgainstCount[i] : 0;
+
+            // Normal: 2 ardisik ters mum gerekli VEYA guclu engulfing
+            if(againstCnt >= 2 || strongReversal)
+            {
+               PrintFormat("[PM-%s] MUM_DONUS_TEYITLI: %s #%d karda ($%.2f) + %s -> KAPAT",
+                           m_symbol, roleStr, (int)ticket, profit,
+                           strongReversal ? "GUCLU_ENGULFING" : StringFormat("%d_ARDISIK_TERS", againstCnt));
+
+               SmartClosePosition(i, role, profit, StringFormat("MumDonus_Teyitli_%s_%.2f", roleStr, profit));
+               if(i < ArraySize(m_candleAgainstCount))
+                  m_candleAgainstCount[i] = 0;
+               continue;
+            }
+            else
+            {
+               PrintFormat("[PM-%s] MUM_DONUS: %s $%.2f - 1. ters mum, teyit bekleniyor",
+                           m_symbol, roleStr, profit);
+            }
+         }
+         else
+         {
+            // Ters mum zinciri kirildi, sifirla
+            if(i < ArraySize(m_candleAgainstCount))
+               m_candleAgainstCount[i] = 0;
          }
       }
 
@@ -1337,11 +1451,21 @@ void CPositionManager::SmartClosePosition(int idx, ENUM_POS_ROLE role, double pr
 
    if(role != ROLE_MAIN)
    {
-      // SPM/DCA/HEDGE → kasaya ekle (FIFO)
-      m_spmClosedProfitTotal += profit;
-      m_spmClosedCount++;
-      PrintFormat("[PM-%s] FIFO: +$%.2f -> Kasa=$%.2f (Sayi=%d)",
-                  m_symbol, profit, m_spmClosedProfitTotal, m_spmClosedCount);
+      // v4.3.1 FIX: SADECE karli kapanislar kasaya eklenir
+      // Zarardaki kapanislar kasayi negatife cekmemeli!
+      // BUG: Eski kod profit < 0 iken de kasaya ekliyordu → kasa = $-8.64
+      if(profit > 0)
+      {
+         m_spmClosedProfitTotal += profit;
+         m_spmClosedCount++;
+         PrintFormat("[PM-%s] FIFO: +$%.2f -> Kasa=$%.2f (Sayi=%d)",
+                     m_symbol, profit, m_spmClosedProfitTotal, m_spmClosedCount);
+      }
+      else
+      {
+         PrintFormat("[PM-%s] FIFO: SPM/DCA zararda kapatildi ($%.2f) - kasaya EKLENMEDI (negatif koruma)",
+                     m_symbol, profit);
+      }
    }
 
    //--- Bildirim
@@ -2293,27 +2417,26 @@ void CPositionManager::CheckFIFOTarget()
    ENUM_SIGNAL_DIR mainDir = mainIsBuy ? SIGNAL_BUY : SIGNAL_SELL;
    ENUM_SIGNAL_DIR candleDir = GetCandleDirection();
 
-   //=== YOL A: Mum ANA yonune dondu + ANA zararda ===
-   // Mum ANA yonune dondu → ANA toparlanabilir → ANA'yi KAPATMA
-   // Bunun yerine en zarardaki SPM'yi kapat (kasadan odemeli)
+   //=== YOL A: DEVRE DISI (v4.3.1) ===
+   // v4.3.1: Yol A KALDIRILDI - SPM'ler ASLA zararda kapatilmamali!
+   // ESKI MANTIK: Mum ANA yonune dondu → worst SPM kapat (kasadan odemeli)
+   // SORUN: Worst SPM zarari kasayi negatife cekiyordu ($-8.64 gibi)
+   //   → FIFO calisamaz → Grid Reset tetiklenir → buyuk zarar
+   // YENI: SPM'ler sadece KAR'da kapanir (MumDonus/TrendDonus/PeakDrop)
+   //   FIFO sadece Yol B uzerinden calisir: kasa + anaLoss >= $5 → ANA kapat
    if(candleDir == mainDir && mainProfit < 0.0 && GetActiveSPMCount() > 0)
    {
-      // Kasada yeterli birikim var mi? (en az $2 kasada olmali)
-      if(m_spmClosedProfitTotal >= 2.0)
+      // ANA yonune mum dondu → ANA toparlanabilir → SADECE BEKLE
+      // SPM'ler kapanmaz, kasa korunur, FIFO kasayi biriktirmeye devam eder
+      static datetime lastWaitLog = 0;
+      if(TimeCurrent() - lastWaitLog >= 120)
       {
-         static datetime lastPathALog = 0;
-         if(TimeCurrent() - lastPathALog >= 60)
-         {
-            PrintFormat("[PM-%s] FIFO YOL-A: Mum ANA %s yonune dondu, ANA=$%.2f → ANA bekle, worst SPM kapat (Kasa=$%.2f)",
-                        m_symbol, (mainDir == SIGNAL_BUY) ? "BUY" : "SELL",
-                        mainProfit, m_spmClosedProfitTotal);
-            lastPathALog = TimeCurrent();
-         }
-
-         // En zarardaki SPM'yi kapat
-         CloseWorstSPM("FIFO_YolA_MumDonus");
-         return;
+         PrintFormat("[PM-%s] FIFO: Mum ANA %s yonune dondu, ANA=$%.2f → Toparlanma BEKLENIYOR (Kasa=$%.2f, SPM=%d)",
+                     m_symbol, (mainDir == SIGNAL_BUY) ? "BUY" : "SELL",
+                     mainProfit, m_spmClosedProfitTotal, GetActiveSPMCount());
+         lastWaitLog = TimeCurrent();
       }
+      // DEVAM - Yol B kontrolune gec (worst SPM kapatilMIYOR)
    }
 
    //=== YOL B: ANA zarara devam ediyor — FIFO net hesap ===
@@ -3813,6 +3936,18 @@ void CPositionManager::ManageBreakevenLock()
 {
    if(!EnableBreakevenLock) return;
 
+   //=======================================================
+   // v4.4.0 DEGISIKLIK 4: DINAMIK TRAILING FLOOR
+   // Eski BE Lock sistemi → Kademeli Trailing Floor
+   // Her kademe icin minimum kar tabani (floor):
+   //   Peak >= $3: Floor = $1.50 (karinin %50'si)
+   //   Peak >= $5: Floor = $3.00 (karinin %60'i)
+   //   Peak >= $8: Floor = $5.50 (karinin %69'u)
+   // Floor ASLA dusmuyor - sadece yukari gider
+   // Eski problem: BE Lock $2'de tetikleniyor → kar $0.80'e dusunce
+   //   kapatiliyor → $1.20 kayip. Yeni sistem kademeli koruma saglar.
+   //=======================================================
+
    for(int i = m_posCount - 1; i >= 0; i--)
    {
       double profit = m_positions[i].profit;
@@ -3822,36 +3957,27 @@ void CPositionManager::ManageBreakevenLock()
       if(role == ROLE_MAIN) continue;
       if(role == ROLE_HEDGE) continue;  // v3.6.0: HEDGE burada yonetilMEZ
 
-      // Breakeven kilidi aktiflesir
-      if(!m_breakevenLocked[i] && profit >= BreakevenTriggerUSD)
-      {
-         m_breakevenLocked[i] = true;
-         m_breakevenPrice[i] = m_positions[i].openPrice;
+      // Peak profit degeri (trailing floor icin)
+      double peak = (i < ArraySize(m_peakProfit)) ? m_peakProfit[i] : profit;
 
+      // v4.4.0: Kademeli Trailing Floor hesapla
+      double currentFloor = 0.0;
+      if(peak >= 8.0)       currentFloor = 5.50;
+      else if(peak >= 5.0)  currentFloor = 3.00;
+      else if(peak >= 3.0)  currentFloor = 1.50;
+      else                   currentFloor = 0.0;  // Henuz trailing yok
+
+      // Trailing floor varsa VE kar floor'un altina dustuyse → kapat
+      if(currentFloor > 0 && profit <= currentFloor && profit > 0)
+      {
          string roleStr = (role == ROLE_SPM) ? "SPM" : "DCA";
-         PrintFormat("[PM-%s] BE KILIDI: %s #%d kar=$%.2f → BE at %.5f",
-                     m_symbol, roleStr, (int)m_positions[i].ticket,
-                     profit, m_breakevenPrice[i]);
-      }
+         PrintFormat("[PM-%s] TRAILING_FLOOR: %s #%d Peak=$%.2f Floor=$%.2f Now=$%.2f → KORUMA KAPAT",
+                     m_symbol, roleStr, (int)m_positions[i].ticket, peak, currentFloor, profit);
 
-      // Breakeven tetigi - fiyat entry'ye dondu
-      // v3.5.2: BE kapamayi minCloseProfit'in altina duserse tetikle (eski $0.30 BTC'de spread noise'unu yakaliyordu)
-      // Mantik: Pozisyon once yuksek karda idi, simdi minimum kar seviyesine dustu → kaybi durdur
-      if(m_breakevenLocked[i])
-      {
-         double beCloseLevel = m_profile.minCloseProfit;  // BTC: $3 (eski: $0.30 breakeven)
-         // v3.6.2: BE ASLA ZARARDA KAPATMAZ - profit >= 0.0 zorunlu
-         // Eski: profit >= -1.0 → SPM'ler -$0.80'de "breakeven" olarak kapatiliyordu = ZARAR!
-         if(profit <= beCloseLevel && profit >= 0.0)
-         {
-            string roleStr = (role == ROLE_SPM) ? "SPM" : "DCA";
-            PrintFormat("[PM-%s] BE KAPAMA: %s #%d kar=$%.2f <= minClose=$%.2f → KORUMA KAPAT",
-                        m_symbol, roleStr, (int)m_positions[i].ticket, profit, beCloseLevel);
-
-            SmartClosePosition(i, role, profit,
-                StringFormat("BE_Lock_%s_%.2f", roleStr, profit));
-         }
+         SmartClosePosition(i, role, profit,
+             StringFormat("TrailingFloor_Peak%.2f_Floor%.2f", peak, currentFloor));
       }
+      // Peak henuz floor esigine ulasmadiysa → birak buyusun
    }
 }
 

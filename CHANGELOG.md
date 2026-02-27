@@ -4,6 +4,127 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.4.0] - 2026-02-26
+
+### Hayatta Kalma Icgudusu + Kazanma Hirsi
+
+**Hedef:** SPM ortalama kapanis kari $1.50-$2.00 → $3.50-$5.00 artisi.
+FIFO kasa birikimi realistik, Grid Reset tetiklenmesi azalacak.
+
+#### 1. SPM Hizli Kapanis Esigi Yukseltildi
+- **Eski**: `minCloseThreshold = minCloseProfit * 0.5` → SPM $1-2'de kapaniyordu
+- **Yeni**: `minCloseThreshold = spmCloseProfit` (Forex=$4, BTC=$6)
+- SPM'ler artik daha buyuk kar hedefinde kapatilir
+
+#### 2. Cift Mum Teyit Sistemi (MUM_DONUS)
+- **Eski**: 1 ters mum = aninda kapanis
+- **Yeni**: 2 ardisik ters mum gerekli (teyit sistemi)
+- **Istisna**: Guclu engulfing (body > ATR × 1.2) tek mumda kapatir
+- Tek mum ters donusu → "teyit bekleniyor" logu
+
+#### 3. Momentum Koruma (Buyuyen Kar Korumasi)
+- Kar son tick'e gore $0.10+ artiyorsa → kapatma mekanizmalari engellenir
+- Buyuyen kar = pozisyon korunur, peak tracking devam eder
+- Grid Reset haric tum kapatma mekanizmalari atlanir
+
+#### 4. Dinamik Trailing Floor (BE Lock Yerine)
+- **Eski BE Lock**: $2'de tetiklenir → $0.80'e dusunce kapatir → $1.20 kayip
+- **Yeni Trailing Floor**: Kademeli koruma tabani
+  - Peak >= $3: Floor = $1.50 (%50 koruma)
+  - Peak >= $5: Floor = $3.00 (%60 koruma)
+  - Peak >= $8: Floor = $5.50 (%69 koruma)
+- Floor ASLA dusmez, sadece yukari gider
+
+#### 5. TREND_DONUS Guclendirme
+- **Eski**: Herhangi trend sinyali SPM'yi kapatiyordu
+- **Yeni**: Sadece guclu trend (sinyal skoru >= 55) SPM kapatabilir
+- Zayif trend donusu → loglanir ama kapatilmaz
+
+#### 6. Zaman Korumasi (Grace Period)
+- < 2 dakikalik yeni pozisyonlar Grid Reset haric kapatilmaz
+- Yeni acilan pozisyonlarin erken kapatilmasi engellenir
+
+#### 7. Profil Esikleri Yukseltme (Tum Profiller)
+- **Forex**: candleClose W=$3/M=$4.50/S=$7, spmClose=$4, minClose=$2.50
+- **BTC**: candleClose W=$5/M=$7/S=$10, spmClose=$6
+- **JPY**: candleClose W=$3/M=$4.50/S=$7, spmClose=$4, minClose=$2.50
+- **XAG/XAU/Metal/CryptoAlt/Indices**: candleClose +$1.50 artis
+- **Energy/Default**: candleClose %100 artis
+- **Global**: PeakMinProfit $1→$2, PartialClose $3→$5, BE_Trigger $2→$3
+
+#### 8. PeakDrop Minimum Yukseltme
+- **Eski**: PeakMinProfit = $1.00 → $1.10 peak'te bile %45 drop tetikleniyordu
+- **Yeni**: PeakMinProfit = $2.00 → anlamli peak birikimi gerektirir
+
+### Yeni Mekanizma Ozeti
+```
+1. Pozisyon acilir → 2 dk Grace Period (kapatma yok)
+2. Kar artiyorsa → Momentum Koruma (kapatma engellenir)
+3. Mum ters donerse → 1. ters mum = teyit bekle, 2. ters mum = kapat
+4. Peak >= $3 → Trailing Floor baslar ($1.50 min koruma)
+5. Trend donusu → skor >= 55 gerekli (zayif donus = kapatma yok)
+6. SPM kari → spmCloseProfit esigine ulasinca MumDonus_TP kapatir
+```
+
+### Files Changed
+- `Config.mqh`: Tum profil esikleri + global input degerleri
+- `PositionManager.mqh`: 6 yeni mekanizma + m_candleAgainstCount[] + m_lastProfit[]
+- `CandleAnalyzer.mqh`: GetLastBody() + GetATR() eklendi
+- `BytamerFX.mq5`: Version 4.40
+- `TelegramMsg.mqh`: Header v4.4.0
+
+---
+
+## [v4.3.2] - 2026-02-26
+
+### FIFO Kasa Fix + BE Lock Fix + Min Profit Threshold
+
+#### 1. FIFO Kasa Negatif Bug Fix (KRITIK)
+- **Bug**: FIFO Yol A (`CloseWorstSPM`) en zarardaki SPM'yi kapatiyordu
+- SPM'nin negatif P/L'si kasaya ekleniyordu → kasa = $-8.64
+- Kasa negatif → FIFO calisamaz → Grid Reset tetiklenir → buyuk zarar
+- **Fix 1**: FIFO Yol A tamamen DEVRE DISI birakildi
+  - SPM'ler ASLA zararda kapatilmaz
+  - FIFO sadece Yol B uzerinden calisir: kasa + anaLoss >= +$5 → ANA kapat
+- **Fix 2**: `SmartClosePosition` kasaya sadece pozitif kar ekler
+  - `if(profit > 0)` koruması eklendi
+  - Zarardaki kapanislar kasayi etkilemez (guvenlik agi)
+
+#### 2. BE Lock Miras Bug Fix (KRITIK)
+- **Bug**: `RefreshPositions()` icinde pozisyon array indexi yeniden kullanildiginda `m_breakevenLocked[]` sifirlanmiyordu
+- Eski SPM'nin BE lock durumu yeni SPM'ye miras kaliyordu → yeni SPM aninda $0.00'da kapaniyordu
+- **Fix**: `RefreshPositions()` icinde ticket degistiginde BE lock + BE price sifirlama eklendi
+
+#### 3. Minimum BE Kapanis Kari: $0.80
+- **Eski**: `profit >= 0.0` → $0.00, $0.02 gibi spread maliyetini karsilamayan kapanislar
+- **Yeni**: `profit >= 0.80` → Spread maliyetini karsilayan minimum kar esigi
+
+#### 4. Dashboard MIA v5.1 Gorsel Iyilestirme
+- Signal gauge, pozisyon haritasi, ticker, glow efektleri, indicator mini-bars
+
+#### 5. Telegram Bot Guncelleme
+- Yeni bot token (ByTamerEA_bot) ile mesaj gonderimi OK
+- HTTP 401 hatasi cozuldu
+
+### FIFO Mantik Ozeti (v4.3.1)
+```
+1. ANA acilir → zarara girer
+2. SPM'ler ters yonde acilir (koruma)
+3. SPM'ler SADECE KARDA kapanir (MumDonus/TrendDonus/PeakDrop)
+4. Karli SPM kapanislari → kasaya eklenir
+5. Kasa + ANA_zarar >= +$5 → ANA kapatilir (FIFO Yol B)
+6. En eski zarardaki SPM → yeni ANA olur
+7. Dongu tekrar baslar
+```
+
+### Files Changed
+- `PositionManager.mqh`: FIFO Yol A devre disi + kasa koruma + BE lock fix + minBEProfit $0.80
+- `Config.mqh`: v4.3.1 + yeni Telegram token
+- `BytamerFX.mq5`: v4.31 surum guncelleme
+- `dashboard_api.py`: MIA v5.1 gorsel yeniden tasarim
+
+---
+
 ## [v4.3.0] - 2026-02-26
 
 ### Telegram Rich Messages + Daily Report + Token Validation
