@@ -1,44 +1,37 @@
-# ─── COMPILED / GENERATED ─────────────────────────
+# ═══════════════════════════════════════════════════
+# BytamerFX — Public Repo (Kaynak Kod Gizli)
+# Sadece README, CHANGELOG, screenshots ve lisans gorunur
+# ═══════════════════════════════════════════════════
+
+# ─── HERSEYI GIZLE (varsayilan) ─────────────────────
+*
+
+# ─── SADECE BUNLARI GOSTER ──────────────────────────
+!.gitignore
+!README.md
+!CHANGELOG.md
+!LICENSE
+!LICENSE.md
+!screenshots/
+!screenshots/**
+
+# ─── COMPILED / GENERATED (kesinlikle gizle) ────────
 *.ex5
 *.ex4
 *.log
 *.dat
 *.bin
 *.raw
+*.py
+*.ps1
 
-# ─── METATRADER CACHE ────────────────────────────
-MQL5/Files/
-Logs/
-Tester/
-
-# ─── BACKTEST / DEBUG (root only) ────────────────
-/*.ini
-/*.txt
-/*.csv
-/tools/
-__pycache__/
-/data/
-/test_data/
-
-# ─── ROOT PYTHON/PS (backtest scripts) ───────────
-/*.py
-/*.ps1
-
-# ─── MIA HASSAS DOSYALAR ────────────────────────
-MIA/.env
-MIA/*.env
-MIA/__pycache__/
-MIA/*.log
-MIA/*.json
-MIA/.claude/
-
-# ─── WINDOWS ─────────────────────────────────────
+# ─── WINDOWS ─────────────────────────────────────────
 Thumbs.db
 desktop.ini
 *.tmp
 nul
 
-# ─── IDE ─────────────────────────────────────────
+# ─── IDE ─────────────────────────────────────────────
 .vs/
 .vscode/
 .idea/
@@ -47,10 +40,10 @@ nul
 *.swp
 *.swo
 
-# ─── BACKUP ──────────────────────────────────────
+# ─── BACKUP ──────────────────────────────────────────
 *.bak
 *~
 
-# ─── CLAUDE AI ───────────────────────────────────
+# ─── CLAUDE AI ───────────────────────────────────────
 CLAUDE.md
 .claude/

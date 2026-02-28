@@ -4,7 +4,15 @@
 
 > **NO SL** | **Never close at a loss** | **Net-Exposure SPM** | **FIFO Strategy** | **Grid Reset Safety** | **Night Mode (20:00+)**
 
-![Quantum Trade OS Dashboard](screenshots/dashboard_quantum.png)
+---
+
+## Screenshots
+
+### Quantum Trade OS — Real-Time Web Dashboard
+![Quantum Trade OS Dashboard](screenshots/quantum_dashboard.png)
+
+### MetaTrader 5 — EA Dashboard Overlay
+![MT5 EA Dashboard](screenshots/mt5_ea_dashboard.png)
 
 ---
 
@@ -44,22 +52,32 @@
 - Profile-based: SPM trigger, lot, cooldown, grid reset thresholds
 - 3-Tier Matching: Symbol-specific > JPY group > Category priority
 
+### Night Session Protection (v4.6.0+)
+- **20:00+ Trade Block**: No new positions for non-crypto symbols after 20:00 local time
+- **23:00 Force Close**: All profitable non-crypto positions closed at 23:00 (min +$1)
+- **Crypto 24/7**: Bitcoin and altcoin trading continues without restrictions
+- **Purpose**: Protection against regional exchange opening volatility and spread spikes
+
 ### Safety Systems
 - **3-Level Margin Protection**: %300 warning → %150 emergency → %30 equity critical
 - **Grid Reset**: `-max($30, equity * 25%)` floating loss → orderly grid reset
 - **Recovery Mode**: After emergency, no new trades for 24h or until 50% balance recovery
 - **News Filter**: Trade blocking during CRITICAL/HIGH impact economic events
-- **Spread Control**: ATR-normalized spread × MaxSpreadMultiplier (1.15)
+- **Spread Control**: ATR-normalized spread x MaxSpreadMultiplier (1.15)
+
+### MIA — Market Intelligence Agent (Python)
+- **Multi-agent architecture**: SpeedAgent + RiskAgent + GridAgent
+- **AI Brain**: Decision engine with market context awareness
+- **Quantum Trade OS Dashboard**: Real-time web interface (Tailwind CSS + LightweightCharts)
+- **DashboardRT Thread**: 500ms real-time price, spread, and position updates
+- **Telegram Commander**: Remote control via Telegram bot
+- **News Manager**: Economic calendar integration with impact-based filtering
+- **Sentiment Engine**: Market sentiment analysis with Fear & Greed index
 
 ### Notifications
 - Telegram (HTML format + emoji + balance/equity info, rate limited)
 - Discord (Embed format + color-coded + balance/equity info)
 - MT5 Push Notification
-
-### Dashboard
-- Full-width news banner (impact-colored)
-- 4-panel real-time chart dashboard (dark theme)
-- Account info, signal scores, SPM+FIFO status, TP targets
 
 ---
 
@@ -68,7 +86,7 @@
 | Property | Value |
 |----------|-------|
 | Platform | MetaTrader 5 (Build 5200+) |
-| Language | MQL5 |
+| Language | MQL5 + Python 3.x |
 | Timeframe | M15 (entry) + H1/H4 (filter) |
 | Min Balance | $10 |
 | Min Signal Score | 40/100 |
@@ -82,47 +100,37 @@
 | Min Lot | Forex: 0.03, Metal/Crypto: 0.01 |
 | Profile Count | 10 instrument profiles |
 | Indicators | 12 (BHSS combo scoring) |
+| Dashboard | Real-time web UI (port 8765) |
+| MIA Agents | SpeedAgent + RiskAgent + GridAgent |
 
 ---
 
-## File Structure
+## Architecture
 
 ```
 BytamerFX/
-├── BytamerFX.mq5          # Main EA file (v4.6.1)
-├── Config.mqh             # Central configuration + 10 SymbolProfiles
-├── AccountSecurity.mqh    # Account verification
-├── SymbolManager.mqh      # Symbol categorization (6 categories)
-├── SpreadFilter.mqh       # ATR-normalized spread control
-├── CandleAnalyzer.mqh     # Candle patterns + new bar detection
-├── LotCalculator.mqh      # 8-factor dynamic lot calculator
-├── SignalEngine.mqh       # 12-indicator hybrid signal system
-├── TradeExecutor.mqh      # Trade execution (SL=0 absolute)
-├── PositionManager.mqh    # Net-Exposure SPM + FIFO + Grid Reset engine
-├── NewsManager.mqh        # Universal News Intelligence
-├── TelegramMsg.mqh        # Telegram notifications (rate limited)
-├── DiscordMsg.mqh         # Discord webhook notifications
-├── ChartDashboard.mqh     # News banner + 4-panel dashboard
-├── LicenseManager.mqh     # BTAI license system
-├── CHANGELOG.md           # Detailed version history
+├── BytamerFX.mq5              # Main EA (v4.6.1 NightGuard)
+├── Config.mqh                 # Central configuration + 10 SymbolProfiles
+├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
+├── PositionManager.mqh        # Net-Exposure SPM + FIFO + Grid Reset
+├── TradeExecutor.mqh          # Trade execution (SL=0 absolute)
+├── NewsManager.mqh            # Universal News Intelligence
+├── ChartDashboard.mqh         # MT5 on-chart dashboard overlay
+├── + 8 more modules           # Security, spread, lot calc, notifications...
 │
-├── MIA/                   # Market Intelligence Agent (Python)
-│   ├── main.py            # MIA v6.2.0 Orchestrator (multi-agent, multi-thread)
-│   ├── dashboard_api.py   # Real-time API server (port 8765)
-│   ├── dashboard_miav62.html  # Quantum Trade OS Dashboard (Tailwind CSS)
-│   ├── brain.py           # AI Brain decision engine
-│   ├── agents.py          # SpeedAgent + RiskAgent + GridAgent
-│   ├── executor.py        # Trade execution bridge
-│   ├── config.py          # MIA configuration
-│   ├── mt5_bridge.py      # MT5 Python API bridge
-│   ├── signal_engine.py   # Signal scoring engine
-│   ├── grid_manager.py    # BiDir Grid management
-│   ├── sentiment_engine.py # Market sentiment analysis
-│   ├── telegram_commander.py # Telegram bot commander
-│   └── ...                # Other support modules
+├── MIA/                       # Market Intelligence Agent (Python)
+│   ├── main.py                # MIA v6.2.0 Orchestrator (multi-agent)
+│   ├── dashboard_api.py       # Real-time WebSocket API (port 8765)
+│   ├── dashboard_miav62.html  # Quantum Trade OS Dashboard
+│   ├── brain.py               # AI Brain decision engine
+│   ├── agents.py              # SpeedAgent + RiskAgent + GridAgent
+│   ├── mt5_bridge.py          # MT5 Python API bridge
+│   └── + 10 more modules      # Grid, sentiment, telegram, signals...
 │
-└── screenshots/           # Dashboard & EA screenshots
+└── screenshots/               # Dashboard & EA screenshots
 ```
+
+> **Note:** Source code is proprietary. This repository serves as a project showcase.
 
 ---
 
@@ -133,38 +141,16 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 | Version | Date | Description |
 |---------|------|-------------|
 | **v4.6.1** | **2026-02-28** | **NightGuard — Night Session Protection + HEDGE Min Profit** |
-| v4.6.0 | 2026-02-27 | NightGuard — Crypto haric 20:00 islem engeli + 23:00 zorla kapanis |
-| v4.5.0 | 2026-02-27 | Tum dosya header'lari guncellendi |
-| v4.4.0 | 2026-02-26 | Tam versiyonlama ve dosya senkronizasyonu |
-| v4.3.2 | 2026-02-26 | FIFO Kasa Fix + BE Lock Fix + Min Profit + New Telegram Bot |
-| v4.3.1 | 2026-02-26 | BE Lock Fix + Min $0.80 Profit Threshold + Dashboard MIA v5.1 |
-| v4.3.0 | 2026-02-26 | Telegram Rich Messages + Daily Report + Token Validation |
+| v4.6.0 | 2026-02-27 | NightGuard — Crypto haric 20:00 trade block + 23:00 force close |
+| v4.5.0 | 2026-02-27 | All file headers updated |
+| v4.4.0 | 2026-02-26 | Full versioning and file synchronization |
+| v4.3.2 | 2026-02-26 | FIFO Kasa Fix + BE Lock Fix + Min Profit |
 | v4.2.0 | 2026-02-26 | Net-Exposure SPM + Grid Reset + EQUITY_ACIL Fix |
-| v4.1.0 | 2026-02-24 | BiDir Fix + Forex 0.03 + FIFO Fix |
-| v4.0.0 | 2026-02-23 | KazanKazan-Pro: 12 indicator + Kademeli Kurtarma |
+| v4.0.0 | 2026-02-23 | KazanKazan-Pro: 12 indicator + progressive recovery |
 | v3.5.0 | 2026-02-21 | Net Settlement + Zigzag Grid Engine |
-| v3.3.0 | 2026-02-21 | Grid Performance (cooldown, lot, thresholds) |
-| v3.2.0 | 2026-02-20 | License System Improvements |
 | v3.0.0 | 2026-02-20 | Trend-Grid System |
-| v2.3.0 | 2026-02-19 | Smart Recovery + FIFO Redesign |
-| v2.2.x | 2026-02-18 | Multiple critical fixes |
 | v2.0.0 | 2026-02-17 | WIN-WIN Hedge System |
 | v1.0.0 | 2026-02-17 | Initial release |
-
----
-
-## Installation
-
-1. Copy all files to `MQL5/Experts/BytamerFX/` directory
-2. Compile `BytamerFX.mq5` with MetaEditor
-3. Drag onto chart in MT5 (M15 timeframe)
-4. **Settings** > Tools > Options > Expert Advisors:
-   - Check "Allow DLL imports"
-   - Enable "Allow WebRequest"
-   - Add to URL list:
-     - `https://api.telegram.org`
-     - `https://discordapp.com`
-5. Enter Telegram/Discord credentials in EA settings
 
 ---
 
