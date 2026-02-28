@@ -1842,8 +1842,8 @@ class MIA:
 
         # MT5 sembol → internal sembol cevirme (bridge'den)
         reverse_map = {}
-        if hasattr(self, 'bridge') and hasattr(self.bridge, '_symbol_map'):
-            for base, mt5name in self.bridge._symbol_map.items():
+        if hasattr(self, 'bridge') and hasattr(self.bridge, '_sym_map'):
+            for base, mt5name in self.bridge._sym_map.items():
                 reverse_map[mt5name] = base
 
         pos_dict = {}
@@ -1881,9 +1881,9 @@ class MIA:
 
         # 3. Canli fiyat + spread guncelleme — sidebar sembolleri anlik degissin
         #    Lock DISINDA MT5 tick verisi topla, sonra lock ICINDE hizlica yaz
-        if hasattr(self, 'bridge') and hasattr(self.bridge, '_symbol_map'):
+        if hasattr(self, 'bridge') and hasattr(self.bridge, '_sym_map'):
             price_updates = {}
-            for base, mt5name in self.bridge._symbol_map.items():
+            for base, mt5name in self.bridge._sym_map.items():
                 tick = mt5.symbol_info_tick(mt5name)
                 if tick and tick.bid > 0:
                     mid = (tick.bid + tick.ask) / 2
@@ -1893,11 +1893,14 @@ class MIA:
                     }
             if price_updates:
                 with dash_state._lock:
-                    tech = dash_state._state.get("technicals", {})
+                    if "technicals" not in dash_state._state:
+                        dash_state._state["technicals"] = {}
+                    tech = dash_state._state["technicals"]
                     for base, data in price_updates.items():
-                        if base in tech:
-                            tech[base]["price"] = data["price"]
-                            tech[base]["spread_pts"] = data["spread_pts"]
+                        if base not in tech:
+                            tech[base] = {}
+                        tech[base]["price"] = data["price"]
+                        tech[base]["spread_pts"] = data["spread_pts"]
 
         # 4. Win Rate + Trade Stats — MT5 deal history (her 5 saniyede bir)
         if not hasattr(self, '_wr_last_update'):
