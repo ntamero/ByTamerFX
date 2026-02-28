@@ -1,8 +1,8 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.4.0** - Professional automated forex trading system with hybrid signal engine.
+**BytamerFX v4.6.1 — NightGuard** - Professional automated forex trading system with hybrid signal engine + night session protection.
 
-> **NO SL** | **Never close at a loss** | **Net-Exposure SPM** | **FIFO Strategy** | **Grid Reset Safety**
+> **NO SL** | **Never close at a loss** | **Net-Exposure SPM** | **FIFO Strategy** | **Grid Reset Safety** | **Night Mode (20:00+)**
 
 ---
 
@@ -87,7 +87,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5          # Main EA file (v4.2.0)
+├── BytamerFX.mq5          # Main EA file (v4.6.1)
 ├── Config.mqh             # Central configuration + 10 SymbolProfiles
 ├── AccountSecurity.mqh    # Account verification
 ├── SymbolManager.mqh      # Symbol categorization (6 categories)
@@ -114,7 +114,11 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.3.2** | **2026-02-26** | **FIFO Kasa Fix + BE Lock Fix + Min Profit + New Telegram Bot** |
+| **v4.6.1** | **2026-02-28** | **NightGuard — Night Session Protection + HEDGE Min Profit** |
+| v4.6.0 | 2026-02-27 | NightGuard — Crypto haric 20:00 islem engeli + 23:00 zorla kapanis |
+| v4.5.0 | 2026-02-27 | Tum dosya header'lari guncellendi |
+| v4.4.0 | 2026-02-26 | Tam versiyonlama ve dosya senkronizasyonu |
+| v4.3.2 | 2026-02-26 | FIFO Kasa Fix + BE Lock Fix + Min Profit + New Telegram Bot |
 | v4.3.1 | 2026-02-26 | BE Lock Fix + Min $0.80 Profit Threshold + Dashboard MIA v5.1 |
 | v4.3.0 | 2026-02-26 | Telegram Rich Messages + Daily Report + Token Validation |
 | v4.2.0 | 2026-02-26 | Net-Exposure SPM + Grid Reset + EQUITY_ACIL Fix |

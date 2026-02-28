@@ -1,28 +1,49 @@
-# MetaTrader 5 / MQL5 Generated Files
+# ─── COMPILED / GENERATED ─────────────────────────
 *.ex5
+*.ex4
 *.log
 *.dat
 *.bin
 *.raw
+compile*.log
 
-# MetaTrader Cache
+# ─── METATRADER CACHE ────────────────────────────
 MQL5/Files/
 Logs/
 Tester/
 
-# Windows
+# ─── BACKTEST / DEBUG ────────────────────────────
+*.ini
+*.txt
+*.csv
+tools/
+__pycache__/
+*.py
+data/
+test_data/
+
+# ─── WINDOWS ─────────────────────────────────────
 Thumbs.db
 desktop.ini
 *.tmp
+nul
 
-# IDE
+# ─── IDE ─────────────────────────────────────────
 .vs/
+.vscode/
+.idea/
 *.suo
 *.user
+*.swp
+*.swo
 
-# Backup files
+# ─── BACKUP ──────────────────────────────────────
 *.bak
 *~
 
-# Claude AI context (project-specific)
+# ─── CLAUDE AI ───────────────────────────────────
 CLAUDE.md
+.claude/
+
+# ─── POWERSHELL SCRIPTS ──────────────────────────
+*.ps1
