@@ -4,6 +4,8 @@
 
 > **NO SL** | **Never close at a loss** | **Net-Exposure SPM** | **FIFO Strategy** | **Grid Reset Safety** | **Night Mode (20:00+)**
 
+![Quantum Trade OS Dashboard](screenshots/dashboard_quantum.png)
+
 ---
 
 ## Core Philosophy
