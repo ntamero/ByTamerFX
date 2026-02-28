@@ -5,22 +5,32 @@
 *.dat
 *.bin
 *.raw
-compile*.log
 
 # ─── METATRADER CACHE ────────────────────────────
 MQL5/Files/
 Logs/
 Tester/
 
-# ─── BACKTEST / DEBUG ────────────────────────────
-*.ini
-*.txt
-*.csv
-tools/
+# ─── BACKTEST / DEBUG (root only) ────────────────
+/*.ini
+/*.txt
+/*.csv
+/tools/
 __pycache__/
-*.py
-data/
-test_data/
+/data/
+/test_data/
+
+# ─── ROOT PYTHON/PS (backtest scripts) ───────────
+/*.py
+/*.ps1
+
+# ─── MIA HASSAS DOSYALAR ────────────────────────
+MIA/.env
+MIA/*.env
+MIA/__pycache__/
+MIA/*.log
+MIA/*.json
+MIA/.claude/
 
 # ─── WINDOWS ─────────────────────────────────────
 Thumbs.db
@@ -44,6 +54,3 @@ nul
 # ─── CLAUDE AI ───────────────────────────────────
 CLAUDE.md
 .claude/
-
-# ─── POWERSHELL SCRIPTS ──────────────────────────
-*.ps1

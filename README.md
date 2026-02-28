@@ -105,7 +105,23 @@ BytamerFX/
 ├── ChartDashboard.mqh     # News banner + 4-panel dashboard
 ├── LicenseManager.mqh     # BTAI license system
 ├── CHANGELOG.md           # Detailed version history
-└── .gitignore
+│
+├── MIA/                   # Market Intelligence Agent (Python)
+│   ├── main.py            # MIA v6.2.0 Orchestrator (multi-agent, multi-thread)
+│   ├── dashboard_api.py   # Real-time API server (port 8765)
+│   ├── dashboard_miav62.html  # Quantum Trade OS Dashboard (Tailwind CSS)
+│   ├── brain.py           # AI Brain decision engine
+│   ├── agents.py          # SpeedAgent + RiskAgent + GridAgent
+│   ├── executor.py        # Trade execution bridge
+│   ├── config.py          # MIA configuration
+│   ├── mt5_bridge.py      # MT5 Python API bridge
+│   ├── signal_engine.py   # Signal scoring engine
+│   ├── grid_manager.py    # BiDir Grid management
+│   ├── sentiment_engine.py # Market sentiment analysis
+│   ├── telegram_commander.py # Telegram bot commander
+│   └── ...                # Other support modules
+│
+└── screenshots/           # Dashboard & EA screenshots
 ```
 
 ---
