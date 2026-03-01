@@ -1,8 +1,8 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.6.1 — NightGuard** - Professional automated forex trading system with hybrid signal engine + night session protection.
+**BytamerFX v4.7.1 — HEDGE-Safe** - Professional automated forex trading system with hybrid signal engine + hedge loss protection + FIFO-only loss closing.
 
-> **NO SL** | **Never close at a loss** | **Net-Exposure SPM** | **FIFO Strategy** | **Grid Reset Safety** | **Night Mode (20:00+)**
+> **NO SL** | **Never close at a loss** | **HEDGE Never Closes at Loss** | **FIFO-Only Loss Management** | **Net-Exposure SPM** | **Grid Reset Safety** | **Night Mode (20:00+)**
 
 ---
 
@@ -109,7 +109,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v4.6.1 NightGuard)
+├── BytamerFX.mq5              # Main EA (v4.7.0 FIFO-Guard)
 ├── Config.mqh                 # Central configuration + 10 SymbolProfiles
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Net-Exposure SPM + FIFO + Grid Reset
@@ -140,7 +140,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.6.1** | **2026-02-28** | **NightGuard — Night Session Protection + HEDGE Min Profit** |
+| **v4.7.0** | **2026-03-01** | **FIFO-Guard — Kasa Persistence + Restart Koruma** |
+| v4.6.1 | 2026-02-28 | NightGuard — Night Session Protection + HEDGE Min Profit |
 | v4.6.0 | 2026-02-27 | NightGuard — Crypto haric 20:00 trade block + 23:00 force close |
 | v4.5.0 | 2026-02-27 | All file headers updated |
 | v4.4.0 | 2026-02-26 | Full versioning and file synchronization |

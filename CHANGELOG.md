@@ -4,6 +4,70 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.7.1] - 2026-03-01
+
+### HEDGE-Safe — Hedge Zararina Satis Yasagi
+
+**KRITIK BUG FIX:** HEDGE TIMEOUT mekanizmasi (Durum 5) hedge pozisyonlari zararina kapatiyordu. Kural: ZARARINA SATIS SADECE FIFO SISTEMINDE YAPILABILIR.
+
+#### 1. HEDGE Timeout Durum 5 Revizyonu
+- **ESKi:** 10dk acik + zarar > $1.0 → ZARARINA KAPAT ❌
+- **YENI:** 10dk acik + KARDA → kar al, ZARARDA → dokunma (FIFO halledecek) ✅
+- Zarardaki hedge artik asla kapatilmaz, sadece uyari logu yazilir (2dk arayla)
+
+#### 2. MaxKayip Koruma Revizyonu
+- **ESKi:** Kayip > %20 bakiye → HEMEN ZARARINA KAPAT ❌
+- **YENI:** Kayip > %20 bakiye → sadece UYARI (Telegram/Discord), pozisyon ACIK kalir ✅
+- FIFO sistemi uzerinden kapanmasini bekler
+
+#### 3. MIA Dashboard v90 Guncelleme
+- Charts alti Teknik Analiz Detaylari artik live (firstTech → activeTech)
+- 6 gosterge: RSI, ADX, ATR, MACD, Stochastic, Bollinger Bands
+- Aktif sembol ismi gosteriliyor (sembol degisince tum degerler guncellenir)
+- Sinyal Analiz paneli (sol sidebar) 7 animasyonlu bar
+- Header: Bakiye + Equity + Daily P/L + Borsa Saatleri + Saat
+- Ust ticker: Tum semboller scrolling, borsa aciksa yesil / kapaliysa kirmizi
+- Alt ticker: Ekonomik takvim haberleri, kategori ikonlari
+- Pozisyonlar 2 tab: Acik / Kapananlar + TP1 eklendi
+- Win/Loss gradient bar
+- pollCandles 15s → 5s hizlandirildi
+
+#### Dosyalar
+- `PositionManager.mqh`: Durum 5 HEDGE TIMEOUT — zararina satis kaldirild
+- `Config.mqh`: Versiyon 4.7.1 HEDGE-Safe
+- `BytamerFX.mq5`: Versiyon 4.71
+- `MIA/dashboard_miav89.html`: Dashboard v90 tum guncellemeler
+
+---
+
+## [v4.7.0] - 2026-03-01
+
+### FIFO-Guard — Kasa Persistence + Restart Koruma
+
+**KRITIK BUG FIX:** EA restart olduğunda FIFO kasası ($30.05) sıfırlanıyordu. Tüm birikmiş SPM karları kayboluyordu.
+
+#### 1. FIFO Kasa Persistence (GlobalVariable)
+- `SaveFIFOState()`: Her tick sonunda FIFO kasasını GlobalVariable'a kaydeder
+- `LoadFIFOState()`: EA restart sonrası kasayı geri yükler
+- Kaydedilen veriler: kasaProfit, kasaCount, totalCashed, mainTicket
+- Pozisyon yoksa GlobalVariable otomatik temizlenir
+
+#### 2. BI-DIR State Persistence
+- BiDirectionalMode, activeGridDir, legacyGridDir de GlobalVariable'da saklanır
+- EA restart sonrası bi-directional mod doğru devam eder
+
+#### 3. mainFound Kasa Koruma
+- ESKİ: ANA bulunamazsa ResetFIFO() → kasa $0'a düşer
+- YENİ: Kalan pozisyon varsa en eski'yi ANA olarak terfi et, kasayı KORU
+- Sadece hiç pozisyon kalmazsa ResetFIFO çağrılır
+
+#### Dosyalar
+- `PositionManager.mqh`: SaveFIFOState, LoadFIFOState, mainFound fix, OnTick persist
+- `Config.mqh`: Versiyon 4.7.0 FIFO-Guard
+- `BytamerFX.mq5`: Versiyon 4.70
+
+---
+
 ## [v4.6.1] - 2026-02-27
 
 ### HEDGE Minimum Kar Esigi
