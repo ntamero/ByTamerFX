@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.7.1 — HEDGE-Safe** - Professional automated forex trading system with hybrid signal engine + hedge loss protection + FIFO-only loss closing.
+**BytamerFX v4.7.3 — AntiSpam** - Professional automated forex trading system with hybrid signal engine + global trade guard + SPM/Hedge/DCA fail cooldown + FIFO-only loss management.
 
 > **NO SL** | **Never close at a loss** | **HEDGE Never Closes at Loss** | **FIFO-Only Loss Management** | **Net-Exposure SPM** | **Grid Reset Safety** | **Night Mode (20:00+)**
 

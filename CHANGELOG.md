@@ -4,6 +4,59 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.7.3] - 2026-03-02
+
+### AntiSpam — Global Trade Guard + Cooldown Sistemi
+
+**KRITIK BUG FIX:** Auto trading kapali veya trade hatasi oldugunda EA tum subsystemler (SPM/Hedge/DCA/FIFO) her tick'te islem deneyip basarisiz oluyordu. Bu her denemede log spam ve Telegram mesaji olusturuyordu (500+ mesaj/gece).
+
+#### 1. Global Auto Trading Guard (OnTick)
+- `!TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)` veya `!MQLInfoInteger(MQL_TRADE_ALLOWED)` → tum trade mantigi atlaniyor
+- 5dk'da bir uyari logu (spam onleme)
+- Auto trading kapali iken hicbir subsystem trade denemez
+
+#### 2. SPM Acilis Hatasi Cooldown
+- `OpenSPM()` basarisiz olunca `m_lastSPMTime` guncellenir (adaptive cooldown devreye girer)
+- 60sn GlobalVariable cooldown: `SPM_FailCooldown_{symbol}`
+- `ManageMainInLoss` ve `ManageActiveSPMs` cooldown kontrol eder
+- Basarili acilista cooldown temizlenir
+
+#### 3. Hedge Acilis Hatasi Cooldown
+- `OpenHedge()` basarisiz olunca `m_lastHedgeTime` guncellenir
+- 60sn GlobalVariable cooldown: `HEDGE_FailCooldown_{symbol}`
+
+#### 4. DCA Acilis Hatasi Cooldown
+- `OpenDCA()` basarisiz olunca `m_lastDCATime` guncellenir
+- Hata logu eklendi (onceden yoktu)
+
+#### 5. v4.7.2 Spam Fix (onceki hotfix dahil)
+- HEDGE KAYIP UYARI'dan Telegram/Discord kaldirildi
+- `static datetime` → `GlobalVariable` (restart-safe cooldown)
+- FIFO HEDEF bildirim: kapatma SONRASI gonderilir (oncesi degil)
+- FIFO/NET SETTLE basarisiz kapatma → 60sn cooldown
+
+#### 6. Dashboard Cache-Control
+- `dashboard_api.py`: `Cache-Control: no-cache, no-store, must-revalidate` header eklendi
+- Tarayici artik eski HTML cache'lemez
+
+#### 7. Proje Yapilandirma Temizligi
+- Eski `FXAGENT` dizini kaldirildi (153MB duplikat)
+- Eski versiyonlar silindi (v4.0, v4.1_temp, backup)
+- Kullanilmayan dashboard dosyalari silindi (v62, v88, v90, v91)
+- 53MB log dosyasi temizlendi
+- `start_mia.bat` / `start_mia_silent.vbs` → dogru dizine yonlendirildi
+- Windows Startup shortcut guncellendi
+
+#### Dosyalar
+- `BytamerFX.mq5`: Global auto trading guard + versiyon 4.73
+- `PositionManager.mqh`: SPM/Hedge/DCA fail cooldown + FIFO/SETTLE spam fix
+- `Config.mqh`: Versiyon 4.7.3 AntiSpam
+- `MIA/dashboard_api.py`: Cache-Control header
+- `MIA/start_mia.bat`: Dogru dizin yonlendirme
+- `MIA/start_mia_silent.vbs`: Dogru dizin yonlendirme
+
+---
+
 ## [v4.7.1] - 2026-03-01
 
 ### HEDGE-Safe — Hedge Zararina Satis Yasagi
