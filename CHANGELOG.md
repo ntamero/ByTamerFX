@@ -47,10 +47,30 @@ All notable changes to this project are documented in this file.
 - `start_mia.bat` / `start_mia_silent.vbs` → dogru dizine yonlendirildi
 - Windows Startup shortcut guncellendi
 
+#### 8. Dashboard v4.7.3 — Tam UI Yeniden Tasarimi
+
+**7 buyuk gorsel degisiklik:**
+
+1. **Logo**: Altin simsek ⚡ + ByTamerFX branding (gold gradient `#F4B23A`)
+2. **Sidebar Tab Sistemi**: 5 tab — Dashboard / Pozisyonlar / BIDIR-GRID / Teknik Analiz / Raporlar
+   - `switchSidebarTab()` fonksiyonu ile tab gecisi
+   - Aktif tab: gold highlight (`bg-[#F4B23A]/10 text-[#F4B23A]`)
+3. **BIDIR-GRID Tab**: Gunluk Kar, Acik Zarar, Toplam Islem, Basari Orani, Hedef Ilerleme, Grid Seviyesi
+4. **Teknik Analiz Tab**: 6 indikatör — RSI, ADX, ATR, MACD, Stochastic, Bollinger Bands (canli, sembol bazli)
+5. **Raporlar Tab**: Gunluk/Haftalik/Aylik P/L (yuzde + dolar + gradient bar) + Toplam Islem + Basari Orani
+   - `calcPeriodPnL()` fonksiyonu ile trade_history bazli hesaplama
+   - Pozitif = emerald gradient, Negatif = rose gradient
+6. **System Logs**: Sidebar'dan chart altina tasindi (tam genislik, 180px, canli MT5 log akisi)
+7. **Haber Ticker**: 8 fallback haber basligi aktif (veri yokken), dinamik hiz ayari
+
+- Tum deger gecislerinde TextScramble animasyonu tutarli
+- Merkez alandan eski Teknik Analiz + BIDIR-GRID bloklari kaldirildi (tab'lara tasindi)
+
 #### Dosyalar
 - `BytamerFX.mq5`: Global auto trading guard + versiyon 4.73
 - `PositionManager.mqh`: SPM/Hedge/DCA fail cooldown + FIFO/SETTLE spam fix
 - `Config.mqh`: Versiyon 4.7.3 AntiSpam
+- `MIA/dashboard_miav89.html`: Tam UI yeniden tasarimi (7 degisiklik)
 - `MIA/dashboard_api.py`: Cache-Control header
 - `MIA/start_mia.bat`: Dogru dizin yonlendirme
 - `MIA/start_mia_silent.vbs`: Dogru dizin yonlendirme

@@ -8,8 +8,10 @@
 
 ## Screenshots
 
-### Quantum Trade OS — Real-Time Web Dashboard
-![Quantum Trade OS Dashboard](screenshots/quantum_dashboard.png)
+### BytamerFX Dashboard v4.7.3 — Real-Time Web Interface
+![BytamerFX Dashboard v4.7.3](screenshots/dashboard_v47.png)
+
+*Gold lightning bolt branding, 5-tab sidebar (Dashboard / Pozisyonlar / BIDIR-GRID / Teknik Analiz / Raporlar), real-time charts, live system logs, news ticker, TextScramble animations*
 
 ### MetaTrader 5 — EA Dashboard Overlay
 ![MT5 EA Dashboard](screenshots/mt5_ea_dashboard.png)
@@ -68,7 +70,7 @@
 ### MIA — Market Intelligence Agent (Python)
 - **Multi-agent architecture**: SpeedAgent + RiskAgent + GridAgent
 - **AI Brain**: Decision engine with market context awareness
-- **Quantum Trade OS Dashboard**: Real-time web interface (Tailwind CSS + LightweightCharts)
+- **BytamerFX Dashboard v4.7.3**: Real-time web interface (Tailwind CSS + LightweightCharts + 5-tab sidebar)
 - **DashboardRT Thread**: 500ms real-time price, spread, and position updates
 - **Telegram Commander**: Remote control via Telegram bot
 - **News Manager**: Economic calendar integration with impact-based filtering
@@ -121,7 +123,7 @@ BytamerFX/
 ├── MIA/                       # Market Intelligence Agent (Python)
 │   ├── main.py                # MIA v6.2.0 Orchestrator (multi-agent)
 │   ├── dashboard_api.py       # Real-time WebSocket API (port 8765)
-│   ├── dashboard_miav62.html  # Quantum Trade OS Dashboard
+│   ├── dashboard_miav89.html  # BytamerFX Dashboard v4.7.3 (5-tab UI)
 │   ├── brain.py               # AI Brain decision engine
 │   ├── agents.py              # SpeedAgent + RiskAgent + GridAgent
 │   ├── mt5_bridge.py          # MT5 Python API bridge
@@ -140,7 +142,9 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.7.0** | **2026-03-01** | **FIFO-Guard — Kasa Persistence + Restart Koruma** |
+| **v4.7.3** | **2026-03-02** | **AntiSpam + Dashboard Redesign — Global Trade Guard + UI Overhaul** |
+| v4.7.1 | 2026-03-01 | HEDGE-Safe — Hedge zararina satis yasagi |
+| v4.7.0 | 2026-03-01 | FIFO-Guard — Kasa Persistence + Restart Koruma |
 | v4.6.1 | 2026-02-28 | NightGuard — Night Session Protection + HEDGE Min Profit |
 | v4.6.0 | 2026-02-27 | NightGuard — Crypto haric 20:00 trade block + 23:00 force close |
 | v4.5.0 | 2026-02-27 | All file headers updated |
