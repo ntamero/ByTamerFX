@@ -9,7 +9,7 @@
 ## Screenshots
 
 ### BytamerFX Dashboard v4.7.3 — Real-Time Web Interface
-![BytamerFX Dashboard v4.7.3](screenshots/dashboard_v47.png)
+![BytamerFX Dashboard v4.7.3]()
 
 *Gold lightning bolt branding, 5-tab sidebar (Dashboard / Pozisyonlar / BIDIR-GRID / Teknik Analiz / Raporlar), real-time charts, live system logs, news ticker, TextScramble animations*
 
