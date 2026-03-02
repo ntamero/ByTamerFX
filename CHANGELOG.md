@@ -4,6 +4,64 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.7.4] - 2026-03-02
+
+### CryptoFreedom — Crypto Haber Blogu Muafiyeti + MIA Dashboard v7
+
+**KRITIK IYILESTIRME:** BTC -$42'ye dustu ancak haber saati oldugu icin SPM/hedge acilamadi. Haber bittikten sonra -$35'te hala kurtarma islemleri baslayamadi. Crypto icin haber engeli kaldirildi.
+
+#### 1. Crypto Haber Blogu Muafiyeti (KRITIK)
+- **ESKi:** USD haberleri (NFP, FOMC, CPI vb.) TUM sembolleri blokluyordu — BTCUSD dahil
+- **YENI:** Crypto semboller (`class: "crypto"`) haber saatlerinde trade engeline GIRMEZ
+- `_CRYPTO_SYMBOLS` seti `config.SYMBOL_SPECS`'ten otomatik olusturulur
+- `_refresh_blocks()`: Crypto semboller `_blocked_symbols`'e eklenmez
+- Forex (EURUSD, GBPUSD, USDJPY, AUDUSD) ve metal (XAUUSD, XAGUSD) icin haber blogu aynen devam eder
+- Grid genisleme (`get_grid_widen`) crypto icin hala aktif (volatilite koruma)
+- Yeni crypto sembol eklendiginde `SYMBOL_SPECS`'te `class: "crypto"` tanimlamak yeterli
+
+#### 2. MIA Telegram Zengin Emoji Formatlama
+- Startup mesaji: Emoji basliklar (⚡🏦🔑🏢🖥💰💎⚖️🤖)
+- Gunluk rapor: Emoji bolumleri (📊📈📉🏆🎯🟢🔴⚪) + P/L bar gorsellestirme
+- Win rate emoji: >=70% 🏆, >=50% 🎯, <50% ⚠️
+
+#### 3. PEAK_DROP Spam Dongusu Fix
+- **Bug:** Executor `_refresh_all()` MT5'teki harici pozisyonlari yok sayiyordu
+- GridManager pozisyonu goruyordu → PEAK_DROP uretiyordu → Executor bulamiyordu → sonsuz dongu
+- **Fix:** Executor artik harici MT5 pozisyonlarini state'e alir (`_detect_role_from_comment()`)
+
+#### 4. Canli Haber Ticker (RSS)
+- SentimentEngine'den RSS haberleri dashboard alt ticker'a akar
+- Yahoo Finance + CNBC RSS feed'leri eklendi
+- 5 kategori: FINANS, SIYASI, DUNYA, EKONOMI, TEKNOLOJI
+- Veri yokken 16 adet fallback haber basligi
+
+#### 5. Kapananlar Tab Duzeltmeleri
+- Kapanan islem adedi badge eklendi
+- Backend `profit`, `close_time`, `open_price`, `close_price`, `volume` alanlari eklendi
+- `open_price` acilis deal'den `position_id` eslesimiyle alinir
+
+#### 6. Haftalik/Aylik P/L Cift Sayma Fix
+- **Bug:** `calcPeriodPnL(7) + rapDaily` bugunun realize karini iki kez sayiyordu
+- **Fix:** `+ rapDaily` yerine `+ floatingNow` (sadece acik pozisyon P/L eklenir)
+
+#### 7. Pozisyon Karti Overflow Fix
+- Sag sidebar (240px) icin compact layout: p-4→p-3, text-lg→text-sm
+- Lot/Ticket ve Unrealized ayni satira tasindi
+
+#### Dosyalar
+- `Config.mqh`: Versiyon 4.7.4 CryptoFreedom
+- `BytamerFX.mq5`: Versiyon 4.74
+- `MIA/news_manager.py`: `_CRYPTO_SYMBOLS` seti + `_refresh_blocks()` crypto muafiyet
+- `MIA/telegram_commander.py`: Zengin emoji startup + gunluk rapor
+- `MIA/executor.py`: Harici pozisyon benimseme + `_detect_role_from_comment()`
+- `MIA/sentiment_engine.py`: `get_rss_headlines()` RSS haber cekme
+- `MIA/dashboard_api.py`: `update_rss_headlines()` + Cache-Control
+- `MIA/main.py`: RSS thread entegrasyonu + kapanan islem veri alanlari
+- `MIA/config.py`: Yahoo Finance + CNBC RSS feed'leri
+- `MIA/dashboard_miav89.html`: Dashboard v7.0 — ticker, kapananlar, P/L fix, pozisyon karti
+
+---
+
 ## [v4.7.3] - 2026-03-02
 
 ### AntiSpam — Global Trade Guard + Cooldown Sistemi
