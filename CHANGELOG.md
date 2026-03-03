@@ -4,6 +4,35 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.7.7] - 2026-03-03
+
+### LayerTrigger — SPM Kademeli Tetik Duzeltme (KRITIK BUG FIX)
+
+**KRITIK BUG FIX:** GBPUSD'de ANA -$28 zarardayken warmup bittikten sonra SPM1, SPM2, SPM3 63 saniye icinde ust uste acildi — hepsi ayni fiyat bolgesinden. Sebep: SPM2/SPM3 tetikleri ANA zararini kontrol ediyordu, onceki SPM'in kendi zararini degil. ANA zaten -$28 oldugundan tum esikler ($4, $5, $7.5) aninda karsilandi.
+
+#### 1. SPM Kademeli Tetik Sistemi (KRITIK)
+- **ESKI:** SPM2 tetik = ANA zarar <= -$5, SPM3 tetik = ANA zarar <= -$7.5
+- ANA -$28'de → 3 esik birden karsilandi → 63sn'de 3 SPM ayni fiyattan acildi
+- Hic ortalama maliyet avantaji yok, pratik olarak 0.09 lot tek pozisyonla ayni
+- **YENI:** SPM2 tetik = SPM1'in kendi zarari <= spmTriggerLoss (-$4)
+- SPM3 tetik = SPM2'nin kendi zarari <= spmTriggerLoss (-$4)
+- Her katman onceki SPM'in zararini kontrol eder (ANA'ya bakmaz)
+- SPM1 acilir → fiyat dusmeye devam eder → SPM1 kendisi -$4'e duser → SPM2 acilir
+- Her katman farkli fiyat seviyesinden girer → gercek maliyet ortalamalama
+- Dogal zaman araligi olusur (fiyatin hareket etmesi gerekir)
+
+#### 2. Log Guncelleme
+- Eski: `SPM2 TETIK: ANA zarar $-28.14 <= $-5.00`
+- Yeni: `SPM2 TETIK: SPM1 zarar $-4.12 <= $-4.00`
+- Hangi katmanin zararinin tetik olusturdugu acikca gorulur
+
+#### Dosyalar
+- `Config.mqh`: Versiyon 4.7.7 LayerTrigger
+- `BytamerFX.mq5`: Versiyon 4.77
+- `PositionManager.mqh`: `ManageActiveSPMs()` — onceki SPM zarar bazli tetik
+
+---
+
 ## [v4.7.6] - 2026-03-03
 
 ### HedgeSmart — Akilli Hedge Timeout + Trend Koruma
