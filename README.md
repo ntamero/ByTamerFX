@@ -1,15 +1,15 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.7.6 — HedgeSmart** - Professional automated forex trading system with hybrid signal engine + smart hedge timeout + SPM/FIFO loss management + trend-aware position control.
+**BytamerFX v4.7.7 — SystemOverhaul** - Professional automated forex trading system with hybrid signal engine + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + trend-aware hedge control.
 
-> **NO SL** | **Never close at a loss** | **HEDGE Never Closes at Loss** | **FIFO-Only Loss Management** | **Net-Exposure SPM** | **Smart Hedge Timeout** | **Crypto 7/24** | **Night Mode (20:00+)**
+> **NO SL** | **Never close at a loss** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Candle Reversal Protection** | **Crypto 7/24** | **Night Mode (20:00+)**
 
 ---
 
 ## Screenshots
 
-### BytamerFX Dashboard v4.7.6 — Real-Time Web Interface
-![BytamerFX Dashboard v4.7.6](screenshots/dashboard_v476.png)
+### BytamerFX Dashboard v4.7.7 — Real-Time Web Interface
+![BytamerFX Dashboard v4.7.7](screenshots/dashboard_v476.png)
 
 *Gold lightning bolt branding, 5-tab sidebar (Dashboard / Pozisyonlar / BIDIR-GRID / Teknik Analiz / Raporlar), real-time charts, live system logs, news ticker, TextScramble animations*
 
@@ -23,7 +23,7 @@
 - **SL = YOK (MUTLAK)** — No Stop Loss on any position, ever
 - **Zararina Satis YOK** — Normal operation never closes positions at a loss
 - **SPM/FIFO Zarar Yonetimi** — Losses managed through SPM accumulation + FIFO offset
-- **Net-Exposure Dengeleme** — BUY/SELL balance prevents one-sided accumulation disaster
+- **Zigzag SPM Kurtarma** — Alternating direction SPM layers (SPM1=MAIN, SPM2=reverse, SPM3=reverse)
 - **Grid Reset & EQUITY_ACIL** — Extreme safety nets only (last resort, not normal operation)
 
 ---
@@ -39,16 +39,16 @@
 - Market Structure analysis (HH/HL/LH/LL)
 - MACD + RSI divergence engine (regular + hidden)
 
-### Position Management - KazanKazan-Pro (v4.7.6)
-- **Net-Exposure SPM**: BUY/SELL count balanced — 3+ same direction IMPOSSIBLE
+### Position Management - KazanKazan-Pro (v4.7.7)
+- **Zigzag SPM Pattern**: SPM1=MAIN direction (DCA), SPM2=reverse, SPM3=reverse again (alternating)
+- **Layer-Based Triggers**: Each SPM triggers on PREVIOUS SPM's own loss (not MAIN loss)
 - **SPM Max 3 Layers**: Deeper recovery with controlled risk
-- **FIFO**: SPM profits accumulate to offset main loss (net >= +$5 closes MAIN)
+- **Smart FIFO**: SPM profits accumulate to offset main loss (net >= +$5 closes MAIN)
+- **FIFO Candle Reversal**: If candle turns toward MAIN → don't close MAIN, close wrong-side SPM instead
+- **Balance-Adaptive Lots**: $100-200: 1.0x, $200-500: 1.2x, $500-1000: 1.4x lot scaling
+- **Rescue Hedge**: SPM2 loss threshold triggers hedge with trend+signal+candle voting
 - **Smart Hedge Timeout**: 3-tier profit targeting ($2 min / $5 target) + trend direction awareness
-- **Trend-Aware Close**: Hedge holds if trend supports, closes on candle reversal if not
 - **Grid Reset**: Total floating loss exceeds threshold → orderly close all
-- **EQUITY_ACIL Recovery**: Emergency close triggers recovery mode (24h or 50% balance recovery)
-- **SPM Fast Kasa**: 50% lower min close threshold for faster profit accumulation
-- **Candle Reversal**: Profitable positions close immediately on candle reversal
 - **SPM Terfi**: After FIFO closes MAIN, oldest SPM promotes to new MAIN + grid direction auto-update
 
 ### Dynamic Profile System (10 Profiles)
@@ -72,7 +72,7 @@
 ### MIA — Market Intelligence Agent (Python)
 - **Multi-agent architecture**: SpeedAgent + RiskAgent + GridAgent
 - **AI Brain**: Decision engine with market context awareness
-- **BytamerFX Dashboard v4.7.6**: Real-time web interface (Tailwind CSS + LightweightCharts + 5-tab sidebar)
+- **BytamerFX Dashboard v4.7.7**: Real-time web interface (Tailwind CSS + LightweightCharts + 5-tab sidebar)
 - **DashboardRT Thread**: 500ms real-time price, spread, and position updates
 - **Telegram Commander**: Remote control via Telegram bot
 - **News Manager**: Economic calendar integration with impact-based filtering
@@ -100,7 +100,7 @@
 | Margin Warning | <300% (block new positions) |
 | Margin Emergency | <150% (close all) |
 | Equity Emergency | <30% (close all + recovery mode) |
-| SPM Trigger | Forex: -$4, BTC/Metal: -$7 |
+| SPM Trigger | Forex: -$4, USDJPY: -$3, BTC/Metal: -$5 |
 | Min Lot | Forex: 0.03, Metal/Crypto: 0.01 |
 | Profile Count | 10 instrument profiles |
 | Indicators | 12 (BHSS combo scoring) |
@@ -113,10 +113,10 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v4.7.6 HedgeSmart)
+├── BytamerFX.mq5              # Main EA (v4.7.7 SystemOverhaul)
 ├── Config.mqh                 # Central configuration + 10 SymbolProfiles
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
-├── PositionManager.mqh        # Net-Exposure SPM + FIFO + Grid Reset
+├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Grid Reset
 ├── TradeExecutor.mqh          # Trade execution (SL=0 absolute)
 ├── NewsManager.mqh            # Universal News Intelligence
 ├── ChartDashboard.mqh         # MT5 on-chart dashboard overlay
@@ -125,7 +125,7 @@ BytamerFX/
 ├── MIA/                       # Market Intelligence Agent (Python)
 │   ├── main.py                # MIA Orchestrator (multi-agent)
 │   ├── dashboard_api.py       # Real-time WebSocket API (port 8765)
-│   ├── dashboard_miav89.html  # BytamerFX Dashboard v4.7.6 (5-tab UI)
+│   ├── dashboard_miav89.html  # BytamerFX Dashboard v4.7.7 (5-tab UI)
 │   ├── brain.py               # AI Brain decision engine
 │   ├── agents.py              # SpeedAgent + RiskAgent + GridAgent
 │   ├── mt5_bridge.py          # MT5 Python API bridge
@@ -144,7 +144,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.7.6** | **2026-03-03** | **HedgeSmart — Akilli Hedge Timeout + Trend Koruma** |
+| **v4.7.7** | **2026-03-03** | **SystemOverhaul — Zigzag SPM + Smart FIFO + Balance Lot Scaling** |
+| v4.7.6 | 2026-03-03 | HedgeSmart — Akilli Hedge Timeout + Trend Koruma |
 | v4.7.5 | 2026-03-03 | PromotionFix — Terfi sonrasi grid yon guncelleme |
 | v4.7.4 | 2026-03-02 | CryptoFreedom — Crypto haber blogu muafiyeti + MIA Dashboard v7 |
 | v4.7.3 | 2026-03-02 | AntiSpam + Dashboard Redesign — Global Trade Guard + UI Overhaul |
