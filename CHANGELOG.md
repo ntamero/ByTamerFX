@@ -6,6 +6,38 @@ All notable changes to this project are documented in this file.
 
 ## [v4.7.7] - 2026-03-03
 
+### SystemOverhaul — Kalici Sistem Kurallari (BUYUK GUNCELLEME)
+
+**BUYUK GUNCELLEME:** SPM, FIFO ve Lot sistemleri kullanici tanimli kalici kurallara gore yeniden yazildi.
+
+#### 1. SPM Zigzag Yon Sistemi (YENI)
+- **ESKI:** `GetNetExposureDirection()` — BUY/SELL sayilarini dengeliyordu
+- **YENI:** Alternating zigzag pattern:
+  - SPM1 = ANA yonunde (DCA — maliyet ortalamalama)
+  - SPM2 = SPM1'in tersi (hedge)
+  - SPM3 = SPM2'nin tersi (= ANA yonu)
+  - Ornek: ANA BUY → SPM1 BUY → SPM2 SELL → SPM3 BUY
+
+#### 2. SPM Tetik Degerleri (GUNCELLEME)
+- **ESKI:** BTC/XAG/XAU/Metal: -$7, Forex: -$4, ForexJPY: -$4
+- **YENI:** BTC/XAG/XAU/Metal: -$5, Forex: -$4, ForexJPY(USDJPY): -$3
+- Her katman onceki SPM'in kendi zararini kontrol eder
+
+#### 3. FIFO Mum Donusu Istisnasi (YENI)
+- **ESKI:** Mum ANA yonune donse bile FIFO ANA'yi kapatiyordu
+- **YENI:** Mum ANA yonune dondu + FIFO hedefi karsilandi:
+  - ANA KAPATILMAZ (toparlanmasina izin verilir)
+  - Bunun yerine terste kalan SPM'ye FIFO uygulanir
+  - Ornek: ANA BUY toparlanir → SPM2 SELL terste → SPM2 kapatilir
+
+#### 4. Balance Bazli Lot Olcekleme (YENI)
+- $100-200: Mevcut lot carpanlari (1.0x — degismez)
+- $200-500: Mevcut carpanlar × 1.20 (+%20)
+- $500-1000: Mevcut carpanlar × 1.40 (+%40)
+- Balance arttikca karlilik sistemi de artar
+
+#### 5. SPM Kademeli Tetik (onceki commit)
+
 ### LayerTrigger — SPM Kademeli Tetik Duzeltme (KRITIK BUG FIX)
 
 **KRITIK BUG FIX:** GBPUSD'de ANA -$28 zarardayken warmup bittikten sonra SPM1, SPM2, SPM3 63 saniye icinde ust uste acildi — hepsi ayni fiyat bolgesinden. Sebep: SPM2/SPM3 tetikleri ANA zararini kontrol ediyordu, onceki SPM'in kendi zararini degil. ANA zaten -$28 oldugundan tum esikler ($4, $5, $7.5) aninda karsilandi.
