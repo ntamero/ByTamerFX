@@ -171,4 +171,4 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 ---
 
-**Copyright 2026, By T@MER** | [www.bytamer.com](https://www.bytamer.com)
+**Copyright 2026, By T@MER** | [www.bytamer.com](https://www.bytamer.com) | [GitHub](https://github.com/ntamero/ByTamerFX) | [Telegram](https://t.me/ByTamer)
