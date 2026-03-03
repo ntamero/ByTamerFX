@@ -1,15 +1,15 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.7.3 — AntiSpam** - Professional automated forex trading system with hybrid signal engine + global trade guard + SPM/Hedge/DCA fail cooldown + FIFO-only loss management.
+**BytamerFX v4.7.6 — HedgeSmart** - Professional automated forex trading system with hybrid signal engine + smart hedge timeout + SPM/FIFO loss management + trend-aware position control.
 
-> **NO SL** | **Never close at a loss** | **HEDGE Never Closes at Loss** | **FIFO-Only Loss Management** | **Net-Exposure SPM** | **Grid Reset Safety** | **Night Mode (20:00+)**
+> **NO SL** | **Never close at a loss** | **HEDGE Never Closes at Loss** | **FIFO-Only Loss Management** | **Net-Exposure SPM** | **Smart Hedge Timeout** | **Crypto 7/24** | **Night Mode (20:00+)**
 
 ---
 
 ## Screenshots
 
-### BytamerFX Dashboard v4.7.3 — Real-Time Web Interface
-![BytamerFX Dashboard v4.7.3]()
+### BytamerFX Dashboard v4.7.6 — Real-Time Web Interface
+![BytamerFX Dashboard v4.7.6](screenshots/dashboard_v476.png)
 
 *Gold lightning bolt branding, 5-tab sidebar (Dashboard / Pozisyonlar / BIDIR-GRID / Teknik Analiz / Raporlar), real-time charts, live system logs, news ticker, TextScramble animations*
 
@@ -39,15 +39,17 @@
 - Market Structure analysis (HH/HL/LH/LL)
 - MACD + RSI divergence engine (regular + hidden)
 
-### Position Management - KazanKazan-Pro (v4.2.0)
+### Position Management - KazanKazan-Pro (v4.7.6)
 - **Net-Exposure SPM**: BUY/SELL count balanced — 3+ same direction IMPOSSIBLE
 - **SPM Max 3 Layers**: Deeper recovery with controlled risk
 - **FIFO**: SPM profits accumulate to offset main loss (net >= +$5 closes MAIN)
+- **Smart Hedge Timeout**: 3-tier profit targeting ($2 min / $5 target) + trend direction awareness
+- **Trend-Aware Close**: Hedge holds if trend supports, closes on candle reversal if not
 - **Grid Reset**: Total floating loss exceeds threshold → orderly close all
 - **EQUITY_ACIL Recovery**: Emergency close triggers recovery mode (24h or 50% balance recovery)
 - **SPM Fast Kasa**: 50% lower min close threshold for faster profit accumulation
 - **Candle Reversal**: Profitable positions close immediately on candle reversal
-- **SPM Terfi**: After FIFO closes MAIN, oldest SPM promotes to new MAIN
+- **SPM Terfi**: After FIFO closes MAIN, oldest SPM promotes to new MAIN + grid direction auto-update
 
 ### Dynamic Profile System (10 Profiles)
 - Forex, ForexJPY, Silver, Gold, Crypto, CryptoAlt, Indices, Energy, Metal, Default
@@ -70,7 +72,7 @@
 ### MIA — Market Intelligence Agent (Python)
 - **Multi-agent architecture**: SpeedAgent + RiskAgent + GridAgent
 - **AI Brain**: Decision engine with market context awareness
-- **BytamerFX Dashboard v4.7.3**: Real-time web interface (Tailwind CSS + LightweightCharts + 5-tab sidebar)
+- **BytamerFX Dashboard v4.7.6**: Real-time web interface (Tailwind CSS + LightweightCharts + 5-tab sidebar)
 - **DashboardRT Thread**: 500ms real-time price, spread, and position updates
 - **Telegram Commander**: Remote control via Telegram bot
 - **News Manager**: Economic calendar integration with impact-based filtering
@@ -111,7 +113,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v4.7.0 FIFO-Guard)
+├── BytamerFX.mq5              # Main EA (v4.7.6 HedgeSmart)
 ├── Config.mqh                 # Central configuration + 10 SymbolProfiles
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Net-Exposure SPM + FIFO + Grid Reset
@@ -121,9 +123,9 @@ BytamerFX/
 ├── + 8 more modules           # Security, spread, lot calc, notifications...
 │
 ├── MIA/                       # Market Intelligence Agent (Python)
-│   ├── main.py                # MIA v6.2.0 Orchestrator (multi-agent)
+│   ├── main.py                # MIA Orchestrator (multi-agent)
 │   ├── dashboard_api.py       # Real-time WebSocket API (port 8765)
-│   ├── dashboard_miav89.html  # BytamerFX Dashboard v4.7.3 (5-tab UI)
+│   ├── dashboard_miav89.html  # BytamerFX Dashboard v4.7.6 (5-tab UI)
 │   ├── brain.py               # AI Brain decision engine
 │   ├── agents.py              # SpeedAgent + RiskAgent + GridAgent
 │   ├── mt5_bridge.py          # MT5 Python API bridge
@@ -142,7 +144,10 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.7.3** | **2026-03-02** | **AntiSpam + Dashboard Redesign — Global Trade Guard + UI Overhaul** |
+| **v4.7.6** | **2026-03-03** | **HedgeSmart — Akilli Hedge Timeout + Trend Koruma** |
+| v4.7.5 | 2026-03-03 | PromotionFix — Terfi sonrasi grid yon guncelleme |
+| v4.7.4 | 2026-03-02 | CryptoFreedom — Crypto haber blogu muafiyeti + MIA Dashboard v7 |
+| v4.7.3 | 2026-03-02 | AntiSpam + Dashboard Redesign — Global Trade Guard + UI Overhaul |
 | v4.7.1 | 2026-03-01 | HEDGE-Safe — Hedge zararina satis yasagi |
 | v4.7.0 | 2026-03-01 | FIFO-Guard — Kasa Persistence + Restart Koruma |
 | v4.6.1 | 2026-02-28 | NightGuard — Night Session Protection + HEDGE Min Profit |
