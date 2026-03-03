@@ -4,6 +4,39 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.7.6] - 2026-03-03
+
+### HedgeSmart — Akilli Hedge Timeout + Trend Koruma
+
+**KRITIK IYILESTIRME:** BTCUSD hedge pozisyonu trend yonunde ilerlerken $0.00 karda kapatildi. Sebep: `hedgeProfit >= 0.0` kosulu $0'i kar sayiyordu ve trend yonu kontrol edilmiyordu. Hedge kapatildiktan sonra EA ayni yone yeni ANA acti — tepe fiyattan aldi ve zarar etti.
+
+#### 1. Hedge Timeout Kademe Sistemi (KRITIK)
+- **ESKi:** `hedgeProfit >= 0.0` → $0 bile "kar" sayiliyordu, trend kontrolu yoktu
+- Hedge trend yonunde gidiyordu → $0'da kapandi → kar firsati kaybedildi
+- **YENI:** 3 kademeli akilli kapatma:
+  - **Kademe 1 ($5+):** Trend hedge yonunde DEGiLSE → kapat (hedef karsilandi)
+  - **Kademe 1 ($5+):** Trend hedge yonunde ISE → TUTMAYA DEVAM (PeakDrop korur)
+  - **Kademe 2 ($2-$5):** Trend hedge yonunde degilse VE mum donusu varsa → kapat
+  - **Kademe 3 ($0-$2):** Kapatma — anlamsiz kar, bekle
+  - **Zarar:** Kapatma — FIFO halleder
+- Minimum anlamli kar: $2.00 (`hedgeMinClose`)
+- Hedef kar: $5.00 (`hedgeTarget`)
+- Trend yonu: `GetConfirmedTrend()` ile dogrulanir
+- Mum donusu algilama: Son 2 mum yonu kontrol edilir
+
+#### 2. Trend Tabanli Karar Mantigi
+- Hedge BUY + trend BUY = trendFavorsHedge → $5 ustunde bile tutmaya devam
+- Hedge BUY + trend SELL = trend degisti → $5 ustunde kapat, $2-5 arasi mum donusunde kapat
+- PeakDrop mekanizmasi zaten zirve takibi yapar — trend destekliyorsa optimal cikis saglar
+- Gereksiz erken kapatmalar onlenir, kar potansiyeli korunur
+
+#### Dosyalar
+- `Config.mqh`: Versiyon 4.7.6 HedgeSmart
+- `BytamerFX.mq5`: Versiyon 4.76
+- `PositionManager.mqh`: `ManageHedgePositions()` Durum 5 Kural 1 — kademe sistemi
+
+---
+
 ## [v4.7.5] - 2026-03-03
 
 ### PromotionFix — Terfi Sonrasi Grid Yon Guncelleme (KRITIK BUG FIX)
