@@ -4,6 +4,28 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.7.5] - 2026-03-03
+
+### PromotionFix — Terfi Sonrasi Grid Yon Guncelleme (KRITIK BUG FIX)
+
+**KRITIK BUG FIX:** GBPUSD'de ANA SELL $9 karda kapandiktan sonra SPM1 BUY yeni ANA'ya terfi etti. Yeni ANA -$13 zararda olmasina ragmen SPM acilamadi. Sebep: `m_gridDirection` eski SELL yonunde kaldi, EA "trend donusu" sanarak `ManageTrendReversal()` cagirdi → `ManageMainInLoss()` hic cagirilmadi → SPM tetiklenemedi. Sonuc: 2 BUY pozisyon savunmasiz -$21'e kadar dustu.
+
+#### 1. Terfi Sonrasi Grid Yon Guncelleme (KRITIK)
+- **ESKi:** `PromoteOldestSPM()` grid yonunu (`m_gridDirection`) guncellemiyordu
+- Eski ANA SELL kapanir → SPM1 BUY terfi eder → `m_gridDirection` hala SELL
+- `ManageTrendGrid()`: mainDir(BUY) != gridDirection(SELL) → `ManageTrendReversal()` → return
+- `ManageMainInLoss()` hic cagirilmaz → SPM tetiklenemez → ANA derin zararda kalir
+- **YENI:** Terfi aninda `m_gridDirection` yeni ANA'nin yonune guncellenir
+- `ManageTrendGrid()` normal akisa girer → ANA zarar esigi astiginda SPM hemen tetiklenir
+- Log: `TERFI: Grid yon guncelleme SELL -> BUY (yeni ANA yonune)`
+
+#### Dosyalar
+- `Config.mqh`: Versiyon 4.7.5 PromotionFix
+- `BytamerFX.mq5`: Versiyon 4.75
+- `PositionManager.mqh`: `PromoteOldestSPM()` — grid yon guncelleme eklendi
+
+---
+
 ## [v4.7.4] - 2026-03-02
 
 ### CryptoFreedom — Crypto Haber Blogu Muafiyeti + MIA Dashboard v7
