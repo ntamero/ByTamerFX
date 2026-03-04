@@ -4,6 +4,43 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.7.8] - 2026-03-04
+
+### KasaGuard — FIFO YOL-A Kasa Bug Fix (KRITIK BUG FIX)
+
+**KRITIK BUG FIX:** BTCUSDm'de FIFO YOL-A tersdeki SPM'i zararda kapattiginda (-$8.67), negatif kar kasaya eklendi. Kasa ekside kaldi ve FIFO hedefine ($5) ulasilamadi. Kalan 3 pozisyon $9.74 acik karda olmasina ragmen Net=$1.07 hesaplandi — pozisyonlar takildi.
+
+#### 1. FIFO YOL-A Kasa Korumasi (KRITIK)
+- **ESKI (BUG):** if/else dallari ayni islemi yapiyordu — negatif kar da kasaya ekleniyordu
+  ```
+  if(profit > 0) kasa += profit;   // pozitif → kasaya ekle
+  else kasa += profit;              // negatif → AYNI SEY! kasayi eksiye dusurur
+  ```
+- **YENI:** Sadece pozitif kar kasaya eklenir (SmartClosePosition v4.3.1 ile tutarli)
+  ```
+  if(profit > 0) kasa += profit;   // pozitif → kasaya ekle
+  // negatif → kasaya EKLENMEZ
+  ```
+- SmartClosePosition zaten v4.3.1'den beri bu korumaya sahipti, FIFO YOL-A atlandi
+
+#### 2. FIFO YOL-A Loglama Iyilestirmesi
+- Kapatilan SPM'in kari, kasaya eklenen miktar ve kasa toplami artik loglanir
+- Ornek: `FIFO YOL-A: SPM2 kapatildi $-8.67, kasaya eklenen: $0.00, kasa toplam: $0.00`
+
+#### Etkilenen Senaryo
+- ANA BUY + SPM2 SELL terste → Mum ANA yonune dondu → FIFO YOL-A tetiklendi
+- SPM2 SELL -$8.67 zararda kapatildi → kasa = -$8.67 (BUG)
+- Kalan: ANA $0.40 + SPM1 $5.08 + SPM3 $4.26 = $9.74 acik kar
+- Net = kasa(-$8.67) + anaLoss($0.40) = -$8.27 → hedef $5'e hic ulasamaz
+- **Duzeltme sonrasi:** kasa = $0, Net = acik SPM karlari ile dogru hesaplanir
+
+#### Dosyalar
+- `Config.mqh`: Versiyon 4.7.8 KasaGuard
+- `BytamerFX.mq5`: Versiyon 4.78
+- `PositionManager.mqh`: CheckFIFOTarget() — FIFO YOL-A negatif kar kasaya eklenmez + loglama
+
+---
+
 ## [v4.7.7] - 2026-03-03
 
 ### SystemOverhaul — Kalici Sistem Kurallari (BUYUK GUNCELLEME)
