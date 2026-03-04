@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.7.7 — SystemOverhaul** - Professional automated forex trading system with hybrid signal engine + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + trend-aware hedge control.
+**BytamerFX v4.7.8 — KasaGuard** - Professional automated forex trading system with hybrid signal engine + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + trend-aware hedge control.
 
 > **NO SL** | **Never close at a loss** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Candle Reversal Protection** | **Crypto 7/24** | **Night Mode (20:00+)**
 
@@ -8,8 +8,8 @@
 
 ## Screenshots
 
-### BytamerFX Dashboard v4.7.7 — Real-Time Web Interface
-![BytamerFX Dashboard v4.7.7](screenshots/dashboard_v476.png)
+### BytamerFX Dashboard v4.7.8 — Real-Time Web Interface
+![BytamerFX Dashboard v4.7.8](screenshots/dashboard_v476.png)
 
 *Gold lightning bolt branding, 5-tab sidebar (Dashboard / Pozisyonlar / BIDIR-GRID / Teknik Analiz / Raporlar), real-time charts, live system logs, news ticker, TextScramble animations*
 
@@ -39,7 +39,7 @@
 - Market Structure analysis (HH/HL/LH/LL)
 - MACD + RSI divergence engine (regular + hidden)
 
-### Position Management - KazanKazan-Pro (v4.7.7)
+### Position Management - KazanKazan-Pro (v4.7.8)
 - **Zigzag SPM Pattern**: SPM1=MAIN direction (DCA), SPM2=reverse, SPM3=reverse again (alternating)
 - **Layer-Based Triggers**: Each SPM triggers on PREVIOUS SPM's own loss (not MAIN loss)
 - **SPM Max 3 Layers**: Deeper recovery with controlled risk
@@ -72,7 +72,7 @@
 ### MIA — Market Intelligence Agent (Python)
 - **Multi-agent architecture**: SpeedAgent + RiskAgent + GridAgent
 - **AI Brain**: Decision engine with market context awareness
-- **BytamerFX Dashboard v4.7.7**: Real-time web interface (Tailwind CSS + LightweightCharts + 5-tab sidebar)
+- **BytamerFX Dashboard v4.7.8**: Real-time web interface (Tailwind CSS + LightweightCharts + 5-tab sidebar)
 - **DashboardRT Thread**: 500ms real-time price, spread, and position updates
 - **Telegram Commander**: Remote control via Telegram bot
 - **News Manager**: Economic calendar integration with impact-based filtering
@@ -113,7 +113,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v4.7.7 SystemOverhaul)
+├── BytamerFX.mq5              # Main EA (v4.7.8 KasaGuard)
 ├── Config.mqh                 # Central configuration + 10 SymbolProfiles
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Grid Reset
@@ -125,7 +125,7 @@ BytamerFX/
 ├── MIA/                       # Market Intelligence Agent (Python)
 │   ├── main.py                # MIA Orchestrator (multi-agent)
 │   ├── dashboard_api.py       # Real-time WebSocket API (port 8765)
-│   ├── dashboard_miav89.html  # BytamerFX Dashboard v4.7.7 (5-tab UI)
+│   ├── dashboard_miav89.html  # BytamerFX Dashboard v4.7.8 (5-tab UI)
 │   ├── brain.py               # AI Brain decision engine
 │   ├── agents.py              # SpeedAgent + RiskAgent + GridAgent
 │   ├── mt5_bridge.py          # MT5 Python API bridge
@@ -144,7 +144,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.7.7** | **2026-03-03** | **SystemOverhaul — Zigzag SPM + Smart FIFO + Balance Lot Scaling** |
+| **v4.7.8** | **2026-03-04** | **KasaGuard — FIFO YOL-A Kasa Bug Fix** |
+| v4.7.7 | 2026-03-03 | SystemOverhaul — Zigzag SPM + Smart FIFO + Balance Lot Scaling |
 | v4.7.6 | 2026-03-03 | HedgeSmart — Akilli Hedge Timeout + Trend Koruma |
 | v4.7.5 | 2026-03-03 | PromotionFix — Terfi sonrasi grid yon guncelleme |
 | v4.7.4 | 2026-03-02 | CryptoFreedom — Crypto haber blogu muafiyeti + MIA Dashboard v7 |
