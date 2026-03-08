@@ -4,6 +4,29 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.7.9] - 2026-03-08
+
+### LotTune — Min Lot Ayarlama + Daily Report Koordinasyon
+
+#### 1. Min Lot Profil Guncellemeleri
+- **BTC:** 0.01 → **0.02** (daha anlamli pozisyon buyuklugu)
+- **Forex (EURUSD, GBPUSD vb.):** 0.03 → **0.04**
+- **USDJPY:** 0.03 → **0.05**
+- **Indices:** 0.03 → **0.01**
+- XAG, XAU: 0.01 (degismedi)
+
+#### 2. Daily Report Tek Chart Koordinasyonu
+- **ESKI:** 3 chart ayni anda 3 ayri rapor gonderiyordu (duplicate/kayip)
+- **YENI:** GlobalVariable kilidi ile sadece 1 chart rapor gonderir
+- `BytamerFX_DailyReport_<tarih>` kilidi ile koordinasyon
+- Onceki gunun kilidi otomatik temizlenir
+
+#### Dosyalar
+- `Config.mqh`: Versiyon 4.7.9 LotTune, min lot degerleri
+- `BytamerFX.mq5`: Versiyon 4.79, Daily Report GlobalVariable kilidi
+
+---
+
 ## [v4.7.8] - 2026-03-04
 
 ### KasaGuard — FIFO YOL-A Kasa Bug Fix (KRITIK BUG FIX)
