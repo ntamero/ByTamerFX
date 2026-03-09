@@ -4,6 +4,27 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.8.2] - 2026-03-10
+
+### GridGuard — NET SETTLE Zigzag Koruma (KRITIK BUG FIX)
+
+**KRITIK BUG:** NET SETTLE DCA yonundeki SPM'i kapatinca (ANA ile ayni yon), kalan ters yondeki SPM yeni SPM1 oluyordu. Sonraki SPM2 de ters acilinca zigzag tamamen bozuluyordu.
+
+#### 1. NET SETTLE Yon Onceliklendirme
+- **ESKI (BUG):** En zarardaki SPM/DCA yon farki gozetmeden kapatiliyordu
+- Ornek: ANA SELL, SPM1 SELL(DCA -$8), SPM2 BUY(hedge -$4)
+  → SPM1 SELL kapatildi → SPM2 BUY yeni SPM1 → SPM2 SELL acildi → **ZIGZAG TERS**
+- **YENI:** Ters yondeki (wrong-side) SPM/DCA oncelikli kapatilir
+  → SPM2 BUY(ters yon) kapatilir → SPM1 SELL(DCA) kalir → **ZIGZAG KORUNUR**
+- Ayni yondeki (DCA) SPM sadece ters yonde pozisyon yoksa kapatilir
+
+#### Dosyalar
+- `PositionManager.mqh`: CheckNetSettlement yon bazli onceliklendirme
+- `Config.mqh`: Versiyon 4.8.2
+- `BytamerFX.mq5`: Versiyon 4.82
+
+---
+
 ## [v4.8.1] - 2026-03-09
 
 ### GridGuard — Trend TrailingFloor + Dashboard Clean
