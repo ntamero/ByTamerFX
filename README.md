@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.7.9 — LotTune** - Professional automated forex trading system with hybrid signal engine + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + trend-aware hedge control.
+**BytamerFX v4.8.0 — GridGuard** - Professional automated forex trading system with hybrid signal engine + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + trend-aware hedge control.
 
 > **NO SL** | **Never close at a loss** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Candle Reversal Protection** | **Crypto 7/24** | **Night Mode (20:00+)**
 
@@ -8,8 +8,8 @@
 
 ## Screenshots
 
-### BytamerFX Dashboard v4.7.9 — Real-Time Web Interface
-![BytamerFX Dashboard v4.7.9](screenshots/dashboard_v476.png)
+### BytamerFX Dashboard v4.8.0 — Real-Time Web Interface
+![BytamerFX Dashboard v4.8.0](screenshots/dashboard_v476.png)
 
 *Gold lightning bolt branding, 5-tab sidebar (Dashboard / Pozisyonlar / BIDIR-GRID / Teknik Analiz / Raporlar), real-time charts, live system logs, news ticker, TextScramble animations*
 
