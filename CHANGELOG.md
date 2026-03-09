@@ -4,9 +4,34 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.8.1] - 2026-03-09
+
+### GridGuard — Trend TrailingFloor + Dashboard Clean
+
+#### 1. Trend-Aware Trailing Floor
+- Guclu trend + poz trend yonunde: Floor peak $6'da baslar (eski: $3)
+- Orta trend: Floor peak $5'te baslar
+- Zayif/ters: Min floor $2.00 (eski: $1.50)
+- SPM'ler guclu trendde daha uzun kosabilir
+
+#### 2. Dashboard Versiyon Temizligi
+- Chart dashboard'da sadece "v4.8.1" gosterilir (eski: uzun aciklama metni)
+- Hem ana panel hem lisans paneli temizlendi
+
+#### 3. NET SETTLE Log Spam Duzeltmesi
+- NET SETTLE ENGEL mesaji 60sn cooldown (her tick yerine)
+
+#### Dosyalar
+- `PositionManager.mqh`: Trend-Aware TrailingFloor, NET SETTLE log cooldown
+- `ChartDashboard.mqh`: Version gosterimi sadece "v" + EA_VERSION
+- `Config.mqh`: Versiyon 4.8.1
+- `BytamerFX.mq5`: Versiyon 4.81
+
+---
+
 ## [v4.8.0] - 2026-03-09
 
-### GridGuard — 3 Kritik Bug Fix + Trend-Aware TrailingFloor
+### GridGuard — 3 Kritik Bug Fix (SPM Acilamama + FIFO Zarar + NET SETTLE Kaskad)
 
 **KRITIK:** BTC SELL pozisyon -$8 zararda olmasina ragmen SPM acilmiyordu. Ayni zamanda FIFO YOL-A ve NET SETTLE gereksiz zarar kapatmalari yapiyordu. 3 bugu birlikte tespit ve duzeltildi.
 
