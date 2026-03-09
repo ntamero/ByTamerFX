@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 
 ## [v4.8.0] - 2026-03-09
 
-### GridGuard — 3 Kritik Bug Fix (SPM Acilamama + FIFO Zarar + NET SETTLE Kaskad)
+### GridGuard — 3 Kritik Bug Fix + Trend-Aware TrailingFloor
 
 **KRITIK:** BTC SELL pozisyon -$8 zararda olmasina ragmen SPM acilmiyordu. Ayni zamanda FIFO YOL-A ve NET SETTLE gereksiz zarar kapatmalari yapiyordu. 3 bugu birlikte tespit ve duzeltildi.
 
