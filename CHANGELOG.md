@@ -32,9 +32,20 @@ All notable changes to this project are documented in this file.
 - Ornek: BUY SPM mum BUY yonundeyken -$4.67'de kapatildi
 - **YENI:** Worst pozisyon mum yonundeyse → kapatilMAZ, toparlanma beklenir
 - Sadece mum KARSI yonde olan pozisyonlar settle edilebilir
+- Log spam onleme: NET SETTLE ENGEL mesaji 60sn cooldown (2027+ spam onlendi)
+
+#### 4. Trend-Aware Trailing Floor (SPM Erken Kapanma Duzeltmesi)
+- **ESKI:** Sabit floor: Peak $3 → Floor $1.50 → BTC SPM erken kapaniyordu
+- Trend gucu ve yonu dikkate alinmiyordu
+- **YENI:** 3 katmanli trend-aware floor sistemi:
+  - **Guclu Trend + poz trend yonunde:** Peak $6→$3, $10→$6, $15→$9 (genis alan)
+  - **Orta Trend + poz trend yonunde:** Peak $5→$2.50, $8→$4.50, $12→$7.50
+  - **Zayif/Ters Trend:** Peak $3→$2.00 (min $2, eskiden $1.50), $5→$3, $8→$5.50
+- Trend gucluyse ilk floor cok daha yukarda baslar → SPM trendde kosabilir
+- Log mesajina trend modu eklendi (GUCLU/ORTA/ZAYIF)
 
 #### Dosyalar
-- `PositionManager.mqh`: CheckTrendDirection grid koruma, FIFO YOL-A net guard + best wrong-side + kasa deduction, NET SETTLE candle check
+- `PositionManager.mqh`: CheckTrendDirection grid koruma, FIFO YOL-A net guard + best wrong-side + kasa deduction, NET SETTLE candle check + log cooldown, Trend-Aware TrailingFloor
 - `Config.mqh`: Versiyon 4.8.0 GridGuard
 - `BytamerFX.mq5`: Versiyon 4.80
 
