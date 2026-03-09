@@ -4,6 +4,42 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.8.0] - 2026-03-09
+
+### GridGuard — 3 Kritik Bug Fix (SPM Acilamama + FIFO Zarar + NET SETTLE Kaskad)
+
+**KRITIK:** BTC SELL pozisyon -$8 zararda olmasina ragmen SPM acilmiyordu. Ayni zamanda FIFO YOL-A ve NET SETTLE gereksiz zarar kapatmalari yapiyordu. 3 bugu birlikte tespit ve duzeltildi.
+
+#### 1. CheckTrendDirection Grid Yonu Override Engeli (KRITIK)
+- **ESKI (BUG):** Sinyal motoru her 120sn'de grid yonunu guncelliyordu
+- Terfi sonrasi ANA SELL, grid=SELL → 120sn sonra sinyal BUY → grid=BUY
+- `ManageTrendGrid` mainDir(SELL) != gridDir(BUY) → "trend donusu" → `return`
+- `ManageMainInLoss` HICBIR ZAMAN cagrilmadi → **SPM ACILAMADI** → ANA yetim kaldi
+- **YENI:** ANA zarardayken grid yonunu ANA'nin tersine degistirmeyi engelle
+- Grid yonu ANA yonuyle uyumlu kalmaya devam eder → SPM normal acilir
+
+#### 2. FIFO YOL-A Net Guard + Best Wrong-Side SPM (KRITIK)
+- **ESKI (BUG):** En KOTU (en zarardaki) wrong-side SPM seciliyordu (-$4.14 zarar!)
+- Wrong-side SPM zarari net hesaba dahil edilmiyordu
+- Zarar kasadan dusmuyordu → kasa sisik kaldi → NET SETTLE kaskad tetikledi
+- **YENI 3 Duzeltme:**
+  1. En AZ ZARARDAKI wrong-side SPM secilir (zarar minimize)
+  2. Wrong-side SPM zarari adjusted net hesaba dahil edilir
+  3. Zarar kasadan dusurulur (min 0) — kaskad onlenir
+
+#### 3. NET SETTLE Mum Yonu Korumasi
+- **ESKI (BUG):** Mum yonundeki SPM/DCA kapatiliyordu (toparlanabilecekken)
+- Ornek: BUY SPM mum BUY yonundeyken -$4.67'de kapatildi
+- **YENI:** Worst pozisyon mum yonundeyse → kapatilMAZ, toparlanma beklenir
+- Sadece mum KARSI yonde olan pozisyonlar settle edilebilir
+
+#### Dosyalar
+- `PositionManager.mqh`: CheckTrendDirection grid koruma, FIFO YOL-A net guard + best wrong-side + kasa deduction, NET SETTLE candle check
+- `Config.mqh`: Versiyon 4.8.0 GridGuard
+- `BytamerFX.mq5`: Versiyon 4.80
+
+---
+
 ## [v4.7.9] - 2026-03-08
 
 ### LotTune — Min Lot Ayarlama + Daily Report Koordinasyon
