@@ -4,6 +4,34 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.8.4] - 2026-03-10
+
+### GridGuard — Floor Lock + Audit Fix
+
+Kapsamli kod denetimi sonrasi 3 duzeltme.
+
+#### 1. Trailing Floor Monoton Artis (BUG FIX)
+- **BUG:** Floor her tick'te sifirdan hesaplaniyordu. Trend gucluden zayifa donunce floor dusebiliyordu (orn. $6→$5.50)
+- **FIX:** `m_breakevenPrice[]` ile onceki floor kaydedilir, `MathMax(currentFloor, previousFloor)` ile sadece YUKARI gidebilir
+- Yorumdaki "Floor ASLA dusmez" kurali artik KOD ILE GARANTI edilir
+
+#### 2. FIFO YOL-A dailyProfit Guncelleme
+- **BUG:** FIFO YOL-A'da wrong-side SPM dogrudan `m_executor.ClosePosition` ile kapatiliyordu
+- `m_dailyProfit` ve `m_totalCashedProfit` guncellenmiyordu → Dashboard gunluk kar yanlis
+- **FIX:** Kapanis sonrasi her iki degisken de guncelleniyor
+
+#### 3. SPM Layer Parse Genisletme
+- **BUG:** Comment'ten layer numarasi tek karakter okunuyordu (`StringSubstr(..., 1)`)
+- Layer >= 10 icin yanlis parse (BTFX_SPM_10_xxx → layer=1)
+- **FIX:** Sonraki underscore'a kadar okunur (orn. "10" → layer=10)
+
+#### Dosyalar
+- `PositionManager.mqh`: ManageBreakevenLock, CheckFIFOConditions, RefreshPositions parse
+- `Config.mqh`: Versiyon 4.8.4
+- `BytamerFX.mq5`: Versiyon 4.84
+
+---
+
 ## [v4.8.3] - 2026-03-10
 
 ### GridGuard — Zigzag Tutarlilik + Cift SPM Koruma
