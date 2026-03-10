@@ -4,6 +4,39 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.8.3] - 2026-03-10
+
+### GridGuard — Zigzag Tutarlilik + Cift SPM Koruma
+
+**KRITIK BUG:** TERFI sonrasi ManageActiveSPMs yeni SPM yonunu onceki SPM'in tersinden aliyordu. Eski SPM'ler farkli ANA'ya gore acildigi icin TERFI sonrasi zigzag deseni tamamen bozuluyordu.
+
+#### 1. ANA-Bazli Zigzag Hesaplama (KRITIK)
+- **ESKI (BUG):** `spmDir = onceki SPM'in tersi` → TERFI sonrasi yanlis yon
+- Ornek: TERFI sonrasi ANA SELL, eski SPM2 SELL kaldi → yeni SPM3 BUY acildi (dogru)
+  ama SPM1 de SELL acildi → SPM2 yine SELL → **ZIGZAG BOZUK**
+- **YENI:** Zigzag yonu ANA'ya gore hesaplanir, onceki SPM'in yonu KULLANILMAZ
+  → Tek katmanlar (1,3,5) = ANA yonu (DCA), cift katmanlar (2,4,6) = ters (hedge)
+  → TERFI sonrasi da sabit kural uygulanir
+
+#### 2. Cift SPM Katman Onleme
+- Ayni katmanda (orn. iki tane SPM3) zaten pozisyon varsa yeni acilmaz
+- TERFI + RenumberSPMLayers sonrasi olusan duplikasyonu onler
+
+#### 3. RenumberSPMLayers Debug Loglama
+- TERFI sonrasi SPM katman atamalarini detayli loglar
+- Her SPM'in yeni katmani, yonu, ticket ve P/L'si gorunur
+
+#### 4. OpenSPM Ticket Format Duzeltme
+- `(int)newTicket` → `newTicket` (%llu format) — 64-bit ulong veri kaybi onlendi
+- ANA ticket bilgisi log satirina eklendi
+
+#### Dosyalar
+- `PositionManager.mqh`: ManageActiveSPMs, RenumberSPMLayers, OpenSPM
+- `Config.mqh`: Versiyon 4.8.3
+- `BytamerFX.mq5`: Versiyon 4.83
+
+---
+
 ## [v4.8.2] - 2026-03-10
 
 ### GridGuard — NET SETTLE Zigzag Koruma (KRITIK BUG FIX)
