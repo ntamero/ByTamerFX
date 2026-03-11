@@ -4,6 +4,46 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.8.5] - 2026-03-11
+
+### GridGuard — H1 Filter + Brier Score + Floor Fix
+
+Sinyal kalitesi ve karlilik iyilestirme: 3 yeni ozellik + 2 bug fix.
+
+#### 1. $0.25 Kapanış Fix — TrailingFloor minCloseProfit Gate (BUG FIX)
+- **BUG:** TrailingFloor `profit > 0` kontrolu yapiyordu — floor tetiklenince $0.25 gibi kucuk karlarda da kapatiyordu
+- **FIX:** `profit >= m_profile.minCloseProfit` gate eklendi (forex: $2.5 altinda kapatmaz)
+- SPM/DCA kari floor altina dustuyse toparlanma sansi verilir
+
+#### 2. Night Mode minCloseProfit Gate (BUG FIX)
+- **BUG:** Gece modu NightModeMinProfit=$1.0 ile kapatiyordu — forex icin cok dusuk
+- **FIX:** `MathMax(NightModeMinProfit, m_profile.minCloseProfit)` ile profil bazli minimum uygulanir
+
+#### 3. H1 Trend Teyit Filtresi (YENİ)
+- Normal volatilite: H1 trend sinyale karsiysa → sinyal ENGELLENIR (sifirlanir)
+- Yuksek volatilite (ATR > 1.5x 20-bar ortalama): Mevcut -30% ceza yeterli, engelleme yok
+- `H1TrendFilterEnabled` input parametresi ile acilip kapatilabilir
+- M15 firsatlari yuksek volatilitede korunur
+
+#### 4. Brier Score Sinyal Performans Takibi (YENİ)
+- Her sinyal acildiginda 7 indikatorun oy gucu kaydedilir (circular buffer, 50 kayit)
+- Islem kapandiginda outcome degerlendirmesi (kar=dogru, zarar=yanlis)
+- Her 10 kapanista indikator bazli Brier Score loglanir
+- GlobalVariable'a kaydedilir (BRIER_{symbol}_{indicator})
+- Faz 1: Sadece log — otomatik agirlik degisikligi yok (veri toplama)
+
+#### 5. H1 ATR Handle
+- SignalEngine'e H1 ATR(14) handle eklendi (volatilite olcumu icin)
+- Toplam handle sayisi: 15 (onceki 14)
+
+#### Dosyalar
+- `Config.mqh`: v4.8.5, H1TrendFilterEnabled, BrierSignalRecord struct
+- `SignalEngine.mqh`: m_hAtrH1, IsH1VolatilityHigh(), H1 filter, RecordSignal(), EvaluateTradeOutcome(), LogBrierScores()
+- `PositionManager.mqh`: TrailingFloor fix (satir 4402), Night Mode fix (satir 1513), Brier hook (ClosePosWithNotification)
+- `BytamerFX.mq5`: v4.85, RecordSignal hook
+
+---
+
 ## [v4.8.4] - 2026-03-10
 
 ### GridGuard — Floor Lock + Audit Fix

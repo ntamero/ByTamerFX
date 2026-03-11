@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.8.4 — GridGuard** - Professional automated forex trading system with hybrid signal engine + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + trend-aware hedge control.
+**BytamerFX v4.8.5 — GridGuard** - Professional automated forex trading system with hybrid signal engine + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + trend-aware hedge control.
 
 > **NO SL** | **Never close at a loss** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Candle Reversal Protection** | **Crypto 7/24** | **Night Mode (20:00+)**
 
