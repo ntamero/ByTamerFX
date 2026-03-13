@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.8.5 — GridGuard** - Professional automated forex trading system with hybrid signal engine + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + trend-aware hedge control.
+**BytamerFX v4.8.7 — GridGuard** - Professional automated forex trading system with hybrid signal engine + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + account-agnostic licensing.
 
 > **NO SL** | **Never close at a loss** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Candle Reversal Protection** | **Crypto 7/24** | **Night Mode (20:00+)**
 
@@ -113,7 +113,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v4.7.9 LotTune)
+├── BytamerFX.mq5              # Main EA (v4.8.6 GridGuard)
 ├── Config.mqh                 # Central configuration + 10 SymbolProfiles
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Grid Reset
@@ -144,7 +144,10 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.7.9** | **2026-03-08** | **LotTune — Min Lot Ayarlama + Daily Report Fix** |
+| **v4.8.7** | **2026-03-13** | **Crypto News Exempt + 30s Warmup + MIA Auto-Start Fix** |
+| v4.8.6 | 2026-03-13 | Account-Agnostic License + MIA Log Rotation + Partial Close Fix |
+| v4.8.5 | 2026-03-11 | GridGuard — H1 Filter + Brier Score + Floor Fix |
+| v4.7.9 | 2026-03-08 | LotTune — Min Lot Ayarlama + Daily Report Fix |
 | v4.7.8 | 2026-03-04 | KasaGuard — FIFO YOL-A Kasa Bug Fix |
 | v4.7.7 | 2026-03-03 | SystemOverhaul — Zigzag SPM + Smart FIFO + Balance Lot Scaling |
 | v4.7.6 | 2026-03-03 | HedgeSmart — Akilli Hedge Timeout + Trend Koruma |
