@@ -4,6 +4,71 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.8.7] - 2026-03-13
+
+### Crypto News Exempt + 30s Warmup + MIA Auto-Start Fix
+
+#### 1. Haber Filtresi Crypto Muafiyeti (IYILESTIRME)
+- **Onceki:** Haber blogu TUM sembolleri engelliyordu (crypto dahil)
+- **Yeni:** Crypto (BTC, ETH, vb.) haber blogundan muaf — 7/24 islem devam
+- `BytamerFX.mq5`: Ana haber blogu kontrolune `g_category != CAT_CRYPTO` eklendi
+- `PositionManager.mqh`: SPM grid acilisi haber sirasinda crypto icin devam ediyor
+- Gece modu zaten crypto muafti (v4.6.0+)
+
+#### 2. 30sn Warmup Gecikmesi (IYILESTIRME)
+- **Onceki:** EA acilir acilmaz sinyal arayip islem aciyordu (kor dalis)
+- **Yeni:** EA acilisinda 30 saniye sinyal kalitesi degerlendirme suresi
+- `g_initTime` ile baslangic zamani takibi
+- FIFO sonrasi zaten mevcut: sonraki M15 bar bekleme + 60sn cooldown
+
+#### 3. MIA Auto-Start Duzeltmesi (BUG FIX)
+- **Onceki:** MIA MT5 kapaliyken bile MT5'i otomatik baslatiyordu
+- **Yeni:** MIA artik MT5'i baslatMAZ — MT5 acilmasini bekler
+- MT5 kapanirsa MIA da durur, MT5 tekrar acildiginda MIA devam eder
+- `start_mia.bat` ve `start_mia_silent.vbs` guncellendi
+
+#### Dosyalar
+- `Config.mqh` — Version 4.8.7
+- `BytamerFX.mq5` — Haber crypto muafiyeti + 30sn warmup
+- `PositionManager.mqh` — SPM grid haber crypto muafiyeti
+- `MIA/start_mia.bat` — MT5 baslatma kaldirildi, bekleme eklendi
+- `MIA/start_mia_silent.vbs` — MT5 baslatma kaldirildi
+
+---
+
+## [v4.8.6] - 2026-03-13
+
+### Account-Agnostic License + MIA Log Rotation + Partial Close Fix
+
+Log analizi sonucu tespit edilen 3 kritik sorun giderildi.
+
+#### 1. Account-Agnostic License (IYILESTIRME)
+- **Onceki:** Lisans belirli bir hesap numarasina kilitliydi, hesap degisince EA duruyordu
+- **Yeni:** Lisans gecerli oldugu surece herhangi bir hesapta calisir
+- `AccountSecurity.mqh`: Hesap uyumsuzlugu artik sadece uyari, EA calismaya devam eder
+- `LicenseManager.mqh`: API `account_mismatch` durumu artik lisansi gecersiz kilmaz
+- Hesap degisikligi otomatik algilanir ve loglanir
+
+#### 2. MIA close_position_partial Fix (BUG FIX)
+- **BUG:** `executor.py:486` olmayan `close_position_partial()` metodunu cagiriyordu (1,547 hata/session)
+- **FIX:** Mevcut `close_partial()` metodu kullanilacak sekilde duzeltildi
+- Return tipi uyumu saglandi (dict beklentisi → bool)
+
+#### 3. MIA Log Rotation (IYILESTIRME)
+- **Onceki:** `fx_agent.log` sinirsi buyuyordu (555 MB+)
+- **Yeni:** `RotatingFileHandler` — 50 MB/dosya, 5 yedek (max 300 MB)
+- Log tarih formati guncellendi: `HH:MM:SS` → `YYYY-MM-DD HH:MM:SS` (gun siniri problemi cozuldu)
+
+#### Dosyalar
+- `BytamerFX.mq5` — Version bump v4.8.6
+- `Config.mqh` — Version defines guncellendi
+- `LicenseManager.mqh` — Account mismatch toleransi
+- `AccountSecurity.mqh` — Account-agnostic gecis
+- `MIA/executor.py` — close_position_partial → close_partial
+- `MIA/main.py` — RotatingFileHandler + tarih formati
+
+---
+
 ## [v4.8.5] - 2026-03-11
 
 ### GridGuard — H1 Filter + Brier Score + Floor Fix
