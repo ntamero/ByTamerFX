@@ -4,6 +4,46 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.9.6] - 2026-03-16
+
+### SmartReentryGate — SPM Akilli Yeniden Giris Filtresi + Anti-Spam
+
+#### 1. SPM Smart Reentry Gate (4 Katmanli Filtre)
+SPM kapandiktan sonra ayni katmanin kör bir sekilde tekrar acilmasini engeller:
+- **Zaman Kapisi:** SPM kapandiktan sonra 120sn (SPM1) / 90sn (SPM2+) bekleme
+- **ADX >= 25 Filtresi:** Trend gucu yoksa SPM acilmaz
+- **Mum Dogrulama:** Mum yonu SPM yonuyle uyusmali
+- **MACD Momentum:** MACD histogram SPM yonunu desteklemeli
+
+#### 2. HEDGE FailCooldown Kontrolu
+`CheckRescueHedge()` fonksiyonuna `HEDGE_FailCooldown` kontrolu eklendi. Error 4806 (yetersiz bakiye) alindiginda 60sn sessiz bekler, tekrar denemez.
+
+#### 3. Anti-Spam Silent Logs (6 Log Temizligi)
+Tekrarlayan loglar tamamen kaldirildi — sadece durum DEGISTIGINDE log basilir:
+- `HEDGE IPTAL: ADX...` → sessiz return
+- `HEDGE IPTAL: Oylama...` → sessiz return
+- `RESCUE COOLDOWN: Xsn kaldi` → sessiz return
+- `RESCUE: Zaten aktif hedge var` → sessiz return
+- `NET SETTLE ENGEL: mum yonunde` → sessiz return
+- `NET SETTLE ENGEL: Trend=ANA` → sessiz return
+
+**Prensip:** Acildi → log. Kapandi → log. Arada tekrar etme.
+
+#### 4. Version Senkronizasyonu
+- Config.mqh: v4.9.6
+- BytamerFX.mq5: #property version "4.96"
+- MIA ea_config.py: EA_VERSION = "4.9.6"
+
+---
+
+## [v4.9.5] - 2026-03-16
+
+### ForexMinClose-Fix — FOREX minCloseProfit Duzeltme
+- FOREX sembollerinde `minCloseProfit` 0.80 → 2.0 olarak duzeltildi
+- candleCloseWeak ($0.80) mum donusu icin ayri kaldi
+
+---
+
 ## [v4.9.0] - 2026-03-16
 
 ### MIA Advisor Integration — EA + AI Sinyal Danismani

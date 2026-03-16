@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.9.0 — MIA-Advisor** - Professional automated forex trading system with hybrid signal engine + **MIA AI Advisor** integration + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-tier lot scaling.
+**BytamerFX v4.9.6 — SmartReentryGate** - Professional automated forex trading system with hybrid signal engine + **SPM Smart Reentry Gate** (ADX+Cooldown+Candle+MACD filter) + **MIA AI Advisor** integration + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-tier lot scaling.
 
 > **NO SL** | **Never close at a loss** | **MIA Advisor (Sentiment + News + Session)** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Crypto 7/24**
 
@@ -121,7 +121,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v4.9.0 MIA-Advisor)
+├── BytamerFX.mq5              # Main EA (v4.9.6 SmartReentryGate)
 ├── Config.mqh                 # Central config + 10 SymbolProfiles + MIA mode
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Grid Reset
@@ -156,7 +156,9 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.9.0** | **2026-03-16** | **MIA Advisor Integration — Sentiment + News + Session signal advisory** |
+| **v4.9.6** | **2026-03-16** | **SmartReentryGate — SPM Reentry Filter (ADX+Cooldown+Candle+MACD) + Anti-Spam Silent Logs** |
+| v4.9.5 | 2026-03-16 | ForexMinClose-Fix — FOREX minCloseProfit 0.80→2.0 |
+| v4.9.0 | 2026-03-16 | MIA Advisor Integration — Sentiment + News + Session signal advisory |
 | v4.8.8 | 2026-03-16 | Balance Tier Lots + MIA Emergency Fix |
 | v4.8.7 | 2026-03-13 | Crypto News Exempt + 30s Warmup + MIA Auto-Start Fix |
 | v4.8.6 | 2026-03-13 | Account-Agnostic License + MIA Log Rotation + Partial Close Fix |
