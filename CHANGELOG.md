@@ -4,6 +4,49 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.8.8] - 2026-03-16
+
+### Balance Tier Lots + MIA Emergency Fix
+
+#### 1. Balance Tier Lot Sistemi (YENI)
+- **Onceki:** Lineer lot hesaplama — sonuc her zaman minLot floor'a dusuyordu
+- **Yeni:** Kademeli balance-bazli lot artisi, her profil icin 4 tier
+- Config.mqh SymbolProfile struct'ina `lotTier1/2/3/4` eklendi
+- LotCalculator.mqh `GetBalanceTierLot()` — balance'a gore sabit tier lot
+- Tier aktifse sadece margin + acik lot dengeleme uygulanir (guvenlik)
+
+| Kategori | $0-200 | $200-500 | $500-1K | $1K+ |
+|----------|--------|----------|---------|------|
+| Forex | 0.04 | 0.06 | 0.08 | 0.12 |
+| ForexJPY | 0.05 | 0.07 | 0.10 | 0.14 |
+| BTC | 0.02 | 0.03 | 0.05 | 0.08 |
+| XAU/XAG/Metal | 0.01 | 0.02 | 0.03 | 0.05 |
+| Diger | 0.01 | 0.02 | 0.03 | 0.05 |
+
+#### 2. MIA Emergency Close Kaldirildi (KRITIK FIX)
+- **Onceki:** `EMERGENCY_CLOSE` equity %99 esiginde surekli tetikleniyordu
+- **Yeni:** `EMERGENCY_CLOSE` ve `STOP_TRADING` tamamen devre disi
+- grid_manager.py: margin/sembol kayip kontrolleri sadece loglama yapar
+- agents.py Arbitrator: EMERGENCY_CLOSE yoksayilir, isleme ALINMAZ
+- executor.py: EMERGENCY_CLOSE istek gelirse yoksayar
+- SPM sistemi pozisyon yonetimini yapar, MIA mudahale etmez
+
+#### 3. Polymarket Referanslari Kaldirildi
+- dashboard_api.py: "PolyARB" CSS/HTML yorumlari "BytamerFX" olarak duzeltildi
+
+#### Dosyalar (EA)
+- `Config.mqh` — Version 4.8.8 + lotTier1/2/3/4 struct + profil degerleri
+- `LotCalculator.mqh` — GetBalanceTierLot() + Initialize tier parametreleri
+- `BytamerFX.mq5` — lotCalc.Initialize tier parametreleri eklendi
+
+#### Dosyalar (MIA)
+- `grid_manager.py` — _emergency_close_all kaldirildi, margin/kayip sadece log
+- `agents.py` — EMERGENCY_CLOSE/STOP_TRADING yoksayilir
+- `executor.py` — EMERGENCY_CLOSE islenmez
+- `dashboard_api.py` — PolyARB → BytamerFX
+
+---
+
 ## [v4.8.7] - 2026-03-13
 
 ### Crypto News Exempt + 30s Warmup + MIA Auto-Start Fix

@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.8.7 — GridGuard** - Professional automated forex trading system with hybrid signal engine + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-adaptive lot scaling + account-agnostic licensing.
+**BytamerFX v4.8.8 — GridGuard** - Professional automated forex trading system with hybrid signal engine + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-tier lot scaling + account-agnostic licensing.
 
 > **NO SL** | **Never close at a loss** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Candle Reversal Protection** | **Crypto 7/24** | **Night Mode (20:00+)**
 
@@ -45,7 +45,7 @@
 - **SPM Max 3 Layers**: Deeper recovery with controlled risk
 - **Smart FIFO**: SPM profits accumulate to offset main loss (net >= +$5 closes MAIN)
 - **FIFO Candle Reversal**: If candle turns toward MAIN → don't close MAIN, close wrong-side SPM instead
-- **Balance-Adaptive Lots**: $100-200: 1.0x, $200-500: 1.2x, $500-1000: 1.4x lot scaling
+- **Balance Tier Lots**: BTC $0-200: 0.02, $200-500: 0.03, $500-1K: 0.05, $1K+: 0.08 | Forex $0-200: 0.04, $200-500: 0.06, $500-1K: 0.08, $1K+: 0.12
 - **Rescue Hedge**: SPM2 loss threshold triggers hedge with trend+signal+candle voting
 - **Smart Hedge Timeout**: 3-tier profit targeting ($2 min / $5 target) + trend direction awareness
 - **Grid Reset**: Total floating loss exceeds threshold → orderly close all
@@ -144,7 +144,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.8.7** | **2026-03-13** | **Crypto News Exempt + 30s Warmup + MIA Auto-Start Fix** |
+| **v4.8.8** | **2026-03-16** | **Balance Tier Lots + MIA Emergency Fix** |
+| v4.8.7 | 2026-03-13 | Crypto News Exempt + 30s Warmup + MIA Auto-Start Fix |
 | v4.8.6 | 2026-03-13 | Account-Agnostic License + MIA Log Rotation + Partial Close Fix |
 | v4.8.5 | 2026-03-11 | GridGuard — H1 Filter + Brier Score + Floor Fix |
 | v4.7.9 | 2026-03-08 | LotTune — Min Lot Ayarlama + Daily Report Fix |
