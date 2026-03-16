@@ -1,8 +1,8 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.8.8 — GridGuard** - Professional automated forex trading system with hybrid signal engine + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-tier lot scaling + account-agnostic licensing.
+**BytamerFX v4.9.0 — MIA-Advisor** - Professional automated forex trading system with hybrid signal engine + **MIA AI Advisor** integration + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-tier lot scaling.
 
-> **NO SL** | **Never close at a loss** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Candle Reversal Protection** | **Crypto 7/24** | **Night Mode (20:00+)**
+> **NO SL** | **Never close at a loss** | **MIA Advisor (Sentiment + News + Session)** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Crypto 7/24**
 
 ---
 
@@ -69,14 +69,19 @@
 - **News Filter**: Trade blocking during CRITICAL/HIGH impact economic events
 - **Spread Control**: ATR-normalized spread x MaxSpreadMultiplier (1.15)
 
-### MIA — Market Intelligence Agent (Python)
-- **Multi-agent architecture**: SpeedAgent + RiskAgent + GridAgent
-- **AI Brain**: Decision engine with market context awareness
-- **BytamerFX Dashboard v4.7.9**: Real-time web interface (Tailwind CSS + LightweightCharts + 5-tab sidebar)
+### MIA — Market Intelligence Agent (Python v6.2.0)
+- **Multi-agent architecture**: SpeedAgent + RiskAgent + GridAgent + SentimentAgent
+- **AI Brain**: Decision engine with market context awareness (Claude Sonnet 4.6)
+- **Signal Advisor (v4.9.0 NEW)**: EA sends signal request via JSON file -> MIA analyzes with sentiment + news + session data -> approves/rejects/adjusts lot -> EA reads response
+- **4 Authority Levels**: Observer (watch only) -> Advisor (approve/reject signals + lot adjustment) -> Copilot (grid management, future) -> Autopilot (full control, future)
+- **Telegram mode control**: `/mia mode advisor` to enable, `/mia mode observer` to disable
+- **File-based bidirectional communication**: `MQL5/Files/MIA/signal_request.json` <-> `signal_response.json`
+- **3-second timeout safety**: If MIA doesn't respond, EA proceeds with its own decision
+- **BytamerFX Dashboard**: Real-time web interface (Tailwind CSS + LightweightCharts + 5-tab sidebar)
 - **DashboardRT Thread**: 500ms real-time price, spread, and position updates
 - **Telegram Commander**: Remote control via Telegram bot
-- **News Manager**: Economic calendar integration with impact-based filtering
-- **Sentiment Engine**: Market sentiment analysis with Fear & Greed index
+- **News Manager**: Economic calendar integration with impact-based trade blocking
+- **Sentiment Engine**: Fear & Greed Index + RSS news + DXY trend + session analysis
 
 ### Notifications
 - Telegram (HTML format + emoji + balance/equity info, rate limited)
@@ -105,7 +110,10 @@
 | Profile Count | 10 instrument profiles |
 | Indicators | 12 (BHSS combo scoring) |
 | Dashboard | Real-time web UI (port 8765) |
-| MIA Agents | SpeedAgent + RiskAgent + GridAgent |
+| MIA Agents | SpeedAgent + RiskAgent + GridAgent + SentimentAgent |
+| MIA Advisor | Signal approve/reject via JSON file communication |
+| MIA Modes | Observer / Advisor / Copilot / Autopilot |
+| Advisor Timeout | 3000ms (EA proceeds if MIA doesn't respond) |
 
 ---
 
@@ -113,23 +121,27 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v4.8.6 GridGuard)
-├── Config.mqh                 # Central configuration + 10 SymbolProfiles
+├── BytamerFX.mq5              # Main EA (v4.9.0 MIA-Advisor)
+├── Config.mqh                 # Central config + 10 SymbolProfiles + MIA mode
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Grid Reset
 ├── TradeExecutor.mqh          # Trade execution (SL=0 absolute)
 ├── NewsManager.mqh            # Universal News Intelligence
 ├── ChartDashboard.mqh         # MT5 on-chart dashboard overlay
-├── + 8 more modules           # Security, spread, lot calc, notifications...
+├── + 9 more modules           # Security, spread, lot calc, notifications...
 │
-├── MIA/                       # Market Intelligence Agent (Python)
-│   ├── main.py                # MIA Orchestrator (multi-agent)
+├── MIA/                       # Market Intelligence Agent (Python v6.2.0)
+│   ├── main.py                # MIA Orchestrator (multi-agent, multi-thread)
+│   ├── signal_advisor.py      # NEW: EA Signal Advisor (approve/reject/lot adjust)
+│   ├── ea_config.py           # NEW: EA Config.mqh Python mirror (all profiles)
+│   ├── brain.py               # AI Brain decision engine (Claude Sonnet 4.6)
+│   ├── agents.py              # SpeedAgent + RiskAgent + GridAgent + SentimentAgent
+│   ├── sentiment_engine.py    # Fear&Greed + RSS + DXY + Session analysis
+│   ├── news_manager.py        # Economic calendar + trade blocking
+│   ├── telegram_commander.py  # Telegram remote control + /mia mode
 │   ├── dashboard_api.py       # Real-time WebSocket API (port 8765)
-│   ├── dashboard_miav89.html  # BytamerFX Dashboard v4.7.9 (5-tab UI)
-│   ├── brain.py               # AI Brain decision engine
-│   ├── agents.py              # SpeedAgent + RiskAgent + GridAgent
 │   ├── mt5_bridge.py          # MT5 Python API bridge
-│   └── + 10 more modules      # Grid, sentiment, telegram, signals...
+│   └── + 8 more modules       # Grid, signals, patterns, lots, config...
 │
 └── screenshots/               # Dashboard & EA screenshots
 ```
@@ -144,7 +156,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.8.8** | **2026-03-16** | **Balance Tier Lots + MIA Emergency Fix** |
+| **v4.9.0** | **2026-03-16** | **MIA Advisor Integration — Sentiment + News + Session signal advisory** |
+| v4.8.8 | 2026-03-16 | Balance Tier Lots + MIA Emergency Fix |
 | v4.8.7 | 2026-03-13 | Crypto News Exempt + 30s Warmup + MIA Auto-Start Fix |
 | v4.8.6 | 2026-03-13 | Account-Agnostic License + MIA Log Rotation + Partial Close Fix |
 | v4.8.5 | 2026-03-11 | GridGuard — H1 Filter + Brier Score + Floor Fix |

@@ -4,6 +4,69 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.9.0] - 2026-03-16
+
+### MIA Advisor Integration — EA + AI Sinyal Danismani
+
+#### 1. MIA Signal Advisor (YENI SISTEM)
+EA sinyal urettiginde MIA'ya danisir. MIA sentiment, haber, session ve RSI analizi yaparak sinyal onay/red/lot ayarlama karari verir.
+
+**Calisma prensibi:**
+```
+EA sinyal uretir → signal_request.json yazar (sembol, yon, skor, lot, teknik veriler)
+→ MIA 200ms arayla dosyayi kontrol eder
+→ Sentiment + Haber Blackout + Session + RSI analiz eder
+→ signal_response.json yazar (APPROVE / REJECT / ADJUST + lot_override)
+→ EA cevabi okur ve uygular
+→ 3 saniye timeout → EA kendi karariyla devam (guvenli fallback)
+```
+
+**Karar kriterleri:**
+- **Haber Blackout:** Yuksek etkili haber 15dk icerisindeyse → REJECT
+- **Margin kontrolu:** Margin seviyesi %300 altindaysa → REJECT
+- **Sentiment cakismasi:** BUY sinyali + extreme bearish (-60) → REJECT
+- **RSI asiri alim/satim:** RSI>80 + BUY veya RSI<20 + SELL → REJECT
+- **Lot ayarlama:** Tier lot x sentiment carpani x session carpani
+- **Session carpanlari:** Tokyo=0.7, London=1.0, NY=1.0, Overlap=1.2, Off=0.5
+
+#### 2. 4 Yetki Seviyesi
+| Mod | ID | Aciklama |
+|-----|---|----------|
+| OBSERVER | 0 | MIA sadece izler, EA tam otonom (varsayilan) |
+| ADVISOR | 1 | EA sinyal uretince MIA'ya sorar, onay/red/lot ayarlama |
+| COPILOT | 2 | + Grid yonetimi onerileri (gelecek) |
+| AUTOPILOT | 3 | MIA tam kontrol (gelecek) |
+
+Telegram ile anlik gecis: `/mia mode advisor` veya `/mia mode observer`
+
+#### 3. EA Config → MIA Senkronizasyonu (ea_config.py)
+EA'nin Config.mqh'deki TUM degerlerinin Python kopyasi:
+- 10 sembol profili (FOREX, FOREX_JPY, SILVER_XAG, GOLD_XAU, CRYPTO_BTC, vb.)
+- Balance tier lot tablosu (4 kademe)
+- Symbol-to-profile eslestirme
+- Adaptif FIFO hedefi, grid cooldown carpanlari
+- Sentiment lot carpanlari, session carpanlari
+
+#### 4. Versiyon Yonetimi Duzeltmesi
+- MIA versiyon tek kaynaktan: `config.py → MIA_VERSION = "6.2.0"`
+- Telegram mesajlarindaki hardcoded v4.7.3 → dinamik `cfg.MIA_VERSION`
+- EA versiyon: Config.mqh `EA_VERSION = "4.9.0"`
+
+#### Dosyalar (EA)
+- `Config.mqh` — v4.9.0 + MIA_Mode/MIA_TimeoutMs/MIA_EnableFileComm input + ENUM_MIA_MODE + MIAResponse struct
+- `BytamerFX.mq5` — WriteMIASignalRequest() + ReadMIASignalResponse() + WaitForMIAResponse() + CheckMIAModeFile() + JSON parser + CheckForNewSignal MIA entegrasyonu + OnInit/OnTick hooklari
+- `PositionManager.mqh` — Bilinmeyen pozisyon spmLayer=0 fix + RenumberSPMLayers cagri
+
+#### Dosyalar (MIA)
+- `signal_advisor.py` — YENI: Sinyal danisma motoru (evaluate_signal, advisor thread, telegram entegrasyonu)
+- `ea_config.py` — YENI: EA Config.mqh birebir Python kopyasi (tum profiller, tier lotlar)
+- `main.py` — SignalAdvisor import + init + thread + Telegram callback wire + versiyon dinamik
+- `telegram_commander.py` — /mia mode komutu + /mia status + callback'ler + yardim + versiyon dinamik
+- `config.py` — MIA_VERSION = "6.2.0" (tek kaynak)
+- `executor.py` — Tum trade execution devre disi (MIA sadece advisor, EA trader)
+
+---
+
 ## [v4.8.8] - 2026-03-16
 
 ### Balance Tier Lots + MIA Emergency Fix
