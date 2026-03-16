@@ -4,9 +4,29 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.9.7] - 2026-03-16
+
+### SilentLogs — Anti-Spam Silent Returns + HEDGE FailCooldown Fix
+
+#### 1. Tüm Tekrar Loglar Sessiz Return Yapıldı
+Aynı durum devam ederken tekrarlayan loglar tamamen kaldırıldı:
+- `HEDGE IPTAL: ADX...` → sessiz return (önceden 60sn'de tekrar)
+- `HEDGE IPTAL: Oylama...` → sessiz return
+- `RESCUE COOLDOWN: Xsn kaldi` → sessiz return
+- `RESCUE: Zaten aktif hedge var` → sessiz return
+- `NET SETTLE ENGEL: mum yonunde` → sessiz return
+- `NET SETTLE ENGEL: Trend=ANA` → sessiz return
+
+**Prensip:** Açıldı → log. Kapandı → log. Arada sessiz — tekrar log basma.
+
+#### 2. HEDGE FailCooldown Kontrolü
+`CheckRescueHedge()` fonksiyonuna `HEDGE_FailCooldown` kontrolü eklendi. Error 4806 (yetersiz bakiye) alındığında 60sn sessiz bekler.
+
+---
+
 ## [v4.9.6] - 2026-03-16
 
-### SmartReentryGate — SPM Akilli Yeniden Giris Filtresi + Anti-Spam
+### SmartReentryGate — SPM Akilli Yeniden Giris Filtresi
 
 #### 1. SPM Smart Reentry Gate (4 Katmanli Filtre)
 SPM kapandiktan sonra ayni katmanin kör bir sekilde tekrar acilmasini engeller:
