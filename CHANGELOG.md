@@ -4,6 +4,32 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.9.9] - 2026-03-17
+
+### DeepAuditFix — Kapsamli Audit: 4 Kritik Bug Duzeltmesi
+
+#### Bug 1: FIFO Path-B Terfi Sirasi (KRITIK)
+- **Sorun:** `m_mainTicket=0` sonrasi `RefreshPositions()` cagriliyor → rastgele pozisyon ANA oluyordu
+- **Duzeltme:** Sira degistirildi: Once `PromoteOldestSPM()`, sonra `RefreshPositions()`
+
+#### Bug 2: ManageLegacyGroupRecovery Kasa Sismesi (KRITIK)
+- **Sorun:** Kasaya kar eklenip SONRA close cagriliyor. Close basarisiz olursa sonraki tick tekrar ekleniyor
+- **Duzeltme:** Once close, basariliysa kasaya ekle
+
+#### Bug 3: HEDGE→ANA Kasa Tutarsizligi (YUKSEK)
+- **Sorun:** ManageHedgePositions kasayi sifirliyordu ama PromoteHedgeToMain koruyordu
+- **Duzeltme:** Her iki yol da kasayi koruyor
+
+#### Bug 4: ClosePosWithNotification Cooldown Eksigi (ORTA)
+- **Sorun:** Close basarisiz olunca her tick retry → spam + gereksiz islem
+- **Duzeltme:** GlobalVariable ile 30sn fail cooldown eklendi
+
+#### Bug 5: EA Telegram Token Devre Disi
+- EA'nin kendi Telegram token'i (7682893549) bosaltildi
+- Artik sadece MIA (OpenFang) uzerinden mesaj gidecek
+
+---
+
 ## [v4.9.8] - 2026-03-17
 
 ### PromotionChain — HEDGE→ANA Terfi Zinciri

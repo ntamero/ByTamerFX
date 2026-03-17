@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v4.9.8 — PromotionChain** - Professional automated forex trading system with **HEDGE→ANA Promotion Chain** + hybrid signal engine + Anti-Spam Silent Logs + SPM Smart Reentry Gate + MIA AI Advisor integration + H1 trend filter + Brier Score tracking + zigzag SPM recovery + smart FIFO candle reversal + balance-tier lot scaling.
+**BytamerFX v4.9.9 — DeepAuditFix** - Professional automated forex trading system with **Deep Audit Fixes** (FIFO order + kasa leak + close cooldown) + HEDGE→ANA Promotion Chain + hybrid signal engine + Anti-Spam Silent Logs + SPM Smart Reentry Gate + MIA AI Advisor integration + zigzag SPM recovery + smart FIFO candle reversal + balance-tier lot scaling.
 
 > **NO SL** | **Never close at a loss** | **MIA Advisor (Sentiment + News + Session)** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Crypto 7/24**
 
@@ -121,7 +121,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v4.9.8 PromotionChain)
+├── BytamerFX.mq5              # Main EA (v4.9.9 DeepAuditFix)
 ├── Config.mqh                 # Central config + 10 SymbolProfiles + MIA mode
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Grid Reset
@@ -156,7 +156,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v4.9.8** | **2026-03-17** | **PromotionChain — HEDGE→ANA Terfi Zinciri (orphan pozisyon fix)** |
+| **v4.9.9** | **2026-03-17** | **DeepAuditFix — FIFO Sıra Fix + Kasa Leak Fix + Close Cooldown** |
+| v4.9.8 | 2026-03-17 | PromotionChain — HEDGE→ANA Terfi Zinciri (orphan pozisyon fix) |
 | v4.9.7 | 2026-03-16 | SilentLogs — Anti-Spam Silent Returns + HEDGE FailCooldown Fix |
 | v4.9.6 | 2026-03-16 | SmartReentryGate — SPM Reentry Filter (ADX+Cooldown+Candle+MACD) |
 | v4.9.5 | 2026-03-16 | ForexMinClose-Fix — FOREX minCloseProfit 0.80→2.0 |
