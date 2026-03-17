@@ -4,6 +4,40 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.0.0] - 2026-03-17
+
+### FullAudit — Tam Audit: 10 Bug Fix + Adaptif FIFO + Orphan DCA
+
+#### v4.9.9'dan ek duzeltmeler:
+
+1. **ANA kari kasaya eklenmez (Bug 6.3)**
+   - SmartClose terfi yolunda `m_spmClosedProfitTotal += profit` kaldiridi
+   - Kasa sadece SPM karlarindan olusur, ANA kari total realize kara gider
+   - Eski hata: ANA kari kasaya eklenip sonraki FIFO'yu erken tetikliyordu
+
+2. **OpenDCA restart-safe fail cooldown (Bug 3.1)**
+   - GlobalVariable ile `DCA_FailCooldown_` eklendi (60sn)
+   - EA restart sonrasi da cooldown korunur
+
+3. **Orphan DCA → SPM donusumu (Bug 2.1)**
+   - RefreshPositions sonunda parent ticket kontrolu
+   - Parent SPM kapanmissa → DCA otomatik SPM'e donusturulur
+   - Artik DCA orphan kalip sonsuza kadar zararda kalmaz
+
+4. **BiDir grid direction stale fix (Bug 5.2)**
+   - PromoteOldestSPM'de `m_activeGridDir` da guncelleniyor
+   - Terfi sonrasi BiDir modda yanlis yon tespit edilmez
+
+5. **Adaptif FIFO aktive edildi (Bug 7.6)**
+   - CheckFIFOTarget artik `GetAdaptiveFIFOTarget()` kullaniyor
+   - Bakiye < $200 → $3 hedef, < $500 → $4, < $1000 → $5, >= $1000 → $6
+   - Zaman decay: 4+ saat → %40, 2-4 saat → %60, 1-2 saat → %80
+
+6. **Dead code temizligi (Bug 7.1)**
+   - CheckNetSettlement icindeki ulasilamaz ANA promotion kodu kaldirildi
+
+---
+
 ## [v4.9.9] - 2026-03-17
 
 ### DeepAuditFix — Kapsamli Audit: 4 Kritik Bug Duzeltmesi
