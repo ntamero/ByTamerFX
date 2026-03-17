@@ -4,6 +4,26 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v4.9.8] - 2026-03-17
+
+### PromotionChain — HEDGE→ANA Terfi Zinciri
+
+#### Sorun
+ANA kapandığında ve SPM kalmadığında HEDGE pozisyonlar orphan (yetim) kalıyordu.
+Sistem "pozisyon yok → reset" yapıp HEDGE'i görmezden geliyordu → zarardaki HEDGE sonsuza kadar açık kalıyordu.
+
+#### Düzeltmeler
+1. **`PromoteHedgeToMain()` fonksiyonu eklendi** — En eski HEDGE → ANA terfi
+2. **5 farklı terfi noktasına HEDGE fallback eklendi:**
+   - ANA kar kapanışı → SPM yoksa → HEDGE var mı? → HEDGE→ANA
+   - `PromoteOldestSPM()` içinde SPM bulunamazsa → HEDGE→ANA
+   - FIFO ANA kapanışı sonrası → SPM yoksa → HEDGE→ANA
+   - Trend dönüşü ANA kapanışı → SPM yoksa → HEDGE→ANA
+   - Net Settlement ANA kapanışı → SPM yoksa → HEDGE→ANA
+3. **Terfi zinciri:** ANA → SPM1 → SPM2 → ... → HEDGE (tam döngü bitene kadar)
+
+---
+
 ## [v4.9.7] - 2026-03-16
 
 ### SilentLogs — Anti-Spam Silent Returns + HEDGE FailCooldown Fix
