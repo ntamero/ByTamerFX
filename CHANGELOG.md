@@ -4,6 +4,27 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.0.3] - 2026-03-18
+
+### AutoTradeGuard — Auto Trading Alert + Zigzag Grid Fix
+
+1. **Auto Trading Alert (OnInit)**
+   - EA yuklendiginde auto trading kapaliysa Alert popup gosterir
+   - Terminal AlgoTrading butonu ve EA Properties ayrı ayrı kontrol edilir
+   - Kullaniciya net yonlendirme: "Allow Algo Trading isaretleyin"
+
+2. **Zigzag Grid Unlock (v5.0.2)**
+   - "TREND DEGISIM ENGELLENDI" kilidi kaldirildi — grid yonu artik serbestce guncellenir
+   - ManageTrendReversal sonrasi `return` kaldirildi — SPM yonetimi atlanmaz
+   - Hedge katmanlar (SPM2, SPM4, SPM6) Gate 3+4'ten muaf
+
+3. **PartialClose Spam Fix (v5.0.1)**
+   - Broker "PartialClose" comment degisikligi artik SPM olarak taniniyor
+   - Ticket→layer cache sistemi ile RenumberSPMLayers spam onlendi
+   - Hash-bazli log tekrar engelleme
+
+---
+
 ## [v5.0.0] - 2026-03-17
 
 ### FullAudit — Tam Audit: 10 Bug Fix + Adaptif FIFO + Orphan DCA
