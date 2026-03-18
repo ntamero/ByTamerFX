@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v5.0.0 — FullAudit** - Professional automated forex trading system with **10 Bug Fix Full Audit** + Adaptive FIFO + Orphan DCA Protection + HEDGE→ANA Promotion Chain + hybrid signal engine + Anti-Spam Silent Logs + SPM Smart Reentry Gate + MIA AI Advisor integration + zigzag SPM recovery + smart FIFO candle reversal + balance-tier lot scaling.
+**BytamerFX v5.0.3 — AutoTradeGuard** - Professional automated forex trading system with **Auto Trading Alert** + PartialClose Fix + Zigzag Grid Unlock + Hedge Gate Exemption + Adaptive FIFO + Orphan DCA Protection + hybrid signal engine + MIA AI Advisor integration + zigzag SPM recovery + balance-tier lot scaling.
 
 > **NO SL** | **Never close at a loss** | **MIA Advisor (Sentiment + News + Session)** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Crypto 7/24**
 
