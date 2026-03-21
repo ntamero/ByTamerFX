@@ -4,6 +4,47 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.0.4] - 2026-03-21
+
+### ProfitTierScale — Balance Tier Profit Scaling
+
+1. **Balance Tier Profit Scaling (ApplyBalanceTierScaling)**
+   - `$0-200`: Baz degerler (degisiklik yok)
+   - `$200-500`: ANA/SPM TP x1.3, FIFO x1.5, SPM tetik x1.15
+   - `$500-1000`: ANA/SPM TP x1.6, FIFO x2.0, SPM tetik x1.3
+   - `$1000+`: ANA/SPM TP x2.0, FIFO x2.5, SPM tetik x1.5
+   - CandleClose, RescueHedge, MinCloseProfit, GridLossMinUSD de olceklenir
+   - `GetSymbolProfile()` return oncesi `AccountInfoDouble(ACCOUNT_BALANCE)` ile otomatik uygulama
+
+2. **Adaptif FIFO Hedefi Guncelleme (GetAdaptiveFIFOTarget)**
+   - `$0-200`: $3 (degisiklik yok)
+   - `$200-500`: $4 → $5
+   - `$500-1000`: $5 → $8
+   - `$1000+`: $6 → **$15**
+   - Zaman decay hala uygulanir (4h+ = %40, min $2)
+
+3. **Global Input Parametreleri ($1000 hesap icin)**
+   - `DailyProfitTarget`: $10 → **$1000**
+   - `MaxCycleLossUSD`: -$15 → **-$30**
+   - `PartialCloseTriggerUSD`: $5 → **$15**
+   - `BreakevenTriggerUSD`: $3 → **$5**
+   - `PeakMinProfit`: $2 → **$4**
+   - `QuickProfitUSD`: $1.5 → **$4**
+   - `HedgePeakMinProfit`: $8 → **$15**
+   - `MaxTotalVolume`: 2.0 → **5.0 lot**
+
+4. **$1000+ Orantili Efektif Degerler (BTC ornegi)**
+   - ANA TP: $8 → **$16**, SPM TP: $6 → **$12**, FIFO: $5 → **$12.5**
+   - SPM Tetik: -$5 → **-$7.5**, Rescue Hedge: -$7 → **-$10.5**
+
+### Dosyalar
+- `Config.mqh` — v5.0.4, ApplyBalanceTierScaling(), input parametreler guncellendi
+- `PositionManager.mqh` — GetAdaptiveFIFOTarget() $1000+ = $15
+- `BytamerFX.mq5` — Version 5.04
+- `MIA/ea_config.py` — Version 5.0.4
+
+---
+
 ## [v5.0.3] - 2026-03-18
 
 ### AutoTradeGuard — Auto Trading Alert + Zigzag Grid Fix
