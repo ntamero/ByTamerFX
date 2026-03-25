@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v5.0.4 — ProfitTierScale** - Professional automated forex trading system with **Balance Tier Profit Scaling** + Auto Trading Alert + Adaptive FIFO ($15 @ $1000+) + hybrid signal engine + MIA AI Advisor integration + zigzag SPM recovery + balance-tier lot scaling.
+**BytamerFX v5.1.1 — SafeGrid** - Professional automated forex trading system with **Complete FailCooldown Coverage** + **Profile Tier Lot** + Balance Tier Profit Scaling + Adaptive FIFO ($15 @ $1000+) + hybrid signal engine + MIA Observer + zigzag SPM recovery.
 
 > **NO SL** | **Never close at a loss** | **MIA Advisor (Sentiment + News + Session)** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Crypto 7/24**
 
@@ -121,7 +121,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v5.0.4 ProfitTierScale)
+├── BytamerFX.mq5              # Main EA (v5.1.1 SafeGrid)
 ├── Config.mqh                 # Central config + 10 SymbolProfiles + MIA mode
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Grid Reset
@@ -156,7 +156,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v5.0.4** | **2026-03-21** | **ProfitTierScale — Balance Tier Profit Scaling ($1000+ x2 TP/SPM, x2.5 FIFO)** |
+| **v5.1.1** | **2026-03-25** | **SafeGrid — OpenNewMain FailCooldown + TierLot + DD=90% + MIA Observer** |
+| v5.0.4 | 2026-03-21 | ProfitTierScale — Balance Tier Profit Scaling ($1000+ x2 TP/SPM, x2.5 FIFO) |
 | v5.0.3 | 2026-03-18 | AutoTradeGuard — Auto Trading Alert + Zigzag Grid Fix |
 | **v5.0.0** | **2026-03-17** | **FullAudit — 10 Bug Fix + Adaptif FIFO + Orphan DCA + BiDir Fix** |
 | v4.9.9 | 2026-03-17 | DeepAuditFix — FIFO Sıra Fix + Kasa Leak Fix + Close Cooldown |
