@@ -4,6 +4,32 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.1.1] - 2026-03-25
+
+### SafeGrid — FailCooldown + TierLot + Protection Tuning
+
+1. **OpenNewMainTrade Fail Cooldown (Anti-Spam)**
+   - 60sn GlobalVariable cooldown eklendi (`MAIN_FailCooldown_SYMBOL`)
+   - Basarili acilis → cooldown temizle, fail → 60sn bekleme
+   - Tum trade fonksiyonlari artik FailCooldown iceriyor (MAIN/SPM/DCA/CLOSE/HEDGE/FIFO)
+
+2. **OpenNewMainTrade Balance Tier Lot**
+   - `BaseLotPer1000` hesaplamasi yerine profil bazli tier lot
+   - $926 bakiye: Forex→0.08, BTC→0.05, XAU→0.03 (LotCalculator ile birebir)
+   - Profil `minLotOverride` da uygulanir
+
+3. **Koruma Parametreleri Guncelleme**
+   - `MaxDrawdownPercent`: 70% → **90%** (son care)
+   - `MaxCycleLossUSD`: -$30 → **-$50**
+   - `DailyProfitTarget`: $1000 → **$5000**
+
+4. **MIA Observer Modu**
+   - `MIA_TRADE_ENABLED = False` — MIA trade acmaz/kapatmaz
+   - EA (BytamerFX) tum trading kararlarini ve execution'i yapar
+   - MIA sadece izleme + Telegram bildirim + Dashboard + Rapor
+
+---
+
 ## [v5.0.4] - 2026-03-21
 
 ### ProfitTierScale — Balance Tier Profit Scaling
