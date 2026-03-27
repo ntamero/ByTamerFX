@@ -1,8 +1,8 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v5.1.1 — SafeGrid** - Professional automated forex trading system with **Complete FailCooldown Coverage** + **Profile Tier Lot** + Balance Tier Profit Scaling + Adaptive FIFO ($15 @ $1000+) + hybrid signal engine + MIA Observer + zigzag SPM recovery.
+**BytamerFX v5.2.0 — PumpCycle** - Professional automated forex trading system with **SPM Pump Cycle** + **Trailing Close** + **Smart Flip** + Trend Reversal Mode + Balance Tier Profit Scaling + Adaptive FIFO + hybrid signal engine + MIA Observer.
 
-> **NO SL** | **Never close at a loss** | **MIA Advisor (Sentiment + News + Session)** | **Zigzag SPM Recovery** | **Smart FIFO** | **Balance-Adaptive Lots** | **Crypto 7/24**
+> **NO SL** | **SPM Pump Cycle** | **Trailing Close ($8+ in strong trend)** | **Smart Flip** | **Trend Reversal Mode** | **Balance-Adaptive Lots** | **Crypto 7/24**
 
 ---
 
@@ -40,9 +40,13 @@
 - MACD + RSI divergence engine (regular + hidden)
 
 ### Position Management - KazanKazan-Pro (v4.7.9)
-- **Zigzag SPM Pattern**: SPM1=MAIN direction (DCA), SPM2=reverse, SPM3=reverse again (alternating)
+- **SPM Pump Cycle (v5.2.0)**: SPM2 closes at $8+ profit → immediately reopens via CalcReopenScore (trend+signal+candle combined score >= 40)
+- **Trailing Close**: Strong trend (ADX>=35) → hold beyond $8, trailing floor at peak-$2
+- **Smart Flip**: SPM profitable + trend reversed strongly → close + open in new trend direction instantly
+- **Trend Reversal Mode**: When trend reverses against MAIN → all SPMs open in trend direction (zigzag suspended), 1.5x profit target, lot boost
+- **Zigzag SPM Pattern**: SPM1=MAIN direction (DCA), SPM2=reverse, SPM3=reverse (alternating, normal mode)
 - **Layer-Based Triggers**: Each SPM triggers on PREVIOUS SPM's own loss (not MAIN loss)
-- **SPM Max 3 Layers**: Deeper recovery with controlled risk
+- **SPM Max 3 Layers**: Deeper recovery with controlled risk (max 8 positions per symbol)
 - **Smart FIFO**: SPM profits accumulate to offset main loss (net >= +$5 closes MAIN)
 - **FIFO Candle Reversal**: If candle turns toward MAIN → don't close MAIN, close wrong-side SPM instead
 - **Balance Tier Lots**: BTC $0-200: 0.02, $200-500: 0.03, $500-1K: 0.05, $1K+: 0.08 | Forex $0-200: 0.04, $200-500: 0.06, $500-1K: 0.08, $1K+: 0.12
@@ -100,6 +104,10 @@
 | Min Balance | $10 |
 | Min Signal Score | 40/100 |
 | SPM Max Layers | 3 (per profile, configurable) |
+| SPM Close Profit | $8 (all profiles, v5.2.0) |
+| Max Positions/Symbol | 8 (hard cap, v5.2.0) |
+| SPM Reopen Score | >= 40/100 (trend+signal+candle) |
+| Trailing Close Drop | $2 from peak (strong trend) |
 | FIFO Net Target | $5 (adaptive by balance) |
 | Grid Reset Threshold | -max($30, 25% equity) |
 | Margin Warning | <300% (block new positions) |
@@ -121,7 +129,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v5.1.1 SafeGrid)
+├── BytamerFX.mq5              # Main EA (v5.2.0 PumpCycle)
 ├── Config.mqh                 # Central config + 10 SymbolProfiles + MIA mode
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Grid Reset
