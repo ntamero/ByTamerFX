@@ -4,6 +4,57 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.2.0] - 2026-03-27
+
+### PumpCycle — SPM Reopen + Trailing Close + Smart Flip + Trend Reversal
+
+**Problem:** %80 win rate ama net zararda. SPM2 kapandiktan sonra yeniden acilmiyor, kasa dolmuyor, ANA pozisyonlar gunlerce acik kalarak buyuk zarar biriktiriyordu.
+
+1. **SPM Pump Cycle (CalcReopenScore + CheckSPMReopen)**
+   - Kapanan SPM katmanlari artik otomatik yeniden acilir
+   - Combined score (0-100): Trend(40p) + Sinyal(30p) + Mum(30p) + DI bonus(10p)
+   - Esik >= 40 → yeniden acilis onaylanir
+   - Reentry cooldown: Hedge=30sn, DCA=60sn (eski 120sn)
+   - Pump dongusu: SPM2 kapat $8 → hemen yeni SPM2 ac → tekrar $8 → kasa hizla dolar
+
+2. **spmCloseProfit $8 (Tum Profiller)**
+   - Forex: $4→$8, BTC: $6→$8, XAU/XAG: $5→$8
+   - Her SPM kapanisinda kasa +$8 minimum garanti
+   - Balance tier scaling ile: $1000+ hesapta $16 hedef
+
+3. **Trailing Close (Guclu Trend)**
+   - TREND_STRONG (ADX>=35): peak - $2 trailing floor, min $8
+   - SPM $8'de kapatilmaz, trendde tutulur → $10-20 kapanislar
+   - TREND_MODERATE: mevcut TP2 (1.5x = $12) davranisi korundu
+
+4. **Smart Flip Mekanizmasi**
+   - SPM2=SELL karda + trend BUY'a dondu (guclu) → kapat + hemen BUY ac
+   - CalcReopenScore >= 40 kontrol (trend + sinyal + mum analizi)
+   - Cooldown YOK — flip aninda pozisyon acilir
+   - Trend zayifsa veya belirsizse flip yapilmaz (sadece kapat)
+
+5. **Trend Donusu Tek Yon Modu**
+   - Trend ANA'nin tersine dondu + MODERATE+ → tum SPM'ler trend yonunde
+   - Zigzag IPTAL → hepsi ayni yonde acilir (3x karlilik)
+   - Kar hedefi %50 boost ($8→$12)
+   - Lot boost: ADX>=35 → +30%, ADX>=25 → +15%
+   - ANA kapaninca veya trend geri donunce otomatik RESET
+
+6. **Trend Destekli Erken Kapatma Engeli**
+   - Trend guclu + pozisyon yonunde → MumDonus_TP ve MumDonus_Teyitli BYPASS
+   - Kucuk mum geri cekilmeleri gecici → HOLD, maximum karlilik icin bekle
+   - spmCloseProfit'e ulasincs trendHold + trailing close devreye girer
+
+7. **MaxPositionsPerSymbol = 8**
+   - Sembol basina hard cap: 8 pozisyon (ANA + SPM + DCA + Hedge dahil)
+   - Guard: ManageMainInLoss, ManageActiveSPMs, ManageDCA, CheckRescueHedge, OpenHedge
+
+8. **Profil Bazli Spread Filtresi (v5.1.1 devami)**
+   - Forex=10, USDJPY=12, XAU=20, XAG=25, BTC=1500 points default
+   - EA gece/kapanista baslarsa bile dogru kalibrasyon
+
+---
+
 ## [v5.1.1] - 2026-03-25
 
 ### SafeGrid — FailCooldown + TierLot + Protection Tuning
