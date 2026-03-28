@@ -4,6 +4,44 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.2.3] - 2026-03-28
+
+### OffsetPump — Offset Lock + Smart Offset Pump + ADX Lot Rebalance
+
+**Problem:** BUY offset SPM'ler bireysel kar hedefiyle hizla kapaniyor, kar kasaya gidiyor ama SELL ANA tek basina kaliyor. ANA'nin zarari kasa birikiminden daha hizli buyuyor, FIFO asla tetiklenmiyor.
+
+1. **Offset Lock (IsLastOffsetSPM)**
+   - Son offset SPM (ANA'nin tersi yondeki tek pozisyon) bireysel kar hedefiyle KAPATILMAZ
+   - PeakDrop, TrailingFloor, MumDonus_TP close triggerlari SKIP edilir
+   - Offset korunarak ANA tek tarafli kalma riski onlenir
+   - TP2 hard limit hala gecerli (asiri kar riski icin guvenlik)
+
+2. **Smart Offset Pump (TrySmartReopen)**
+   - Mum donusunde offset tepeden kapatilir, kar kasaya alinir
+   - Mum + Trend ANA yonunde → ANA yonunde DCA acilir (3-5x kar potansiyeli)
+   - Mum + Trend hala ters → yeni offset acilir (koruma devam eder)
+   - CalcReopenScore >= 40 kontrol (trend + sinyal + mum analizi)
+
+3. **ADX + Trend Reversal Lot Boost Azaltildi (v5.2.2)**
+   - ADX Bonus: max %15 → **%8** (/150 → /300 yavas artis)
+   - Trend Reversal Strong: +%30 → **+%10**
+   - Trend Reversal Moderate: +%15 → **+%5**
+   - Eski worst case: 0.08 * 1.15 * 1.3 = 0.12 | Yeni: 0.08 * 1.08 * 1.10 = 0.095
+
+4. **CalcSPMLot Balance Scaling Fix (v5.2.1)**
+   - v4.7.7 balance scaling KALDIRILDI (bal>=500 → 1.4x carpan)
+   - Tier sistemi zaten balance'a gore lot belirliyor, ek carpan gereksizdi
+   - BTC ANA: 0.23 → 0.08 (tier4 dogru deger)
+
+5. **Restart FIFO State Fix (v5.2.1)**
+   - LoadFIFOState: m_mainTicket=0 ama pozisyonlar var → GV korunur
+   - MT5 sync delay'de GlobalVariable silme hatasi duzeltildi
+
+6. **MIA-CMD Log Spam Fix**
+   - HTTP 404 logu 10 dakikada 1 kez (eski: her 30 saniye)
+
+---
+
 ## [v5.2.0] - 2026-03-27
 
 ### PumpCycle — SPM Reopen + Trailing Close + Smart Flip + Trend Reversal

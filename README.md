@@ -1,8 +1,8 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v5.2.0 — PumpCycle** - Professional automated forex trading system with **SPM Pump Cycle** + **Trailing Close** + **Smart Flip** + Trend Reversal Mode + Balance Tier Profit Scaling + Adaptive FIFO + hybrid signal engine + MIA Observer.
+**BytamerFX v5.2.3 — OffsetPump** - Professional automated forex trading system with **Offset Lock + Smart Offset Pump** + SPM Pump Cycle + Trailing Close + Smart Flip + Trend Reversal Mode + Balance Tier Profit Scaling + Adaptive FIFO + hybrid signal engine + MIA Observer.
 
-> **NO SL** | **SPM Pump Cycle** | **Trailing Close ($8+ in strong trend)** | **Smart Flip** | **Trend Reversal Mode** | **Balance-Adaptive Lots** | **Crypto 7/24**
+> **NO SL** | **Offset Lock** | **Smart Offset Pump** | **SPM Pump Cycle** | **Trailing Close** | **Smart Flip** | **Balance-Adaptive Lots** | **Crypto 7/24**
 
 ---
 
@@ -39,11 +39,13 @@
 - Market Structure analysis (HH/HL/LH/LL)
 - MACD + RSI divergence engine (regular + hidden)
 
-### Position Management - KazanKazan-Pro (v4.7.9)
+### Position Management - KazanKazan-Pro (v5.2.3)
+- **Offset Lock (v5.2.3)**: Last offset SPM (opposite to MAIN) never closes at individual profit target — stays open as protection until FIFO paired close
+- **Smart Offset Pump (v5.2.3)**: On candle reversal, offset closes at peak → TrySmartReopen: if candle+trend support MAIN → open DCA (3-5x profit potential); if still against MAIN → open new offset (protection continues)
 - **SPM Pump Cycle (v5.2.0)**: SPM2 closes at $8+ profit → immediately reopens via CalcReopenScore (trend+signal+candle combined score >= 40)
 - **Trailing Close**: Strong trend (ADX>=35) → hold beyond $8, trailing floor at peak-$2
 - **Smart Flip**: SPM profitable + trend reversed strongly → close + open in new trend direction instantly
-- **Trend Reversal Mode**: When trend reverses against MAIN → all SPMs open in trend direction (zigzag suspended), 1.5x profit target, lot boost
+- **Trend Reversal Mode**: When trend reverses against MAIN → all SPMs open in trend direction (zigzag suspended)
 - **Zigzag SPM Pattern**: SPM1=MAIN direction (DCA), SPM2=reverse, SPM3=reverse (alternating, normal mode)
 - **Layer-Based Triggers**: Each SPM triggers on PREVIOUS SPM's own loss (not MAIN loss)
 - **SPM Max 3 Layers**: Deeper recovery with controlled risk (max 8 positions per symbol)
@@ -129,14 +131,16 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v5.2.0 PumpCycle)
+├── BytamerFX.mq5              # Main EA (v5.2.3 OffsetPump)
 ├── Config.mqh                 # Central config + 10 SymbolProfiles + MIA mode
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
-├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Grid Reset
+├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Offset Lock + Grid Reset
 ├── TradeExecutor.mqh          # Trade execution (SL=0 absolute)
+├── MIACommander.mqh           # MIA remote command bridge (v5.0.5)
 ├── NewsManager.mqh            # Universal News Intelligence
 ├── ChartDashboard.mqh         # MT5 on-chart dashboard overlay
-├── + 9 more modules           # Security, spread, lot calc, notifications...
+├── DashboardSync.mqh          # Web dashboard sync
+├── + 8 more modules           # Security, spread, lot calc, notifications...
 │
 ├── MIA/                       # Market Intelligence Agent (Python v6.2.0)
 │   ├── main.py                # MIA Orchestrator (multi-agent, multi-thread)
@@ -164,6 +168,9 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v5.2.3** | **2026-03-28** | **OffsetPump — Offset Lock + Smart Offset Pump + ADX Lot Rebalance** |
+| v5.2.1 | 2026-03-28 | PumpCycle-Hotfix — CalcSPMLot Balance Scaling Fix + Restart FIFO Fix + Double Open Fix |
+| v5.2.0 | 2026-03-27 | PumpCycle — SPM Reopen + Trailing Close + Smart Flip + Trend Reversal |
 | **v5.1.1** | **2026-03-25** | **SafeGrid — OpenNewMain FailCooldown + TierLot + DD=90% + MIA Observer** |
 | v5.0.4 | 2026-03-21 | ProfitTierScale — Balance Tier Profit Scaling ($1000+ x2 TP/SPM, x2.5 FIFO) |
 | v5.0.3 | 2026-03-18 | AutoTradeGuard — Auto Trading Alert + Zigzag Grid Fix |
