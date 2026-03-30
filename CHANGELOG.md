@@ -4,6 +4,37 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.2.4] - 2026-03-30
+
+### IntegrityGuard — PartialClose Fix + HEDGE Guard + MAIN Enforcer
+
+**Problem:** PartialClose 3 ayri PRIMARY pozisyon olusturuyordu (0.21+0.12+0.07 lot). Her biri icin SPM/DCA/HEDGE aciliyordu. HEDGE ANA ile ayni yonde acilabiliyordu (koruma degil zarar carpani). Pozisyon sayisi kontrolsuz artiyordu.
+
+1. **PartialClose ANA Tanima Fix**
+   - PartialClose kalintilari artik dogru tanimlaniyor: ilk parca = ANA, digerler = phantom (layer=99)
+   - Phantom parcalar SPM/DCA/HEDGE tetiklemez
+   - ESKI: 3 PartialClose = 3 ANA → 3x SPM/DCA acma | YENI: 1 ANA + 2 phantom
+
+2. **HEDGE Yon Korumasi**
+   - HEDGE ANA ile ayni yonde ACMA yasagi (`OpenHedge` son guvenlik katmani)
+   - Orphan state (ANA yok) durumunda HEDGE acma engeli
+   - ESKI: oylama ANA yonunde 2+ oy verirse HEDGE ANA yonunde aciliyordu
+
+3. **Tek ROLE_MAIN Enforcer**
+   - `RefreshPositions()` sonunda duplikat ANA kontrolu
+   - Birden fazla ROLE_MAIN varsa: en buyuk lotlu kalir, digerler phantom(99)
+   - Her tick'te tutarlilik garantisi
+
+4. **ManageDCA Phantom Filtresi**
+   - `spmLayer >= 99` pozisyonlar DCA tetiklemez
+   - ESKI: 0.21 lot phantom SPM zarardayken DCA aciyordu (0.21 lot israf)
+
+5. **GetActiveSPMCount Phantom Filtresi**
+   - Phantom(99) parcalar SPM sayimina dahil edilmez
+   - SPM limiti dogru hesaplanir (phantom'lar slot doldurmaz)
+
+---
+
 ## [v5.2.3] - 2026-03-28
 
 ### OffsetPump — Offset Lock + Smart Offset Pump + ADX Lot Rebalance
