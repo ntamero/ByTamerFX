@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v5.2.3 — OffsetPump** - Professional automated forex trading system with **Offset Lock + Smart Offset Pump** + SPM Pump Cycle + Trailing Close + Smart Flip + Trend Reversal Mode + Balance Tier Profit Scaling + Adaptive FIFO + hybrid signal engine + MIA Observer.
+**BytamerFX v5.2.4 — IntegrityGuard** - Professional automated forex trading system with **Offset Lock + Smart Offset Pump** + SPM Pump Cycle + Trailing Close + Smart Flip + Trend Reversal Mode + Balance Tier Profit Scaling + Adaptive FIFO + hybrid signal engine + MIA Observer.
 
 > **NO SL** | **Offset Lock** | **Smart Offset Pump** | **SPM Pump Cycle** | **Trailing Close** | **Smart Flip** | **Balance-Adaptive Lots** | **Crypto 7/24**
 
@@ -131,7 +131,7 @@
 
 ```
 BytamerFX/
-├── BytamerFX.mq5              # Main EA (v5.2.3 OffsetPump)
+├── BytamerFX.mq5              # Main EA (v5.2.4 IntegrityGuard)
 ├── Config.mqh                 # Central config + 10 SymbolProfiles + MIA mode
 ├── SignalEngine.mqh           # 12-indicator BHSS hybrid signal system
 ├── PositionManager.mqh        # Zigzag SPM + Smart FIFO + Offset Lock + Grid Reset
@@ -168,7 +168,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v5.2.3** | **2026-03-28** | **OffsetPump — Offset Lock + Smart Offset Pump + ADX Lot Rebalance** |
+| **v5.2.4** | **2026-03-30** | **IntegrityGuard — PartialClose Fix + HEDGE Guard + MAIN Enforcer** |
+| v5.2.3 | 2026-03-28 | OffsetPump — Offset Lock + Smart Offset Pump + ADX Lot Rebalance |
 | v5.2.1 | 2026-03-28 | PumpCycle-Hotfix — CalcSPMLot Balance Scaling Fix + Restart FIFO Fix + Double Open Fix |
 | v5.2.0 | 2026-03-27 | PumpCycle — SPM Reopen + Trailing Close + Smart Flip + Trend Reversal |
 | **v5.1.1** | **2026-03-25** | **SafeGrid — OpenNewMain FailCooldown + TierLot + DD=90% + MIA Observer** |
