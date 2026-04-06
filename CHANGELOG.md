@@ -4,6 +4,50 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.2.8] - 2026-04-06
+
+### SignalPump — ETH Rebalance + Signal Group + MinScore45 + LicenseGuard
+
+1. **ETH (CryptoAlt) Profil Rebalance**
+   - Lot tier: 0.01/0.02/0.03/0.05 → **0.05/0.08/0.12/0.18** (daha etkili pozisyon)
+   - anaCloseProfit: $7 → **$4** (dusuk votalite icin daha kolay hedef)
+   - spmCloseProfit: $8 → **$4** | minCloseProfit: $4 → **$2**
+   - peakMinProfit/quickProfitUSD: $5 → **$4**
+   - candleCloseModerate: $5.50 → **$5** | candleCloseStrong: $8 → **$7**
+
+2. **Sinyal Grubu Entegrasyonu**
+   - Score >= 45 sinyaller otomatik Telegram grubuna gonderilir
+   - Ayri bot token (7682893549) + BytamerAI_Support grubu
+   - Mesaj: Sembol, Skor, Alis/Satis, TP1 (%), Tahmini sure, Trend+ADX
+   - MQL5 unicode emoji destegi (ShortToString surrogate pairs)
+
+3. **SignalMinScore 40 → 45**
+   - Daha kaliteli giris sinyalleri
+   - SPM_ReopenMinScore da 45'e yukseltildi
+
+4. **Balance Tier Scaling Tamamlandi (v5.2.7)**
+   - Baz degerler $0-200 tier icin: BTC ana=$5/spm=$5, EUR ana=$4/spm=$4
+   - peakMinProfit + quickProfitUSD tum tierlarda olceklenir
+   - FIFO hedefi profil bazli (hardcoded degil)
+
+5. **Lisans Hesap Kontrolu (v5.2.7)**
+   - account_mismatch → EA DURUR (eski: sadece uyari)
+   - ExpectedAccountNumber default=0 (sunucu kontrolu yeterli)
+
+6. **Orphan DCA Log Fix (v5.2.5)**
+   - Ayni ticket icin tek seferlik log (spam onleme)
+   - PrintDetailedStatus 30sn → 300sn (5dk)
+
+7. **7 Critical Fix (v5.2.6)**
+   - FIFO Yol-A + Net Settlement offset lock korumasi
+   - TrendReversalMode zigzag KORUNUR (tek yon birikim engeli)
+   - ManageActiveSPMs 2sn tick guard
+   - CalcSPMLot fragment lot → tier fallback
+   - PromoteOldestSPM DCA dahil
+   - GetRealPositionCount phantom haric
+
+---
+
 ## [v5.2.4] - 2026-03-30
 
 ### IntegrityGuard — PartialClose Fix + HEDGE Guard + MAIN Enforcer
