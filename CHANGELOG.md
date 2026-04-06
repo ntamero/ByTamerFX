@@ -4,6 +4,22 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.2.9] - 2026-04-06
+
+### FastGrid — Forex Lot + SPM Tetik Rebalance
+
+1. **Forex Lot Tier Artisi**
+   - lotTier1: 0.04 → **0.05** | lotTier2: 0.06 → **0.08**
+   - lotTier3: 0.08 → **0.10** | lotTier4: 0.12 → **0.14**
+   - Daha etkili pozisyon, daha hizli kar hedefine ulasim
+
+2. **Forex SPM Tetik Erken Mudahale**
+   - spmTriggerLoss: -$4 → **-$3** (SPM1 daha erken acar)
+   - spm2TriggerLoss: -$5 → **-$4** (SPM2 daha erken acar)
+   - Firsatlar daha hizli yakalanir, kasa daha erken birikir
+
+---
+
 ## [v5.2.8] - 2026-04-06
 
 ### SignalPump — ETH Rebalance + Signal Group + MinScore45 + LicenseGuard
