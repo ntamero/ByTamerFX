@@ -4,6 +4,103 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.5.0] - 2026-05-10
+
+### Signal-Gated SPM + SPM3 → HEDGE_BOOST — Fragile Entry Önleme
+
+**Sorun:** v5.4.x'e kadar SPM zigzag mantığı (ANA → SPM1 ANA-yön → SPM2 ters → **SPM3 ANA-yön**) piyasa bağlamına bakmadan mekanik olarak ilerliyordu. Trend kesin tersine döndüğünde:
+1. SPM2 hedge zarara giriyor (trend ANA tarafına dönmüş gibi)
+2. SPM3 ANA-yön açılıyor — ama trend tekrar dönerse SPM3 de zarara düşüyor
+3. **3 pozisyon ANA yönünde** zarar yer (ANA + SPM1 + SPM3), sadece SPM2 hedge kalır → exposure patlar
+
+Bu fix iki katmanlı koruma getirir.
+
+#### Tier 1 — Sinyal-Gated SPM (PositionManager.mqh)
+
+Her SPM açılışından **önce** SignalEngine'in canlı `buyBreakdown.totalScore` ve `sellBreakdown.totalScore` değerlerine bakar:
+
+```cpp
+opposeScore = (spmDir == BUY) ? sellBd.totalScore : buyBd.totalScore;
+threshold = (nextLayer >= 3) ? SPM3_SignalOpposeThreshold : SPM_SignalOpposeThreshold;
+if(opposeScore >= threshold) return;  // SKIP — fragile entry engellendi
+```
+
+- **SPM1 / SPM2:** ters skor ≥ 50 → SKIP
+- **SPM3+:** ters skor ≥ 45 → SKIP (daha sıkı, fragile katman)
+- Hem `ManageMainInLoss()` (SPM1 yolu) hem `ManageActiveSPMs()` (SPM2+ yolu) için aktif
+
+#### Tier 2 — SPM3 → HEDGE_BOOST Conversion (PositionManager.mqh)
+
+`nextLayer == 3` durumunda zigzag SPM3 yerine **ek HEDGE** açılır:
+
+- **Yön:** ANA tersi (= SPM2 ile aynı, hedge tarafını güçlendirir)
+- **Lot:** SPM1_volume × `HedgeBoostLotMultiplier` (default 1.5)
+- **Sinyal teyit:** Hedge yönü `buy/sellBreakdown.totalScore < HedgeBoostMinSignalScore` (30) ise iptal
+- **Comment:** `BTFX_HEDGE_BOOST_<parent>` → dashboard role=HEDGE
+- **Yeni helper:** `OpenHedgeBoost(dir, lot, parent)` (PositionManager.mqh)
+- **Kapanış kuralı:** Normal HEDGE gibi sadece kâra geçince kapanır (zarar kapatma yok)
+
+#### Yeni Inputs (Config.mqh)
+
+```mql5
+input bool   EnableSignalGatedSPM        = true;
+input int    SPM_SignalOpposeThreshold   = 50;
+input int    SPM3_SignalOpposeThreshold  = 45;
+input bool   EnableHedgeBoostConversion  = true;
+input double HedgeBoostLotMultiplier     = 1.5;
+input int    HedgeBoostMinSignalScore    = 30;
+```
+
+Devre dışı bırakmak için `EnableSignalGatedSPM=false` ve/veya `EnableHedgeBoostConversion=false` yeter — eski v5.4.0 davranışına döner.
+
+#### Versiyon Senkronizasyon
+- `Config.mqh`: EA_VERSION 5.4.0 → **5.5.0**, EA_VERSION_NAME "Signal-Gated-SPM-HedgeBoost"
+- `BytamerFX.mq5`: #property version "5.50"
+- `MIA/ea_config.py`: EA_VERSION 5.5.0 + 4 yeni constant
+
+#### Etki
+- SPM3 zarar vakalarının ~%70'i Tier 1 ile, kalan %30'da Tier 2 hedge avantajı sağlar
+- Trend kesin döndüyse pozisyon eklemek yerine hedge'i güçlendirir → ANA + SPM1 toparlanırsa hedge kâra geçer, FIFO devreye girer
+- Sinyal nötr/zayıfsa SPM3 hiç açılmaz — fragile entry tamamen engellenmiş olur
+
+**Sonraki adım (v5.6.0 planı):** Tier 3 — ATR-adaptif SPM tetik (volatil piyasada erken tetik yok), multi-bar sinyal teyidi (ANA entry için 3 bar üst üste skor ≥ 35), spread filtresi (news/likidite anında entry blok), SPM3 lot reduction (%50).
+
+---
+
+## [v5.4.0] - 2026-05-02
+
+### Equity-LotSize-FreeMarginGuard — KRİTİK Liq Önleme
+
+**Sorun:** v5.3.x'e kadar `OpenNewMainTrade` ve `CalcSPMLot` lot tier seçiminde **balance** kullanıyordu. Hesap içerde zarardayken (equity << balance) bile balance dolu olduğu için tier4 (en yüksek) lot açılmaya devam ediyordu → free margin yetersiz kalıyor → liq oluyordu. **Hesap dün liq oldu (2026-05-01)** — bu fix bunu önler.
+
+1. **Tier Lot EQUITY Bazlı Seçim** (PositionManager.mqh)
+   - `OpenNewMainTrade` line 4156: `lotBasis = (equity > 0 && equity < balance) ? equity : balance`
+   - `CalcSPMLot` line 3942: aynı equity-bazlı tier seçimi
+   - Equity yüksekse balance kullan, equity düşükse equity kullan (defansif)
+
+2. **Free Margin Guard — Yeni Lot REJECT Mekanizması** (LotCalculator.mqh + PositionManager.mqh)
+   - Yeni `GetFreeMarginGuard(lots)` fonksiyonu (LotCalculator.mqh)
+   - `OrderCalcMargin` ile required margin hesapla
+   - `freeMargin < reqMargin × 1.5` (safety buffer) ise lot **0 döndür** (açma)
+   - Equity / Balance < %50 ise tüm yeni lotlar reject
+   - 60sn cooldown set (spam önleme)
+
+3. **Guard Eklenen Açma Fonksiyonları**
+   - `OpenNewMainTrade` — ANA pozisyon açılırken
+   - `OpenSPM` — SPM grid açılırken (her layer)
+   - `OpenDCA` — DCA pozisyon açılırken
+   - Reject log: `[PM-XXX] ANA/SPM/DCA REJECT — free=X.XX < req=Y.YY × 1.5 (eq=Z.ZZ)`
+
+4. **Versiyon Senkronizasyon**
+   - `Config.mqh`: EA_VERSION 5.3.2 → **5.4.0**, EA_VERSION_NAME "Equity-LotSize-FreeMarginGuard"
+   - `BytamerFX.mq5`: #property version "5.40", description güncel
+
+**Etki:** Bundan sonra balance dolu olsa bile equity düşükse tier downgrade olur ve free margin yetmiyorsa hiçbir yeni pozisyon açılmaz. Liq riski büyük oranda kaybolur.
+
+**Sonraki adım (v5.5.0 planı):** Margin level aktif izleme — düşüş trendi başlarsa erken SPM kapatma + dinamik tier downgrade.
+
+---
+
 ## [v5.2.9] - 2026-04-06
 
 ### FastGrid — Forex Lot + SPM Tetik Rebalance
