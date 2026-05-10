@@ -1,8 +1,8 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v5.2.9 — FastGrid** - Professional automated forex trading system with **Offset Lock + Smart Offset Pump** + SPM Pump Cycle + Trailing Close + Smart Flip + Trend Reversal Mode + Balance Tier Profit Scaling + Adaptive FIFO + hybrid signal engine + MIA Observer.
+**BytamerFX v5.5.0 — Signal-Gated SPM + HEDGE_BOOST** - Professional automated forex trading system with **Signal-Gated SPM Entry (v5.5)** + **SPM3 → HEDGE_BOOST Conversion (v5.5)** + Equity-Based Lot Sizing + Free Margin Guard + Offset Lock + SPM Pump Cycle + Trailing Close + Smart Flip + Trend Reversal Mode + Balance Tier Profit Scaling + Adaptive FIFO + hybrid signal engine + MIA Observer.
 
-> **NO SL** | **Offset Lock** | **Smart Offset Pump** | **SPM Pump Cycle** | **Trailing Close** | **Smart Flip** | **Balance-Adaptive Lots** | **Crypto 7/24**
+> **NO SL** | **Signal-Gated SPM (v5.5)** | **HEDGE_BOOST (v5.5)** | **Equity-Based Lots (v5.4)** | **Free Margin Guard (v5.4)** | **Offset Lock** | **SPM Pump Cycle** | **Crypto 7/24**
 
 ---
 
@@ -168,7 +168,9 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v5.2.9** | **2026-04-06** | **FastGrid — Forex Lot+Tetik Rebalance** |
+| **v5.5.0** | **2026-05-10** | **Signal-Gated SPM + SPM3 → HEDGE_BOOST — Fragile Entry Önleme** |
+| v5.4.0 | 2026-05-02 | Equity-LotSize-FreeMarginGuard — Equity-bazlı tier lot + free margin guard (liq önleme) |
+| v5.2.9 | 2026-04-06 | FastGrid — Forex Lot+Tetik Rebalance |
 | v5.2.8 | 2026-04-06 | SignalPump — ETH Rebalance + Signal Group + MinScore45 + LicenseGuard |
 | v5.2.7 | 2026-04-02 | TierBalance — Balance Tier Scaling + MinScore 45 + License Enforcement |
 | v5.2.6 | 2026-03-31 | DeepAudit — 7 Critical Fix + Zigzag + OffsetGuard |
