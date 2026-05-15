@@ -4,6 +4,45 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v5.8.1] - 2026-05-15
+
+### Alpha Engine Hotfix — TrendMaturity Array Allocation
+
+**Critical bug fix.** Backtest sırasında ortaya çıktı:
+
+```
+array out of range in 'TrendMaturity.mqh' (117,18)
+Tester OnTester critical error
+```
+
+**Root cause:** `HasBearishDivergence()` ve `HasBullishDivergence()` fonksiyonlarında `double highBuf[]` / `double lowBuf[]` dynamic array'leri allocate edilmemişti. ArraySetAsSeries flag set ediliyordu ama ArrayResize çağrısı yoktu → array size 0 kalıyor, `highBuf[i] = iHigh(...)` invalid index.
+
+**Fix:** `ArrayResize(highBuf, lookback + 2)` + `ArrayResize(lowBuf, lookback + 2)` eklendi.
+
+```cpp
+double highBuf[];
+ArraySetAsSeries(highBuf, true);
+ArrayResize(highBuf, lookback + 2);  // ✨ v5.8.1 FIX
+```
+
+**Etkilenen kullanıcılar:** Live trading sırasında RSI divergence kontrolü yapılırken EA crash riski. Restart sonrası tekrar başlıyordu ama trade durmuş oluyordu.
+
+**Telegram brand:** `KazanKazan Pro AKTIF` → `BytamerFX Alpha Engine ONLINE`
+
+**Permanent slogan** (mia dashboard): `BytamerFX v5.5.0` (varied) → `ALPHA ENGINE · BUILT TO COMPOUND`
+
+#### Backtest Bulgular (v5.8.1)
+
+PC Strategy Tester (BTCUSDm M15, 1 ay, $100 deposit):
+- ✅ Array out of range: ÇÖZÜLDÜ (fix doğrulandı)
+- ⚠️ Stop-out at -79.78%: lot sizing $100 hesap için fazla agresif
+- 13 trade açıldı 5 saatte
+- Final balance: -$16 (broker margin call kapadı, EA force-close değil)
+
+**Sonraki adım:** Lot sizing tier'lerini gözden geçir — $100 hesabı için minimum 0.01 lot bile BTCUSDm için fazla.
+
+---
+
 ## [v5.8.0] - 2026-05-13
 
 ### Alpha Engine — Pure Mathematics (No More Indicators)
