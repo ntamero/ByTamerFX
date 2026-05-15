@@ -1,8 +1,37 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v5.5.0 — Signal-Gated SPM + HEDGE_BOOST** - Professional automated forex trading system with **Signal-Gated SPM Entry (v5.5)** + **SPM3 → HEDGE_BOOST Conversion (v5.5)** + Equity-Based Lot Sizing + Free Margin Guard + Offset Lock + SPM Pump Cycle + Trailing Close + Smart Flip + Trend Reversal Mode + Balance Tier Profit Scaling + Adaptive FIFO + hybrid signal engine + MIA Observer.
+**BytamerFX v5.8.0 — Alpha Engine (Pure Mathematics)** — Professional automated trading system featuring a **12-layer intelligence stack** for crypto/forex with no stop-loss recovery via FIFO + SPM + Hedge orchestration.
 
-> **NO SL** | **Signal-Gated SPM (v5.5)** | **HEDGE_BOOST (v5.5)** | **Equity-Based Lots (v5.4)** | **Free Margin Guard (v5.4)** | **Offset Lock** | **SPM Pump Cycle** | **Crypto 7/24**
+> **NO SL · NO Force Close** | **Alpha Engine** | **Quantum Recovery** | **Probabilistic Edge** | **Crypto 7/24**
+
+## v5.6.4 → v5.8.0 Journey (3 days, 5 major releases)
+
+| Version | Date | Key Innovation |
+|---------|------|----------------|
+| **v5.6.4** | 2026-05-13 | No Force Close + Basic Recovery Boost |
+| **v5.7.0** | 2026-05-13 | Quantum Recovery: Microstructure + Maturity + Session |
+| **v5.7.5** | 2026-05-13 | Probabilistic Edge: Correlation + HTF + EV + Liquidity |
+| **v5.8.0** | 2026-05-13 | **Alpha Engine: Pure Mathematics (Hurst + Markov + Z-Score)** |
+
+### The Alpha Engine Stack (v5.8.0)
+
+```
+Layer 1: SignalEngine (12-indicator hybrid)
+Layer 2: MicrostructureEngine (tick volume + wick rejection + traps)
+Layer 3: TrendMaturity (BIRTH → EXHAUSTED detector)
+Layer 4: SessionFilter (London/NY/Asia/Overlap)
+Layer 5: CorrelationEngine (BTC↔ETH↔Gold confluence)
+Layer 6: HigherTimeframeBias (D1 + W1 filter)
+Layer 7: ExpectedValueCalc (Kelly-Lite sizing)
+Layer 8: LiquidityZones (swing high/low magnets)
+Layer 9: HurstExponent (R/S analysis — market memory)
+Layer 10: MarkovRegime (5-state stochastic process)
+Layer 11: ZScoreEngine (statistical outlier detection)
+Layer 12: SmartRecoveryEngine (12-stage decision tree)
+
+→ Recovery action: TREND_AMPLIFY / COUNTER_HEDGE / WAIT / PROFIT_TAKE
+→ Final lot = baseLot × 9 multipliers (matur×sess×corr×htf×liq×ev×hurst×markov×z)
+```
 
 ---
 
