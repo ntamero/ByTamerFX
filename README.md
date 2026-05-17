@@ -1,8 +1,41 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v5.8.0 — Alpha Engine (Pure Mathematics)** — Professional automated trading system featuring a **12-layer intelligence stack** for crypto/forex with no stop-loss recovery via FIFO + SPM + Hedge orchestration.
+**BytamerFX v6.0.1 — Signal Momentum Protection + Multi-TF Reversal Check** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. Now with **anti-reversal protection** to prevent profitable trades from turning into losses.
 
-> **NO SL · NO Force Close** | **Alpha Engine** | **Quantum Recovery** | **Probabilistic Edge** | **Crypto 7/24**
+> **NO SL · NO Force Close** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Quantum Recovery** | **Probabilistic Edge** | **Crypto 7/24**
+
+## v6.0.x — Signal Reversal Protection Layer (2026-05-17)
+
+The v6.0 release adds **3 critical protections** against the "profitable trade turns into loss" problem:
+
+| Feature | Trigger | Action |
+|---------|---------|--------|
+| **Signal Momentum Drop Check** | Pre-entry: peak/current < 0.65 | REJECT new trade (momentum dying) |
+| **Multi-TF Reversal Check** | Pre-entry: M1/M3/M5/M10 candles 60%+ opposite | REJECT new trade (reversal in progress) |
+| **Signal Reversal Exit** | Post-entry: signal flipped + profit > $1 | CLOSE main early (lock profit) |
+
+**Reversal Trap Detector** (v5.9.18) also active:
+- ADX < 25 + RSI extreme + candle just reversed → REJECT (peak/dip trap)
+
+**Architectural protections:**
+- SPM Layer 3 forced opposite direction (built-in hedge)
+- OSA (One-Sided Accumulation) lot ratio check (3.5x threshold)
+- Tester GlobalVariable cleanup (deterministic backtests)
+- MFI Gate removed from code (replaced with smarter Reversal Trap Detector)
+- HedgeBoost disabled (fixed 0.10 lot rounding bug)
+
+## v5.9.x Iteration Series — User Customization (20+ versions in 1 day)
+
+Major user-driven refinements:
+- **v5.9.20**: Progressive lots restored (1.0/1.1/1.2/1.3) + OSA protection enabled
+- **v5.9.19**: MFI Gate hard-disabled in code (input override impossible)
+- **v5.9.18**: Reversal Trap Detector (smart MFI replacement)
+- **v5.9.16-17**: Signal cooldown-based (no longer dependent on M15 new bar)
+- **v5.9.14-15**: User final settings — BTC lot 0.04, Forex 0.06, MinScore 45
+- **v5.9.12**: HedgeBoost OFF (critical 0.10 lot bug fix)
+- **v5.9.10-11**: A-A-T-A SPM direction pattern + early hedge architecture
+- **v5.9.5**: Baseline architecture — proved breakeven (-$0.27) in backtest
+- **v5.9.1**: Tester GlobalVariable cleanup for deterministic backtests
 
 ## v5.6.4 → v5.8.0 Journey (3 days, 5 major releases)
 

@@ -4,6 +4,120 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v6.0.1] - 2026-05-17
+
+### Multi-TF Reversal Check (M1/M3/M5/M10 Candle Alignment)
+
+**Yeni pre-entry koruma katmani.** M15 sinyali fark etmeden once kisa TF mumlardan reversal'i yakalar.
+
+**Mantik:**
+- Sinyal M15'te SELL geldi
+- Son 3 M1 + 3 M3 + 2 M5 + 2 M10 mumlarinin %60+'si BUY (ters yon) ise
+- → REDDET (M15 trend dönüyor olabilir, M15 henüz gostermeyebilir)
+
+**Log:** `[MULTI-TF-BTCUSDm] v6.0.1 SELL[55] REDDEDILDI — MULTI-TF REVERSAL: 7/10 ters mum (70% >= 60%) | M1=3/3 M3=2/3 M5=1/2 M10=1/2`
+
+**Config:**
+- `EnableMultiTFReversalCheck = true`
+- `MultiTFReversalThreshold = 0.60`
+- `MultiTF_M1_Bars = 3`, `MultiTF_M3_Bars = 3`, `MultiTF_M5_Bars = 2`, `MultiTF_M10_Bars = 2`
+
+---
+
+## [v6.0.0] - 2026-05-17
+
+### Signal Momentum Protection — Pre-Entry + Post-Entry
+
+**MAJOR RELEASE.** Sistemin terste kalma probleminin matematik cozumu.
+
+**Senaryo:** Signal SELL[52] -> trade acildi -> 5dk sonra signal SELL[31] -> 10dk sonra signal BUY -> SELL pozisyon ters'te kaldi.
+
+#### A) Pre-Entry: Signal Momentum Drop Check
+Sinyal son 3 M15 bar peak'inden %35+ dustuyse acma:
+- Son 3 bar (45dk) peak skor: 60
+- Su anki skor: 35
+- Ratio: 0.58 < 0.65 threshold -> REDDET (momentum dying)
+
+**Log:** `[MOMENTUM-BTCUSDm] v6.0.0 SELL[35] REDDEDILDI — MOMENTUM DYING: Peak=60 (son 3 bar) -> Current=35 (58% < 65%)`
+
+#### B) Post-Entry: Signal Reversal Exit
+ANA pozisyon ters sinyal aldiysa + karda ise erken kapat:
+- ANA SELL @ 77965, $5 kar
+- Sinyal BUY[48] geldi (ters yon, kuvvetli)
+- Hold suresi 60sn+
+- -> ERKEN KAPAT (kar realize, ters'e donmez)
+
+**Log:** `[PM-BTCUSDm] v6.0.0 SIGNAL REVERSAL EXIT: ANA #123 SELL P/L=$5.00 (hold=600sn) | Sinyal=BUY[48] -> ERKEN KAPAT`
+
+**Korunan v5.9.20 yapisi:**
+- SPM A-A-T-A direction (Layer 1,2,4+ = ANA yon, Layer 3 = HEDGE)
+- Progressive lots 1.0/1.1/1.2/1.3
+- BTC lot 0.04 / Forex 0.06 base
+- MinScore 45
+- OSA tek yon koruma AKTIF
+- MFI Gate KODDAN SILINMIS (ReversalTrapDetector ile degistirildi)
+- HedgeBoost KAPALI (0.10 lot bug fix)
+- SPM3 StrictGate KAPALI
+
+#### Live Sonuc
+PC live test ilk trade: **+$20.57 kar** (BTCUSDm SELL 0.08 lot, FIFO + Peak Drop ile kapandi)
+
+---
+
+## [v5.9.x] - 2026-05-17 (Iteration Series)
+
+Bu seri tek bir gunde 20+ iterasyon ile yapildi. Asagida en kritik degisiklikler:
+
+### v5.9.20 — Progressive Lots + OSA ON
+- SPM lots GERI progressive (1.0/1.1/1.2/1.3 — v5.9.5 ispatlanmis)
+- `EnableOSACheck = true` (tek yon yigilma korumasi acildi)
+
+### v5.9.19 — MFI Gate HARD DISABLED
+- `SignalEngine.mqh`'den MFI Gate kod blogu silindi
+- Input override edemez, asla calismaz
+- Yerine ReversalTrapDetector kullanilir
+
+### v5.9.18 — Reversal Trap Detector
+**MFI Gate'in akilli yerine gecen filter.** 4 sart birden gerekli:
+1. ADX < 25 (trend zayif)
+2. RSI extreme (SELL > 65 / BUY < 35)
+3. Son mum sinyal yonunde
+4. Onceki mum TERS yonde (yeni dondu)
+
+Bu durumlarda peak/dip donus tuzagini engeller. Guclu trendde (ADX >= 25) bloklamaz.
+
+### v5.9.16-17 — Signal Cooldown System
+- `isNewBar` sarti KALDIRILDI (eski: 15dk'da bir kontrol)
+- Yeni: pozisyon yoksa her tick'te, `SignalCooldownSec` (120sn) rate-limit
+- Sinyal kontrolu 8-12x daha sik
+
+### v5.9.14-15 — User Final Settings
+- BTC tier1 = 0.04 (was 0.05)
+- Forex tier1 = 0.06 (was 0.08)
+- SPM Layer triggers: -$5 / -$8 / -$15 / -$20
+- SPM Yon: A-A-T-A (Layer 3 hedge zorunlu)
+- All SPM lot mults = 1.0 (= ANA ayni)
+
+### v5.9.12 — HedgeBoost OFF (0.10 Lot Bug Fix)
+**KRITIK FIX.** Tier2 ($200-500) icin SPM1 lotu 0.07, HedgeBoost x1.5 carpani = 0.105 -> broker 0.10'a yuvarliyordu.
+- `EnableHedgeBoostConversion = false`
+- `HedgeBoostLotMultiplier = 1.5 -> 1.0`
+
+### v5.9.10-11 — Erken Hedge Architecture
+- SPM3 tetik -$15 -> -$10 (erken hedge devreye)
+- SPM3 StrictGate KAPALI
+
+### v5.9.5 — Architecture Baseline (Proven)
+- Lot mults: 1.0/1.1/1.2/1.3
+- Trigger mults: 1.0/2.0/3.0/4.0 (= -$5/-$10/-$15/-$20)
+- Backtest sonuc: **-$0.27 (breakeven)** — en iyi backtest
+
+### v5.9.1 — Tester GlobalVariable Cleanup
+**Deterministic backtest fix.** Tester'da cooldown GV'lar onceki testten persist ediyordu, sonuclar non-deterministik oluyordu.
+- OnInit'te tester modunda GV'leri temizle
+
+---
+
 ## [v5.8.1] - 2026-05-15
 
 ### Alpha Engine Hotfix — TrendMaturity Array Allocation
