@@ -4,6 +4,49 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v6.0.2] - 2026-05-17
+
+### Multi-TF MINI SIGNAL ENGINE (M1/M3/M5/M10)
+
+**v6.0.1 basit mum sayimi YERINE → tam Mini SignalEngine her TF icin.**
+
+Her TF'de 5 indicator:
+1. **EMA(21)** — Price vs MA (yon)
+2. **MACD(12,26,9)** — histogram > signal (momentum)
+3. **RSI(14)** — > 50 BUY / < 50 SELL
+4. **ADX(14)** — > 25 trend gucu + price momentum
+5. **Candle direction** — bullish/bearish (yon dogrulamasi)
+
+Her TF kendi yon + skor (0-100) verir.
+
+**Weighted Voting** (longer TF = more weight):
+- M1: agirlik 1
+- M3: agirlik 2
+- M5: agirlik 3
+- M10: agirlik 4
+- Toplam: 10
+
+**Kalite filter:** Sadece skor >= 55 olan TF'ler oyda sayilir (zayif TF'leri yoksay).
+
+**Karar:** Weighted agreement < %40 ise REDDET.
+
+**Log ornegi:**
+```
+[MULTI-TF-BTCUSDm] v6.0.2 SELL[55] REDDEDILDI -
+MULTI-TF MINI-SIG: agreement=20% < 40% (agree=1/oppose=3) |
+M1=BUY[60] M3=BUY[72] M5=SELL[58] M10=BUY[68]
+```
+
+**Avantajlari:**
+- Tam SignalEngine'in core mantigini her TF'de calistirir
+- Sadece mum yonu degil, EMA + MACD + RSI + ADX hepsi dahil
+- Weighted vote → longer TF daha guvenilir
+- Kalite filter → zayif sinyalleri yoksay
+
+**CPU yuku:** +16 indicator handle (4 TF x 4 indicator), her cagrida 4x evaluation.
+
+---
+
 ## [v6.0.1] - 2026-05-17
 
 ### Multi-TF Reversal Check (M1/M3/M5/M10 Candle Alignment)
