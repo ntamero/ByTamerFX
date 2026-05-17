@@ -4,6 +4,41 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v6.0.3] - 2026-05-17
+
+### MultiTF Mini SignalEngine → LOG-ONLY Mode
+
+**Disiplinli yaklasim:** Test edilmemis filter eklemeyiz.
+
+v6.0.2'de tam Mini SignalEngine'i bloklayici olarak eklemistik. Ama:
+- Live trade sayisi: **1**
+- Bu filter test edilen: **0**
+- Onceki benzer filter (MFI Gate) live'da kotuydu
+
+**Karar:** Default OFF mode = log-only. Filter calisir AMA bloklamaz, sadece log basar:
+
+```
+[MULTI-TF-BTCUSDm] v6.0.3 INFO ONLY: SELL[55] WOULD HAVE BLOCKED -
+  MULTI-TF MINI-SIG: agreement=20% < 40% (...) | M1=BUY[60] M3=BUY[72] M5=SELL[58] M10=BUY[68]
+  (trade aciliyor)
+```
+
+Bu sayede:
+- Trade her zaman acilir (mevcut performans korunur)
+- 50-100 trade biriksin
+- Sonra istatistik: "filter bloklayacak olduklarinin %X'i gercekten zarar mi?"
+- Veriye dayali karar: filter ON yap / kapali kal / threshold ayarla
+
+**Config:**
+- `MultiTF_LogOnlyMode = true` (default — sadece logla)
+- `MultiTF_LogOnlyMode = false` → bloklamaya gec (validate edildikten sonra)
+
+### Felsefe: Veri Olmadan Karar Yok
+
+Onceki hatalar (MFI Gate, OSA Check) hep "teorik iyi gorunen filter ekle, sonra live'da kullanici sikayet edince kaldir" pattern'iydi. v6.0.3 ile bu donguyu kiriyoruz.
+
+---
+
 ## [v6.0.2] - 2026-05-17
 
 ### Multi-TF MINI SIGNAL ENGINE (M1/M3/M5/M10)
