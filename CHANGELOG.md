@@ -4,6 +4,42 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v6.0.4] - 2026-05-18
+
+### KRITIK BUG FIX — OSA Tek-Yon Extreme Handling
+
+**Sorun:** Kullanici live test'inde tespit etti:
+- EUR: SELL=0.22 lot (3 pozisyon), BUY=0 lot
+- Floating loss: -$42.66
+- OSA (One-Sided Accumulation) tetiklenmedi!
+- Yeni SELL'ler ardisik olarak acildi
+
+**Kok neden:** `CheckOneSidedAccumulation` fonksiyonunda:
+```cpp
+if(otherSide <= 0.001) return false;
+// Eski yorum: "Ters yon bos, dengesizlik henuz olusmadi (ilk acilis)"
+```
+
+Bu **TAM TERSI** olmasi gereken bir mantik. Ters yon TAMAMEN BOS ise tek-yon EXTREME durumu. Sonsuz oran. OSA'nin TAM CALISMASI gereken senaryo.
+
+**Fix:**
+```cpp
+if(otherSide <= 0.001) {
+   if(sameSide < tier1 * 1.5) return false;  // 1 pozisyon (~tier1), izin
+   ratio = 999.0;  // effective infinity → oylama yap
+}
+```
+
+Ek olarak threshold sikilastirildi:
+- Eski: ratio < 3.5 → izin (cok gevsek)
+- Yeni: ratio < 3.0 → izin (daha siki)
+
+**Etki:** Tek-yon extreme durumlarda yeni acilislar trend+signal+mum oylama ile gercirilir. 3'ten en az 1 destek yoksa BLOK.
+
+**Mevcut pozisyonlar etkilenmez** — sadece YENI acilislar.
+
+---
+
 ## [v6.0.3] - 2026-05-17
 
 ### MultiTF Mini SignalEngine → LOG-ONLY Mode
