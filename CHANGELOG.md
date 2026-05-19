@@ -4,6 +4,60 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v6.0.7] - 2026-05-19
+
+### MAX 1 HEDGE Rule + HEDGE → SPM Downgrade Logic
+
+**Kullanici argumani:**
+- "Hedge mantığı SPM'ler çaresiz kalınca ciddi kurtarma modeli olarak düşünülmeli"
+- "MAX 1 HEDGE yeterli — çoklu hedge margin sıkışması yapar"
+- "Şayet SPM1 kapandı veya SPM2 kapandı ise hedge otomatikman alt kategoriye düşmelidir"
+
+### Fix #1: MAX 1 HEDGE Enforcement (OpenHedge)
+
+```cpp
+// v6.0.7: MAX 1 HEDGE - coklu hedge margin sikismasi yapar
+int hedgeCount = ...; // ROLE_HEDGE sayisi
+if(hedgeCount >= 1) {
+   LOG: "HEDGE BLOK: MAX 1 HEDGE kurali (mevcut=N)"
+   return;
+}
+```
+
+### Fix #2: HEDGE → SPM Downgrade (ManageSPMSystem başında)
+
+```cpp
+// SPM sayisi < 2 ise ve HEDGE varsa: HEDGE'i SPM'e reklasifiye et
+if(hedgeCount >= 1 && activeSPMs < 2) {
+   m_positions[hedgeIdx].role = ROLE_SPM;
+   m_positions[hedgeIdx].spmLayer = nextAvailableLayer;
+   LOG: "HEDGE DOWNGRADE: SPM=N<2 -> HEDGE #X reklasifiye"
+}
+```
+
+### Mantık
+
+```
+SPM1 + SPM2 + HEDGE açık (3 pozisyon, hedge slot dolu)
+   ↓
+SPM2 FIFO ile kapandı (ANA toparlanma sırasında)
+   ↓
+v6.0.7: SPM=1 < 2 → HEDGE reklasifiye → SPM3 olur (slot bosalir)
+   ↓
+Eğer market ANA aleyhine giderse: yeni HEDGE açılabilir (slot bos)
+```
+
+### Kombine Koruma (v6.0.5 + v6.0.6 + v6.0.7)
+
+| Koruma | Versiyon |
+|--------|----------|
+| Duplicate HEDGE blok (cooldown + ratio) | v6.0.5 |
+| SmartRecovery COUNTER_HEDGE bypass SPM | v6.0.6 |
+| MAX 1 HEDGE concurrent | v6.0.7 |
+| HEDGE → SPM downgrade | v6.0.7 |
+
+---
+
 ## [v6.0.6] - 2026-05-19
 
 ### CRITICAL BUG FIX — SmartRecovery SPM Bypass
