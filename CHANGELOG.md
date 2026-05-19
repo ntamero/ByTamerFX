@@ -4,6 +4,47 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v6.0.6] - 2026-05-19
+
+### CRITICAL BUG FIX — SmartRecovery SPM Bypass
+
+**Live test sirasinda kullanici tespit etti:**
+
+EUR'da:
+- 05:15 ANA SELL 0.08 acildi
+- 05:35 ANA P/L = -$3.92 (SPM1 trigger -$3 asildi)
+- **SPM1 ACILMADI!** Hicbir "SPM TETIK" log'u yok
+- 06:47 SmartRecovery COUNTER_HEDGE → HEDGE BUY (SPM yerine)
+- 5 HEDGE birikti, SPM hic acilmadi
+
+### Kok Neden
+
+SmartRecoveryEngine `RECOVERY_COUNTER_HEDGE` aksiyonu, **SPM mantığını override ediyordu**. ANA -$3 olur olmaz hemen HEDGE açıyordu — SPM1/SPM2'nin normal devreye girme şansı vermedi.
+
+### Fix (v6.0.6)
+
+PositionManager COUNTER_HEDGE case'inde:
+```cpp
+// SPM yoksa veya tek bir SPM varsa COUNTER_HEDGE BLOK
+int spmCount = GetActiveSPMCount();
+if(spmCount < 2)
+{
+   LOG: "COUNTER_HEDGE BEKLE: SPM=X < 2 — normal SPM sirasini bekliyor"
+   return;
+}
+```
+
+### Disiplinli Sıra (Doğru Akış)
+
+1. ANA loss → SPM1 (DCA, ANA yönde)
+2. SPM1 loss → SPM2 (DCA, ANA yönde derinleşme)
+3. SPM2 loss → SPM3 (HEDGE, TERS yön) **VEYA** SmartRecovery COUNTER_HEDGE
+4. ... daha sonra başka HEDGE/DCA
+
+SmartRecovery COUNTER_HEDGE artık **SPM2+ varken** devreye girer (yardımcı, override değil).
+
+---
+
 ## [v6.0.5] - 2026-05-19
 
 ### CRITICAL BUG FIX — Multiple COUNTER_HEDGE Opening
