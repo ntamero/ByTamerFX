@@ -4,6 +4,46 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v6.0.5] - 2026-05-19
+
+### CRITICAL BUG FIX — Multiple COUNTER_HEDGE Opening
+
+**Live test sirasinda kritik bug tespit:**
+
+EUR'da 35 dakika icinde **5 HEDGE acildi**:
+- 06:47 HEDGE BUY 0.10
+- 06:55 HEDGE BUY 0.14
+- 07:05 HEDGE BUY 0.12
+- 07:12 HEDGE BUY 0.12
+- 07:20 HEDGE BUY 0.14
+
+Toplam: **0.62 BUY HEDGE vs 0.08 ANA SELL = 7.75x hedge orani!**
+
+Margin riski cok yuksek, ciddi sorun.
+
+### Kok Neden
+
+`SmartRecoveryEngine.RECOVERY_COUNTER_HEDGE` aksiyonu mevcut hedge varligini kontrol etmeden yeni hedge aciyordu. Her trigger ("Trend EXHAUSTED" veya "Microstructure REJECT") ayri hedge aciyordu.
+
+### Fix (v6.0.5)
+
+`PositionManager.mqh` COUNTER_HEDGE case'inde:
+1. Mevcut HEDGE'ler taranir (aynı yön)
+2. Mevcut hedge varsa: 10 dakika cooldown (RECOVERY_LastFire GV)
+3. Cooldown gectiyse de: lot orani kontrol (mevcut + yeni > ANA × 2.0 → BLOK)
+
+**Log mesajlari:**
+- `COUNTER_HEDGE SKIP: Mevcut N HEDGE var + cooldown aktif`
+- `COUNTER_HEDGE SKIP: Hedge oran patladi (mevcut + yeni > ANA*2)`
+
+### Etki
+
+- Mevcut pozisyonlar etkilenmez
+- Yeni COUNTER_HEDGE'ler kontrollu acilir
+- Margin sorunu tekrar olmaz
+
+---
+
 ## [v6.0.4] - 2026-05-18
 
 ### KRITIK BUG FIX — OSA Tek-Yon Extreme Handling
