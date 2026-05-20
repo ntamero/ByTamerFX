@@ -4,6 +4,78 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.0.0] - 2026-05-21 — MAJOR RELEASE
+
+### Multi-TF Confluence + Adaptive Lot Scaling
+
+**Felsefe Değişikliği:** Daha cok trade + akilli sizing.
+
+**Yeni Akış:**
+```
+M15 skor ≥ 47 (45 → 47 sikilastirma)
+    ↓
+Multi-TF CONFLUENCE skor hesaplanir (0-120):
+  M1 (5%)  + M5 (15%) + M15 (40%) + H1 (25%) + H4 (15%) + Bonuses
+    ↓
+Peak/Dip Extreme kontrol (sadece üst/alt %5)
+    ↓
+Confluence'a göre LOT SIZE:
+  ≥70 → %100 lot (yuksek guven)
+  55-69 → %75 lot (orta)
+  40-54 → %50 lot (savunma)
+  <40 → SKIP (cok zayif)
+    ↓
+ANA acilir, lot size confluence'a gore scaled
+```
+
+### Yeni Config Parametreleri
+
+**MinScore:**
+- `SignalMinScore`: 45 → **47** (1 kademe sıkı)
+
+**Multi-TF Confluence:**
+- `EnableTFConfluence = true`
+- `TFConfluence_FullLotMin = 70` (≥70 → %100 lot)
+- `TFConfluence_HalfLotMin = 55` (55-69 → %75 lot)
+- `TFConfluence_QuarterLotMin = 40` (40-54 → %50 lot)
+- `TFConf_Weight_M1 = 5`
+- `TFConf_Weight_M5 = 15`
+- `TFConf_Weight_M15 = 40` (sabit)
+- `TFConf_Weight_H1 = 25`
+- `TFConf_Weight_H4 = 15`
+
+**Peak/Dip Extreme:**
+- `EnablePeakDipExtreme = true`
+- `PeakDip_LookbackBars = 20`
+- `PeakDip_ExtremePercent = 5.0` (sadece TOP/BOTTOM 5%)
+
+**ADX Momentum Bonus:**
+- `EnableADXMomentumBonus = true`
+- `ADXMomentum_BonusPoints = 8` (ADX ≥27 → +8 confluence)
+
+**Time-of-Day Bonus:**
+- `EnableTimeOfDayBonus = true`
+- London+NY Overlap (UTC 13-15): +5
+- London Open (UTC 7-8): +3
+- Asia Quiet (UTC 21-04): -5
+
+### Korunan Yapı (Değişmedi)
+
+- ANA sadece FIFO ile kapanır (zararına satış YASAK)
+- SPM/HEDGE/FIFO mekanizmaları aynı
+- v6.0.5 + v6.0.6 + v6.0.7 + v6.0.8 fixleri korundu
+
+### Beklenen Etki
+
+| Metric | v6.x | **v7.0.0** |
+|--------|------|------------|
+| Trade/gün | 10-30 | **15-40** (daha cok) |
+| Avg lot | tier1 sabit | tier1 × 0.5-1.0 (adaptive) |
+| Yanlış yön | %50 | %30 (peak/dip + confluence) |
+| Net kazanc | -%40/gün | +%50/gün hedef |
+
+---
+
 ## [v6.0.8] - 2026-05-20
 
 ### CRITICAL HOTFIX — v6.0.7 Sonsuz Downgrade Döngüsü
