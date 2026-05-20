@@ -4,6 +4,61 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v6.0.8] - 2026-05-20
+
+### CRITICAL HOTFIX — v6.0.7 Sonsuz Downgrade Döngüsü
+
+**Bug:** v6.0.7'de eklenen HEDGE → SPM downgrade kodu **sonsuz döngüye girdi**.
+
+**Log spam (her tick):**
+```
+04:29:01 v6.0.7 HEDGE DOWNGRADE: HEDGE #1268544679 BUY SPM1 reklasifiye
+04:29:02 v6.0.7 HEDGE DOWNGRADE: AYNI ticket
+04:29:02 v6.0.7 HEDGE DOWNGRADE: AYNI ticket
+... (yüzlerce kez aynı mesaj)
+```
+
+### Kök Neden
+
+```cpp
+// v6.0.7 (BUGGY):
+m_positions[i].role = ROLE_SPM;  // Geçici değişiklik
+
+// Sonraki tick:
+RefreshPositions(); // Broker pozisyonu okuyor
+// Comment "BTFX_HEDGE_X" → role = ROLE_HEDGE atanıyor (eski değer döner)
+
+// v6.0.7 tekrar downgrade yapıyor → SONSUZ DÖNGÜ
+```
+
+### Yan Etki: SPM Layer Çakışması
+
+Downgrade çalıştığında SPM1 oluştu (HEDGE BUY). Daha sonra normal SPM1 SELL açıldı. İki tane SPM1 (BUY ve SELL) — zigzag mantığı bozuldu.
+
+### Fix (v6.0.8)
+
+HEDGE → SPM downgrade tamamen **KALDIRILDI**. Sadece v6.0.7'nin MAX 1 HEDGE kuralı korunur (bu sağlam çalışıyor, log doğruluyor: 5 kez yeni HEDGE açılması engellendi).
+
+```cpp
+void ManageSPMSystem()
+{
+   // v6.0.8: HEDGE DOWNGRADE KALDIRILDI (kritik bug fix)
+   // MAX 1 HEDGE OpenHedge'de zaten enforce ediliyor — yeterli koruma
+   ManageTrendGrid();
+}
+```
+
+### Şu Anki Koruma Matrisi (v6.0.5 + 6 + 7-MAX1 + 8-fix)
+
+| Koruma | Durum |
+|--------|-------|
+| Duplicate HEDGE blok (v6.0.5) | ✓ |
+| SmartRecovery SPM bypass (v6.0.6) | ✓ |
+| MAX 1 HEDGE (v6.0.7) | ✓ ÇALIŞIYOR |
+| HEDGE → SPM downgrade | ❌ KALDIRILDI (bug) |
+
+---
+
 ## [v6.0.7] - 2026-05-19
 
 ### MAX 1 HEDGE Rule + HEDGE → SPM Downgrade Logic
