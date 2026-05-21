@@ -4,6 +4,64 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.0.2] - 2026-05-21 — HOTFIX
+
+### Chart Input Override Sorunu Kodda Cozuldu
+
+**Sorun:** v7.0.1'de Config'de `EnableMultiTFStrict = false` ve `SignalMinScore = 47` yaptık. AMA MT5 chart input'larında ESKİ değerler saklı:
+- BTCUSDm chart: MinScore=48 (override)
+- EURUSDm chart: MinScore=45 (override)
+- EnableMultiTFStrict: muhtemelen hala TRUE (chart override)
+
+Chart input'lar Config defaults'ı override ediyor — manuel düzeltme gerekiyordu. v7.0.2 ile **kod seviyesinde** çözdük.
+
+### Fix #1: MultiTF Strict HARDCODE Devre Dısı (SignalEngine.mqh)
+
+```cpp
+// Eski v7.0.1:
+if(mtfResult == SIGNAL_NONE && EnableMultiTFStrict) {
+   sig.direction = NONE; return;
+}
+
+// Yeni v7.0.2 (kod block commented out):
+// v7.0.0 Multi-TF Confluence sistemine devredildi
+```
+
+Chart input `EnableMultiTFStrict=true` olsa bile kod calismayacak.
+
+### Fix #2: MinScore Min 47 Zorlamasi (BytamerFX.mq5)
+
+```cpp
+// v7.0.2: Chart input 45 veya 48 olsa da min 47 zorlanir
+int effectiveMinScore = MathMax((int)SignalMinScore, 47);
+if(sig.score < effectiveMinScore) return;
+```
+
+### Etki
+
+- ✅ Chart input override edemez kritik gateler
+- ✅ v7.0.0 Multi-TF Confluence devreye girer (eski blok kalktı)
+- ✅ Minimum quality 47 garantili
+- ✅ Manuel chart input update GEREKMIYOR
+
+---
+
+## [v7.0.1] - 2026-05-21
+
+### HOTFIX: v5.6.0 MultiTF Strict KAPATILDI
+
+v7.0.0'da yeni Multi-TF Confluence ekledik AMA eski v5.6.0 MultiTF Strict hala SignalEngine içinde aktifti. Çakışma:
+- v5.6.0 daha sıkı, sinyalleri tamamen REDDEDİYOR (sig=NONE)
+- v7.0.0 daha esnek, lot scaling yapar AMA önce v5.6.0 bloklar
+
+Sonuç: 1.5 saat içinde **0 trade açıldı**.
+
+Fix: `EnableMultiTFStrict = false` Config'de.
+
+(NOT: v7.0.2 ile chart input override sorunu da kodda hardcoded olarak cozuldu)
+
+---
+
 ## [v7.0.0] - 2026-05-21 — MAJOR RELEASE
 
 ### Multi-TF Confluence + Adaptive Lot Scaling
