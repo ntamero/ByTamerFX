@@ -4,6 +4,43 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.0.3] - 2026-05-24
+
+### MIA Commander Tick-Bagimsiz Polling (Mobile APK Fix)
+
+**Background:** Mobile APK projesi icin diger agent eklemeleri yaptı, AMA version bump unutulmuştu. Bu commit ile rapor edilip resmilestiriliyor.
+
+### Sorun
+
+`g_miaCmd.CheckCommands()` sadece `OnTick()` icinde caginlityordu. Market sessizken (Cuma akşamı, tatil, Asia quiet) tick gelmezdi ve mobile APK komutlari **bekleyip kalir**di.
+
+### Fix
+
+`OnTimer()` (saniyede 1 kez ate-) icinde de `CheckCommands()` cagrildi. Internal 30sn throttle var, asiri yuk olusturmaz.
+
+### Ek: Diagnostic Heartbeat Log
+
+Her ~5 dakikada bir (her 10. poll'da) bir log:
+```
+[MIA-CMD] heartbeat poll #X (interval=30s)
+```
+MIA sisteminin yaşıyor mu doğrulama icin.
+
+### Etki
+
+- ✅ Mobile APK komutları her zaman işlenir
+- ✅ Crypto/Forex tick zamanlamasına bağımlı değil
+- ✅ Live trading'e sıfır etki (sadece polling)
+- ✅ CPU yükü minimal (30sn throttle)
+
+### Notlar
+
+- BytamerFX.mq5 OnTimer'da g_miaCmd.CheckCommands() eklendi
+- MIACommander.mqh CheckCommands() basında heartbeat log eklendi
+- Config.mqh version 7.0.2 -> 7.0.3
+
+---
+
 ## [v7.0.2] - 2026-05-21 — HOTFIX
 
 ### Chart Input Override Sorunu Kodda Cozuldu
