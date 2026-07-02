@@ -4,6 +4,80 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.1.0] - 2026-07-02 — MAX PROFIT OPTIMIZASYONU
+
+### Felsefe: Kârı Erken Kasaya Al → Floating'e Girme → Drawdown Ulasilamaz
+
+Kullanici icgorusu: *"Dogru zamanda karlari kasaya koyarsak %95 risk zaten ulasilamaz olur."* Bu tamamen dogru. Optimizasyon bu prensibe gore senkronize edildi.
+
+### Ana Sorun (Veriyle Tespit)
+
+$1000+ hesapta `ApplyBalanceTierScaling` kar hedeflerini asiri sisiriyor:
+- FIFO hedefi ×2.5 → BTC $7 × 2.5 = **$17.50** (cok gec kasa → derin floating)
+- SPM tetik ×1.5 → SPM gec acilir → daha derin zarara girer
+- Kar hedefleri ×2.0 → yavas kasa
+
+### Cozum: Hizli Kasa Scaling (v7.1.0)
+
+**$1000+ TIER:**
+| Parametre | Eski | Yeni | Etki |
+|-----------|------|------|------|
+| fifoNetTarget | ×2.5 | **×1.6** | BTC $17.5 → $11.2 (erken FIFO) |
+| spmTriggerLoss | ×1.5 | **×1.2** | SPM erken acar, sig floating |
+| anaCloseProfit | ×2.0 | **×1.4** | erken kasa |
+| quickProfitUSD | ×2.0 | **×1.4** | hizli kasa |
+| peakMinProfit | ×2.0 | **×1.4** | kar erken kilitlen |
+
+**$500-1000 TIER:** Benzer sekilde ×1.6→×1.4, ×2.0→×1.4
+
+### Global Kar-Alma Hizlandirma
+
+| Parametre | Eski | Yeni |
+|-----------|------|------|
+| QuickProfitUSD | 8.0 | **5.0** |
+| PeakMinProfit | 8.0 | **5.0** |
+| PeakDropPercent | 45 | **40** (giveback azalt) |
+| BreakevenTriggerUSD | 5.0 | **3.0** (floor erken kilit) |
+| PartialCloseTriggerUSD | 15.0 | **10.0** |
+
+### Risk Kaplari (Floating Patlamasi Onle)
+
+| Parametre | Eski | Yeni | Sebep |
+|-----------|------|------|-------|
+| MaxPositionsPerSymbol | 999 | **6** | Sinirsiz SPM patlamasi durduruldu |
+| MaxTotalVolume | 5.0 | **2.0** | $1149 icin ~$200k max exposure (felaket kalkani) |
+
+### Lot Tutarliligi (Sinyal Tutarsizligi Fix)
+
+Confluence lot scaling daralt (kaos → ongorulebilir):
+| Confluence | Eski Mult | Yeni Mult |
+|------------|-----------|-----------|
+| ≥70 | 1.00 | 1.00 |
+| 55-69 | 0.75 | **0.90** |
+| 40-54 | 0.50 | **0.85** |
+
+Sonuc: Lot boyutu 0.03-0.33 kaosu yerine daha tutarli.
+
+FOREX lot tier dusuruldu (agresif EUR):
+- lotTier3: 0.18 → **0.15**
+- lotTier4: 0.30 → **0.20**
+
+### Korunan Kurallar (DEGISMEDI)
+
+- ✅ ANA sadece FIFO ile kapanir (zararina satis YASAK)
+- ✅ SPM/HEDGE/FIFO recovery mekanizmalari
+- ✅ MinScore 47, Multi-TF Confluence, Peak/Dip filtreleri
+- ✅ Tum v6.x + v7.0.x bug fix'leri
+
+### Beklenen Etki
+
+- Daha erken kasa → sermaye serbest → daha cok dongu → bilesik buyume
+- Daha az floating → drawdown "ulasilamaz" seviyeye iner
+- Kontrollu lot → ongorulebilir risk
+- Server auto-restart (Restart=always) + akilli monitor (bu surumle beraber)
+
+---
+
 ## [v7.0.3] - 2026-05-24
 
 ### MIA Commander Tick-Bagimsiz Polling (Mobile APK Fix)
