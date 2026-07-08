@@ -4,6 +4,36 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.3.1] - 2026-07-08 — XAU/XAG MUM-DÖNÜŞÜ ERKEN KAPATMA DÜZELTMESİ
+
+### Sorun (Kullanıcı Raporu)
+
+Yüksek volatiliteli metallerde (XAU/Altın, XAG/Gümüş) akıllı kapatma (SmartClose) sistemi
+kârı **$0.80–$1.00 gibi komik küçük seviyelerde** alıp pozisyonu kapatıyordu. Aynı anda
+BTC, EUR, GBP gibi sembollerde kâr alma seviyeleri sağlıklıydı ($4 ve üzeri).
+
+### Kök Neden
+
+`SymbolProfile` yapısındaki **`candleCloseWeak`** parametresi (zayıf trendde mum-dönüşü
+tespit edilince kabul edilen minimum kâr eşiği) XAU ve XAG profillerinde `$0.80` idi.
+Altın/gümüş gibi tek mumda büyük hareket eden enstrümanlarda bu eşik çok düşük kalıyor —
+zayıf bir ters mum belirtisinde pozisyon daha $1 kârdayken kapanıyordu. Forex/BTC
+profillerinde bu değer zaten enstrümana uygun ölçekteydi, o yüzden onlarda sorun yoktu.
+
+### Çözüm
+
+- **XAU (GOLD_XAU):** `candleCloseWeak` $0.80 → **$3.00**
+- **XAG (SILVER_XAG):** `candleCloseWeak` $0.80 → **$3.00**
+
+Böylece altın/gümüşte zayıf trend mum-dönüşü kapaması en az $3 kârda tetiklenir; orta
+($5.50) ve güçlü ($9.00) trend eşikleri zaten uygun olduğundan dokunulmadı. Diğer profiller
+(Forex, JPY, BTC, ALT, Endeks, Enerji, Metal) etkilenmedi.
+
+### Etkilenen Dosyalar
+- `Config.mqh` — `SetGold()` ve `SetSilver()` içinde `candleCloseWeak` güncellendi
+
+---
+
 ## [v7.1.0] - 2026-07-02 — MAX PROFIT OPTIMIZASYONU
 
 ### Felsefe: Kârı Erken Kasaya Al → Floating'e Girme → Drawdown Ulasilamaz

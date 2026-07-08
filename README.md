@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v6.0.1 — Signal Momentum Protection + Multi-TF Reversal Check** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. Now with **anti-reversal protection** to prevent profitable trades from turning into losses.
+**BytamerFX v7.3.1 — XAU/XAG CandleClose Fix** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. Volatility-aware smart-close thresholds ensure high-volatility metals (Gold/Silver) bank meaningful profit instead of closing on trivial $1 moves.
 
 > **NO SL · NO Force Close** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Quantum Recovery** | **Probabilistic Edge** | **Crypto 7/24**
 
@@ -230,6 +230,13 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v7.3.1** | **2026-07-08** | **XAU/XAG CandleClose Fix — Altın/Gümüş zayıf-trend mum-dönüşü kâr eşiği $0.80 → $3.00 (komik küçük kâr alma raporu)** |
+| v7.1.0 | 2026-07-02 | MAX PROFIT Optimization — Erken kâr bankalama, floating minimize, drawdown ulaşılamaz |
+| v7.0.3 | 2026-06-28 | MIA Commander Tick-Independent Polling (Mobile APK Fix) |
+| v7.0.2 | 2026-06-27 | HOTFIX — Chart Input Override kod içinde çözüldü |
+| v7.0.0 | 2026-06-25 | MAJOR — Multi-TF Confluence + Adaptive Lot Scaling |
+| v6.0.8 | 2026-06-20 | CRITICAL HOTFIX — Hatalı HEDGE downgrade döngüsü kaldırıldı |
+| v6.0.7 | 2026-06-19 | MAX 1 HEDGE + HEDGE→SPM Downgrade |
 | **v5.5.0** | **2026-05-10** | **Signal-Gated SPM + SPM3 → HEDGE_BOOST — Fragile Entry Önleme** |
 | v5.4.0 | 2026-05-02 | Equity-LotSize-FreeMarginGuard — Equity-bazlı tier lot + free margin guard (liq önleme) |
 | v5.2.9 | 2026-04-06 | FastGrid — Forex Lot+Tetik Rebalance |
