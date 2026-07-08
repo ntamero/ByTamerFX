@@ -4,6 +4,64 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.4.0] - 2026-07-08 — SPIKE FADE: M5 ANİ PİK TERS İŞLEM SİSTEMİ
+
+### Kullanıcı Talebi
+
+*"Haberlerde veya sansasyonel haberlerde ani sell/buy pik çizen mum hareketinde,
+bağımsız olarak tepe/dip noktaya geldiğinde ters işlem açarak mum hareketinin
+%40'ına gelene kadar ters işlemde kâr toplayıp, kâr değerine bakmadan bu tür
+açılan işlemlerin hepsini kapatsın. Pik trend aynı yönde devam ederse 2. tepe/dip
+noktada 2. ters işlem — max 3 adet. Bu sistem 5 dakikalık; normal sistem 15M'de."*
+
+### Yeni Modül: `SpikeFade.mqh` (CSpikeFade)
+
+**Tam izolasyon:** Spike işlemleri kendi magic numarasını kullanır
+(`MagicNumber + 5000`). PositionManager yalnızca ana magic'i yönettiği için
+SPM/FIFO/HEDGE sistemi bu pozisyonları hiç görmez — 15M normal sistem ile M5
+spike sistemi aynı sembolde birbirine karışmadan bağımsız çalışır.
+
+**Durum makinesi:**
+1. **Spike tespiti (M5):** Kapanan M5 mumunun menzili ≥ `ATR(14) × SpikeATRMult`
+   (varsayılan 3.0) VE gövde ≥ menzilin %50'si (yönlü hareket) → episod başlar,
+   base = spike mumunun açılışı, ekstrem takibi başlar.
+2. **Tepe/dip onayı → ters işlem:** Spike yönüne TERS renkli M5 mum kapanışı =
+   tepe/dip oluştu → ters işlem açılır (yukarı pik → SELL, aşağı pik → BUY).
+3. **%40 retrace hedefi:** Fiyat `ekstrem − (ekstrem−base) × %40` seviyesine
+   (aşağı pikte tersi) geri çekilince → **kâr değerine bakılmaksızın episodun
+   TÜM spike işlemleri kapatılır**, episod biter (30 dk cooldown).
+4. **Trend devamı → kademeli giriş:** Pik aynı yönde devam edip ekstremi önceki
+   girişten en az `0.5 × ATR` ileri taşırsa, yeni ters mum onayında 2. (ve 3.)
+   ters işlem açılır — **max 3 giriş** (`SpikeMaxEntries`).
+5. **Zaman aşımı (240 dk):** Episod hedefe ulaşmadan uzarsa kârda olanlar
+   kapatılır; kalan zarardakiler NO-SL felsefesine uygun şekilde küçük kâra
+   (+$0.50) gelince tek tek kapanır (recovery modu).
+
+### Yeni Input Parametreleri (Config.mqh)
+
+| Parametre | Varsayılan | Açıklama |
+|---|---|---|
+| `EnableSpikeFade` | `true` | Sistemi aç/kapat |
+| `SpikeATRMult` | `3.0` | Spike eşiği: M5 menzil ≥ ATR × bu |
+| `SpikeRetracePct` | `40.0` | Geri çekilme hedefi (%) |
+| `SpikeMaxEntries` | `3` | Episod başına max ters işlem |
+| `SpikeLotSize` | `0.02` | Ters işlem lot büyüklüğü |
+| `SpikeNewExtremeATR` | `0.5` | 2./3. giriş için yeni ekstrem min mesafesi (ATR×) |
+| `SpikeTimeoutMin` | `240` | Episod zaman aşımı (dk) |
+| `SpikeCooldownMin` | `30` | Episod sonrası bekleme (dk) |
+
+### Notlar
+- Gece modu kuralı korunur (Crypto hariç TR 05-19 dışında yeni spike girişi yok)
+- Telegram bildirimleri: spike tespiti, her ters işlem girişi, toplu kapatma
+- İşlem yorumu: `BTFX_SPIKE_1/2/3`
+
+### Etkilenen Dosyalar
+- `SpikeFade.mqh` — YENİ modül
+- `Config.mqh` — 8 yeni input + versiyon
+- `BytamerFX.mq5` — include + init + OnTick + OnDeinit entegrasyonu
+
+---
+
 ## [v7.3.1] - 2026-07-08 — XAU/XAG MUM-DÖNÜŞÜ ERKEN KAPATMA DÜZELTMESİ
 
 ### Sorun (Kullanıcı Raporu)

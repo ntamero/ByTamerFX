@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v7.3.1 — XAU/XAG CandleClose Fix** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. Volatility-aware smart-close thresholds ensure high-volatility metals (Gold/Silver) bank meaningful profit instead of closing on trivial $1 moves.
+**BytamerFX v7.4.0 — SpikeFade-M5** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. New **Spike Fade** module counter-trades news-driven M5 price spikes at peak/dip with a 40% retracement banking target — fully isolated from the main M15 engine via a dedicated magic number.
 
 > **NO SL · NO Force Close** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Quantum Recovery** | **Probabilistic Edge** | **Crypto 7/24**
 
@@ -230,7 +230,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| **v7.3.1** | **2026-07-08** | **XAU/XAG CandleClose Fix — Altın/Gümüş zayıf-trend mum-dönüşü kâr eşiği $0.80 → $3.00 (komik küçük kâr alma raporu)** |
+| **v7.4.0** | **2026-07-08** | **SpikeFade-M5 — Haber kaynaklı ani piklerde tepe/dip ters işlem, %40 retrace toplu kapatma, max 3 kademeli giriş (izole magic, ana 15M sistemden bağımsız)** |
+| v7.3.1 | 2026-07-08 | XAU/XAG CandleClose Fix — Altın/Gümüş zayıf-trend mum-dönüşü kâr eşiği $0.80 → $3.00 (komik küçük kâr alma raporu) |
 | v7.1.0 | 2026-07-02 | MAX PROFIT Optimization — Erken kâr bankalama, floating minimize, drawdown ulaşılamaz |
 | v7.0.3 | 2026-06-28 | MIA Commander Tick-Independent Polling (Mobile APK Fix) |
 | v7.0.2 | 2026-06-27 | HOTFIX — Chart Input Override kod içinde çözüldü |
