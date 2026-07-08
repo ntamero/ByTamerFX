@@ -4,6 +4,61 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.5.0] - 2026-07-08 — LEAD-LAG FİLTRESİ: BAĞIMSIZ ÖNCÜ KAYNAK ONAYI
+
+### Kullanıcı Talebi
+
+*"Dış bağlantı ile forex broker arasında erken hareket yapısını kontrol edecek bir
+yapı oluştur — öncü hareket algılama ile işlem kalitesini artır."* Seçim: **yalnız
+filtre/onay** (en düşük riskli, kuralları bozmayan yaklaşım).
+
+### Dürüst Çerçeve
+
+Gerçek "latency arbitrage" (broker'dan önce görüp bedavaya alma) retail kurulumda
+mümkün değildir (last-look, slippage, ToS yasağı). Bunun yerine kurulan şey meşru
+bir **lead-lag / bağımsız öncü onay** sistemidir: broker feed'inden BAĞIMSIZ
+kaynakların kısa vadeli momentum yönü, yeni giriş için teyit olarak kullanılır.
+
+### Mimari (3 parça)
+
+1. **Sunucu daemon** (`/root/lead-signal-daemon.py`, systemd `lead-signal.service`):
+   - BTC → Binance BTCUSDT (fiyat keşif merkezi — gerçek lead)
+   - EUR/GBP → Yahoo EURUSD=X / GBPUSD=X
+   - XAU/XAG → Yahoo GC=F (altın) / SI=F (gümüş)
+   - Her 5 sn örnekler, 45 sn'lik pencerede momentum yönü + gücü (0-100) hesaplar
+   - `/var/www/bytamer.com/api/lead-signal.json`'e atomik yazar
+2. **PHP endpoint** (`bytamer.com/api/lead-signal.php`): key korumalı, 30 sn'den eski
+   veriyi `stale` işaretler. EA WebRequest ile okur (bytamer.com zaten whitelist'te).
+3. **EA modülü** (`LeadLagFilter.mqh`): sinyali 15 sn cache ile çeker; yeni pozisyon
+   açarken önerilen yön öncü kaynakça **güçlü şekilde ters** (güç ≥ `LeadLagMinStrength`,
+   varsayılan 55) ise girişi engeller.
+
+### Güvenlik / Kurallara Etki
+
+- **SIFIR kural değişikliği.** NO-SL, sınırsız SPM, FIFO, kapatma mantığı aynen kalır.
+- Sadece yeni ANA giriş kapısına eklenen bir filtre (mevcut TRAP/MOMENTUM/PEAK-DIP
+  reddetme zincirinin yanına). Front-running / erken giriş YOK.
+- **Fail-safe:** veri stale / endpoint erişilemez / sembol kapsam dışı → filtre
+  ASLA engellemez, EA tamamen normal çalışır.
+
+### Yeni Input Parametreleri (Config.mqh)
+
+| Parametre | Varsayılan | Açıklama |
+|---|---|---|
+| `EnableLeadLagFilter` | `true` | Filtre aktif |
+| `LeadLagURL` | `bytamer.com/api/lead-signal.php` | Sinyal endpoint |
+| `LeadLagKey` | (api key) | Endpoint anahtarı |
+| `LeadLagRefreshSec` | `15` | Sinyal tazeleme (sn) |
+| `LeadLagMinStrength` | `55` | Bu gücün altındaki ters momentum engellemez (0-100) |
+
+### Etkilenen Dosyalar
+- `LeadLagFilter.mqh` — YENİ EA modülü
+- `Config.mqh` — 5 yeni input + versiyon
+- `BytamerFX.mq5` — include + init + OnTick refresh + giriş filtresi bloğu
+- Sunucu (git dışı): `lead-signal-daemon.py`, `lead-signal.php`, `lead-signal.service`
+
+---
+
 ## [v7.4.0] - 2026-07-08 — SPIKE FADE: M5 ANİ PİK TERS İŞLEM SİSTEMİ
 
 ### Kullanıcı Talebi

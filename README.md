@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v7.4.0 — SpikeFade-M5** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. New **Spike Fade** module counter-trades news-driven M5 price spikes at peak/dip with a 40% retracement banking target — fully isolated from the main M15 engine via a dedicated magic number.
+**BytamerFX v7.5.0 — LeadLag-Filter** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. New **Lead-Lag Filter** cross-checks each entry against broker-independent momentum from external reference feeds (Binance for BTC, Yahoo for FX/metals) — blocking entries that strongly contradict the leading source. Filter-only, fail-safe, zero changes to core rules.
 
 > **NO SL · NO Force Close** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Quantum Recovery** | **Probabilistic Edge** | **Crypto 7/24**
 
@@ -230,6 +230,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v7.5.0** | **2026-07-08** | **LeadLag-Filter — Bağımsız öncü kaynak (Binance/Yahoo) momentum teyidi; güçlü ters öncü momentumda girişi engeller (yalnız filtre, fail-safe, kurallara sıfır dokunuş)** |
 | **v7.4.0** | **2026-07-08** | **SpikeFade-M5 — Haber kaynaklı ani piklerde tepe/dip ters işlem, %40 retrace toplu kapatma, max 3 kademeli giriş (izole magic, ana 15M sistemden bağımsız)** |
 | v7.3.1 | 2026-07-08 | XAU/XAG CandleClose Fix — Altın/Gümüş zayıf-trend mum-dönüşü kâr eşiği $0.80 → $3.00 (komik küçük kâr alma raporu) |
 | v7.1.0 | 2026-07-02 | MAX PROFIT Optimization — Erken kâr bankalama, floating minimize, drawdown ulaşılamaz |
