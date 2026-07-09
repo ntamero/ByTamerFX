@@ -4,6 +4,56 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.6.0] - 2026-07-09 — GİRİŞ KALİTESİ + SPIKEFADE HABER-KAPISI
+
+### Amaç
+
+Canlı gözlemde görülen **tek büyük kayıp kaynağı** — güçlü trende karşı açılan ilk
+pozisyon ve onun üzerine biriken tek-yönlü grid — kalıcı kurallara (NO-SL, SPM,
+FIFO, kasa) **hiç dokunmadan** girişte kesilir. Ayrıca SpikeFade'in normal
+volatilitede yanlış tepe/dip açması düzeltilir.
+
+### 1) SpikeFade — Haber Kapısı + Sertleştirilmiş Eşik
+
+Kullanıcı kuralı "**haberlerde/sansasyonel haberlerde**" fade idi; kod ise her M5
+mumunda eşik dolunca (haber olmadan) ters işlem açıp sürekli yanlış tepe/dip
+zararına neden oluyordu. Düzeltmeler:
+
+- `SpikeRequireNews = true` → fade **yalnızca aktif haber penceresinde** çalışır
+- Spike eşiği `ATRx3.0 → ATRx4.5` (sadece gerçek pik)
+- Max kademeli giriş `3 → 2`, yeni tepe/dip mesafesi `0.5 → 1.2 ATR`
+- Ters onay mumu artık **gerçek gövde** ister (`body/range ≥ 0.40` — doji ile girmez)
+- Episod sonrası bekleme `30 → 60 dk`
+
+### 2) Lead-Lag Filtresi — Etkinleştirildi
+
+- Eşik `55 → 35` (gerçek momentum değerlerinde artık devreye girer)
+- Bağımsız öncü kaynak (Binance/Yahoo) **güçlü şekilde ters** ise ilk giriş engellenir
+
+### 3) İlk Giriş — Büyük Trend Hizası (HTF Gate)
+
+- Hesap boşken açılan **ilk pozisyon yalnızca D1/W1 (HTF) trendi yönünde** açılır
+- Trende karşı ilk grid'in doğması baştan önlenir
+
+### 4) Tek-Yön Birikim Tavanı Sıkılaştırıldı
+
+- OSA dengesizlik oranı `3.0x → 2.5x`
+- Oylamaya **büyük trend (HTF) oyu** eklendi; artık çoğunluk desteği şart
+- Trende karşı aynı-yön yığılma daha erken kesilir
+
+### Kurallara Etki
+
+- **SIFIR kural değişikliği.** NO-SL, SPM, FIFO, kasa, kapatma mantığı aynen korunur.
+- Tüm kapılar **yalnızca yeni girişi** süzer; açık pozisyonlara ve recovery/SPM/DCA
+  mekaniğine dokunmaz. Filtreler kapalı/veri stale ise EA normal çalışır (fail-safe).
+
+### Dürüst Çerçeve
+
+Bu değişiklikler **kâr garantisi vermez**; hesabı en çok zorlayan deseni (güçlü
+trende karşı SL'siz grid) bastırmayı hedefler. Sonuç canlı takiple değerlendirilir.
+
+---
+
 ## [v7.5.0] - 2026-07-08 — LEAD-LAG FİLTRESİ: BAĞIMSIZ ÖNCÜ KAYNAK ONAYI
 
 ### Kullanıcı Talebi

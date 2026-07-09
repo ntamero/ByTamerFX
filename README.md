@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v7.5.0 — LeadLag-Filter** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. New **Lead-Lag Filter** cross-checks each entry against broker-independent momentum from external reference feeds (Binance for BTC, Yahoo for FX/metals) — blocking entries that strongly contradict the leading source. Filter-only, fail-safe, zero changes to core rules.
+**BytamerFX v7.6.0 — EntryQuality + SpikeFix** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. New **entry-quality gate** opens the first position only when aligned with the higher-timeframe (D1/W1) trend and not contradicted by broker-independent lead-lag momentum, while the SpikeFade module is now **news-gated** (only fires inside active high-impact news windows) with hardened thresholds to stop false top/bottom fades. All gates filter **new entries only** — zero changes to core rules (NO-SL, SPM, FIFO, kasa).
 
 > **NO SL · NO Force Close** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Quantum Recovery** | **Probabilistic Edge** | **Crypto 7/24**
 
@@ -230,6 +230,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v7.6.0** | **2026-07-09** | **EntryQuality + SpikeFix — İlk giriş HTF (D1/W1) trend + lead-lag (eşik 55→35) hizalı; tek-yön birikim tavanı 2.5x + HTF oyu; SpikeFade haber-kapısı (yalnız aktif haberde) + sertleştirilmiş eşik (ATRx4.5, max 2, gerçek-gövde onayı) — yanlış tepe/dip fix. Yalnız yeni giriş süzülür, kurallara sıfır dokunuş** |
 | **v7.5.0** | **2026-07-08** | **LeadLag-Filter — Bağımsız öncü kaynak (Binance/Yahoo) momentum teyidi; güçlü ters öncü momentumda girişi engeller (yalnız filtre, fail-safe, kurallara sıfır dokunuş)** |
 | **v7.4.0** | **2026-07-08** | **SpikeFade-M5 — Haber kaynaklı ani piklerde tepe/dip ters işlem, %40 retrace toplu kapatma, max 3 kademeli giriş (izole magic, ana 15M sistemden bağımsız)** |
 | v7.3.1 | 2026-07-08 | XAU/XAG CandleClose Fix — Altın/Gümüş zayıf-trend mum-dönüşü kâr eşiği $0.80 → $3.00 (komik küçük kâr alma raporu) |
