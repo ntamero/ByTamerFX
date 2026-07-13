@@ -1,8 +1,24 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v7.6.0 — EntryQuality + SpikeFix** — Professional automated trading system with **15-layer intelligence stack** for crypto/forex. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. New **entry-quality gate** opens the first position only when aligned with the higher-timeframe (D1/W1) trend and not contradicted by broker-independent lead-lag momentum, while the SpikeFade module is now **news-gated** (only fires inside active high-impact news windows) with hardened thresholds to stop false top/bottom fades. All gates filter **new entries only** — zero changes to core rules (NO-SL, SPM, FIFO, kasa).
+**BytamerFX v7.7.6 — Drawdown Opportunity Scalp (DOS)** — Professional automated trading system with a **15-layer intelligence stack** for crypto/forex/metals. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. The new **DOS engine** turns drawdown into opportunity: when the account is in drawdown *and* a strong, fresh, HTF-aligned signal appears, it opens a small isolated scalp **in the direction of the move** and banks $8–10 straight to the vault (kasa) on a QuickTP hit or an M5 candle reversal — no top-guessing required. Live results proved the concept (**+$300 realized, 94% win-rate, 100% on silver**), so the older top-fade module (**SpikeFade**) was retired in favor of DOS. All add-on engines filter or trade **isolated** positions only — zero changes to core rules (NO-SL, SPM, FIFO, kasa).
 
-> **NO SL · NO Force Close** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Quantum Recovery** | **Probabilistic Edge** | **Crypto 7/24**
+> **NO SL · NO Force Close** | **Drawdown Opportunity Scalp** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Companion Mobile Apps** | **Crypto 7/24**
+
+## v7.7.x — Drawdown Opportunity Scalp Series (2026-07-12 → 13)
+
+The v7.7 line adds a **profit engine that thrives in adverse conditions** — the opposite of a defensive layer.
+
+| Feature | Trigger | Action |
+|---------|---------|--------|
+| **DOS Entry** (v7.7.0) | Drawdown ≥ 3% + signal score ≥ 50 + fresh (< 15 min) + HTF-aligned | Open small isolated scalp in move direction (magic +6000) |
+| **DOS QuickTP** | Open scalp reaches +$8–10 | Close → send profit to vault (kasa) |
+| **DOS Candle Exit** | M5 candle reverses against the scalp | Close at peak → vault (never at a loss on timeout) |
+| **Momentum Filter** (v7.7.5) | Last M5 candle must confirm direction + not decelerate | Block late/exhausted entries |
+| **Equity-Tier Lot** | Balance-scaled sizing | <$200: 0.02–0.04 · $200–500: 0.04–0.08 · $500–1K: 0.08–0.12 · $1K+: 0.12–0.20 |
+| **Metal Fixed Lot** | XAU / XAG scalps | Fixed 0.02 lot (volatility-safe) |
+| **SpikeFade Retired** (v7.7.6) | — | Disabled — DOS does the "profit-on-extreme" job with a 94% win-rate |
+
+**Why it works:** classic "fade the top" systems must call the exact reversal — mathematically hard, so they misfire. DOS never predicts the top. It rides an already-extended move with a tiny lot, grabs a fast $8–10, and exits the instant an M5 candle turns. Realized proof over 35 trades: **+$300.13, 94% WR** (silver 16/16 = 100%, crypto 89%).
 
 ## v6.0.x — Signal Reversal Protection Layer (2026-05-17)
 
@@ -77,6 +93,30 @@ Layer 12: SmartRecoveryEngine (12-stage decision tree)
 
 ### MetaTrader 5 — EA Dashboard Overlay
 ![MT5 EA Dashboard](screenshots/mt5_ea_dashboard.png)
+
+---
+
+## Companion Mobile Apps (Android)
+
+The BytamerFX ecosystem ships two native companion apps built with **Expo / React Native (SDK 55, RN 0.83)**, distributed as sideload APKs with **in-app auto-update**.
+
+<img src="screenshots/mobile_app_icon.png" width="96" align="left" style="margin-right:16px" alt="BytamerFX app icon" />
+
+### BytamerFX Mobile — Trading Companion
+Real-time account monitoring on the go. Live **equity + balance dual-line chart** with an animated leading-edge pulse, watchlist (38 symbols — crypto, forex & metals streamed from the broker), per-symbol candle charts, open positions & grid ladder, Fear & Greed gauge, economic calendar, news feed and a biometric-gated login. Push/local alert engine for critical news & price events.
+
+<br clear="left" />
+
+<img src="screenshots/erp_app_icon.png" width="96" align="left" style="margin-right:16px" alt="ByTamer ERP app icon" />
+
+### ByTamer ERP Mobile — Business Operations
+Full-featured native ERP companion (OTP + JWT + RBAC) covering all 16 modules: incoming/outgoing sub-contracting, work orders, production, accounting, receivables, expenses, payroll, attendance, chemical stock and monthly earnings — with **complete write-actions** (create/edit/delete) and one-tap **WhatsApp customer notifications**, mirroring the web ERP.
+
+<br clear="left" />
+
+> Both apps auto-detect new releases via a version manifest and offer one-tap in-app updates. APKs: `bytamer.com/download/bytamerfx.apk` · `bytamer.com/download/bytamer-erp.apk`
+
+*Live device screenshots coming soon.*
 
 ---
 
@@ -230,6 +270,9 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v7.7.6** | **2026-07-13** | **DOS-Permanent — SpikeFade retired (atıl/negatif); DOS proven live (+$300, 94% WR, silver 100%); DDScalp_MaxEntries 2→3. Top-fade is mathematically hard; DOS rides the move + banks $8–10 on M5 reversal instead** |
+| v7.7.5 | 2026-07-12 | DOS Momentum Filter + Equity-Tier Lot + fixed 0.02 metal lot (XAU/XAG) + external-cash vault hook |
+| **v7.7.0** | **2026-07-12** | **Drawdown Opportunity Scalp — turn drawdown into profit: DD≥3% + score≥50 + fresh + HTF-aligned → isolated move-direction scalp (magic +6000), QuickTP/M5-reversal → vault, NO-SL** |
 | **v7.6.0** | **2026-07-09** | **EntryQuality + SpikeFix — İlk giriş HTF (D1/W1) trend + lead-lag (eşik 55→35) hizalı; tek-yön birikim tavanı 2.5x + HTF oyu; SpikeFade haber-kapısı (yalnız aktif haberde) + sertleştirilmiş eşik (ATRx4.5, max 2, gerçek-gövde onayı) — yanlış tepe/dip fix. Yalnız yeni giriş süzülür, kurallara sıfır dokunuş** |
 | **v7.5.0** | **2026-07-08** | **LeadLag-Filter — Bağımsız öncü kaynak (Binance/Yahoo) momentum teyidi; güçlü ters öncü momentumda girişi engeller (yalnız filtre, fail-safe, kurallara sıfır dokunuş)** |
 | **v7.4.0** | **2026-07-08** | **SpikeFade-M5 — Haber kaynaklı ani piklerde tepe/dip ters işlem, %40 retrace toplu kapatma, max 3 kademeli giriş (izole magic, ana 15M sistemden bağımsız)** |

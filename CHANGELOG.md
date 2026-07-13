@@ -4,6 +4,63 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.7.6] - 2026-07-13 — DOS KALICI + SPIKEFADE KAPATILDI
+
+### Amaç
+
+Canlı veri analizi ile eklenti modüllerin gerçek getirisi ölçüldü ve sistem
+kanıta göre sadeleştirildi. Kalıcı kurallara (NO-SL, SPM, FIFO, kasa) **hiç
+dokunulmadı** — yalnız izole eklenti modüllerin ayarı değişti.
+
+### Canlı Performans Bulgusu (son ~910 kapanış penceresi)
+
+| Modül | İşlem | Toplam | WR | Sonuç |
+|-------|-------|--------|-----|-------|
+| **DOS-Scalp** | 35 | **+$300.13** | **%94** | 🟢 Yıldız (gümüş 16/16 = %100, kripto %89) |
+| Hedge | 66 | +$4.45 | %82 | 🟡 Nötr sigorta |
+| **SpikeFade** | 3 | −$0.47 | %33 | 🔴 Atıl/başarısız — neredeyse hiç tetiklenmedi |
+
+### Değişiklikler
+
+- `EnableSpikeFade = false` — atıl+negatif modül kapatıldı. **Gerekçe:** tepe-fade
+  yaklaşımı tam dönüş noktasını bilmek zorundadır (matematiksel olarak zor), bu
+  yüzden ya erken girip zarar eder ya hiç tetiklenmez. DOS ise tepeyi **tahmin
+  etmez** — uzamış hareketi küçük lotla sürüp M5 mum döner dönmez $8–10'u kasaya
+  alır. DOS, SpikeFade'in yapmaya çalıştığı işi %94 WR ile zaten yapıyor.
+- `DDScalp_MaxEntries` `2 → 3` — kanıtlanmış kazanan biraz genişletildi.
+
+> Not: O sıradaki floating −$330'un −$212'si kullanıcının **manuel** XAG buy
+> pozisyonlarıydı (magic=0, EA-dışı) — strateji başarısızlığı değil.
+
+---
+
+## [v7.7.0] - 2026-07-12 — DRAWDOWN OPPORTUNITY SCALP (DOS)
+
+### Fikir (kullanıcı önerisi)
+
+Drawdown'ı savunulacak bir tehdit değil, bir **fırsat** olarak oku: hesap
+drawdown'dayken güçlü ve taze bir sinyal geldiğinde, hareket **yönünde** küçük
+izole bir scalp aç ve karı hızlıca kasaya al.
+
+### Mekanik
+
+- **Giriş kapısı:** Drawdown ≥ %3 **+** sinyal skoru ≥ 50 **+** taze (< 15 dk)
+  **+** HTF hizalı **+** ivme filtresi (son M5 mumu yönü teyit etmeli, yavaşlamamalı)
+- **İzole magic** `MagicNumber + 6000` — ana 15M sistemden tamamen bağımsız
+- **Çıkış:** QuickTP +$8–10 **veya** M5 mum dönüşü → kâr **kasaya** (`AddExternalCash`)
+- **Zamanaşımı:** yalnız kârdaysa kapatır — **NO-SL korunur**
+- **Equity-tier lot:** <$200: 0.02–0.04 · $200–500: 0.04–0.08 · $500–1K: 0.08–0.12
+  · $1K+: 0.12–0.20 | **Metal (XAU/XAG) sabit 0.02 lot**
+- `EnableDDScalp = false` ile tamamen kapatılabilir; SPM/FIFO/kasa'ya karışmaz
+
+### v7.7.1 – v7.7.5 ara iyileştirmeler
+
+- HTF-relax tier (yüksek drawdown'da HTF şartını base-lot ile gevşetir)
+- Momentum decel toleransı (`DDScalp_MomDecelTol`), sinyal önbelleği (non-mutating
+  `GetLastSignal`), Spike/DOS ortak `AddExternalCash` kasa kancası
+
+---
+
 ## [v7.6.0] - 2026-07-09 — GİRİŞ KALİTESİ + SPIKEFADE HABER-KAPISI
 
 ### Amaç
