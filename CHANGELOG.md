@@ -4,6 +4,36 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.7] - 2026-07-16 — SPM TETIK TEKDUZE -4
+
+### Degisti
+- **`spmTriggerLoss` tum profillerde -4.0** (SetForex, SetForexJPY, SetSilver, SetIndices,
+  SetEnergy, SetMetal -3.0 -> -4.0). SetGold ve SetCryptoAlt zaten -4.0 idi.
+  Fallback input `SPM_TriggerLoss` de -3.0 -> -4.0.
+- **SetCrypto (BTC) -5.0 KORUNDU** — bilincli istisna. Tetigi -4'e cekmek BTC'yi
+  daraltip daha sik SPM actiracakti; BTC'nin SPM'i tarihsel olarak en zararli
+  bilesen (SPM1 172 islem -$57, SPM2 61 islem -$230), yani kaybeden tarafa daha
+  cok giris demekti.
+
+### Gerekce (canli veri analizi)
+Tetikler fiyat yuzdesine gore ayarlanmisti (XAG %0.060, XAU %0.057 — neredeyse ayni),
+ama gumus altina gore 2.2 kat oynak (M15 ATR/fiyat: XAG %0.39, XAU %0.18). Sonuc:
+volatiliteye gore normalize edildiginde tetikler hic tutarli degildi —
+**XAG 0.15xATR, XAU 0.32xATR, BTC 0.97xATR**.
+
+XAG'in asiri dar tetigi churn uretiyordu: son 24 saatte **41 SPM1 islemi / net +$5.00**
+(islem basina 12 sent, medyan omur 4.3 dk). Ayni pencerede XAU: 17 islem / +$19.11
+(islem basina $1.12) — yaklasik 9 kat verimli. XAG artik 0.21xATR.
+
+### Notlar
+- Sadece yeni SPM girislerini seyreltir. NO-SL / SPM zigzag / FIFO / kasa kurallarina
+  DOKUNULMADI.
+- Canli dogrulama: restart sonrasi ilk tetik `ANA zarar $-4.60 <= $-4.60` (onceden -3.45).
+- Dormant profiller (Forex/JPY/Indices/Energy/Metal) tutarlilik icin -4 yapildi ama
+  ATR analizi YAPILMADI — canlida islem gormuyorlar.
+
+---
+
 ## [v7.7.6] - 2026-07-13 — DOS KALICI + SPIKEFADE KAPATILDI
 
 ### Amaç
