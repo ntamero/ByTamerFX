@@ -4,6 +4,30 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.17] - 2026-07-17 — DONUS KAPISI (TASK 19) + FREN KILIDI + TAZE PARA RAMPASI
+
+### Eklendi
+- **Donus kapisi (Task 19):** REVERSAL-AWARE (v7.2.0) donusu zaten tespit ediyordu ama
+  sadece skor ayarliyordu (+8/-5) — 07-17'de "BULLISH donus" loglanirken 3 SELL acildi
+  (2 kez para yakti: gece liq + sabah -$90). Artik onaylanmis donus (son 3 kapali mumda
+  2+ ayni yon + MACD hist 3-bar momentum) varken:
+  - TERS yonde yeni ANA sinyali uretilmez (`[REV-GATE] ... BLOKLANDI` logu)
+  - SPM1 (ANA yonunde ortalama) donuse karsiysa acilmaz
+  - Zigzag dengeleyici SPM2+, hedge ve mevcut grid ETKILENMEZ. `EnableReversalGate` input.
+- **Fren kilidi (hysteresis):** manuel zarar kapatma bakiyeyi dusurunce equity/balance
+  orani "duzelip" yuksek-DD freni ayni saniyede cozuluyordu → EA hemen ayni yone girdi.
+  Fren artik tetiklendikten sonra `HighDDLatchMinutes` (15dk) kilitli kalir.
+- **Taze para rampasi:** bakiye tek adimda +%20 VE +$50 sicrarsa (yatirim) ilk
+  `FreshDepositRampMinutes` (45dk) SPM/DCA acilmaz, sadece ANA. 07-17: $200 yatirilip
+  2 dk sonra tam grid acilmis, 20 dk'da %30 DD olmustu.
+
+### Sembol Yapisi
+- **$200 icin 2 sembol: XAU + USTEC.** XAG cikarildi (min lotta ~$21/ATR ile en agir
+  risk, iki liq'in de bas aktoru; XAU $14/ATR, USTEC $7.6/ATR). Metal-metal korelasyonu
+  yerine metal+endeks cesitlendirmesi. **$500'de XAG geri eklenecek.**
+
+---
+
 ## [v7.9.16] - 2026-07-17 — NET SETTLEMENT MIN ZARAR ESIGI
 
 ### Degisti
