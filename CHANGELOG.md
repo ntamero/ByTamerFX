@@ -4,6 +4,25 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.15] - 2026-07-17 — OFFSETPUMP TP2 KURUS-KAPANIS BUG FIX
+
+### Duzeltildi
+- **OffsetPump TP2 hard limiti** (v5.2.3'ten beri gizli bug): pip→USD donusumu
+  `tp1Pips x POINT x lot x tickValue/tickSize` seklindeydi — 3-haneli XAU'da "50 pip"
+  50 POINT sayilip limit **$0.15** cikiyordu (0.02 lot). Sonuc: ANA'nin tersi yondeki
+  son offset SPM, kari $0.15'i gecer gecmez kapatildi ($0.25, $0.91 kapanislar, 07-17).
+  Profildeki min kapatma ($4) ve SPM hedefi ($8) esikleri bypass ediliyordu.
+- Yeni formul: `tp2USD = max(spmCloseProfit x 1.5, $5)` — sembol matematigi yok,
+  profil bazli dolar. XAU/XAG/Indices'te limit $12; hicbir offset SPM $5 altinda
+  "hard limit" ile kapanamaz.
+
+### Neden simdi ortaya cikti
+Bug'in yolu sadece "grid tek yonde + karsi yonde TEK offset SPM karda" durumunda
+calisir. v7.9.13 yuksek-DD freni ayni-yon girisleri durdurunca bu dizilim ilk kez
+arka arkaya olustu. Kapatma esiklerine v7.9.13/14'te DOKUNULMADI.
+
+---
+
 ## [v7.9.14] - 2026-07-17 — LIQ KORUMASI TAMAMLANDI (DCA DA FRENDE)
 
 ### Duzeltildi
