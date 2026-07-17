@@ -4,6 +4,63 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.14] - 2026-07-17 — LIQ KORUMASI TAMAMLANDI (DCA DA FRENDE)
+
+### Duzeltildi
+- **DCA yuksek-DD freni:** v7.9.13'un yuksek-DD giris freni ilk deployda `OpenDCA`'yi
+  kapsamiyordu. DCA ayni yonde ortalama dusurur, hesap batarken zarari katlar —
+  artik equity < balance x %70 iken DCA da ACILMAZ. Boylece fren tum zarar-buyuten
+  girisleri kapsar: ANA + SPM + DCA + DDS.
+
+---
+
+## [v7.9.13] - 2026-07-17 — XAG LIQ SONRASI GIRIS FRENLERI
+
+### Olay
+2026-07-17 03:19 — hesap XAG'de likidite oldu ($200 → $0). Sistem trendde mukemmel
+calisti (dusen XAG'de 8 karli SELL, kasa $96.90); felaket DONUSTE geldi: dipte tek-yon
+SELL birikimi (ANA + SPM1 + SPM2), fiyat donunce hepsi zarara, **%54 DD'de bile
+`DDScalp_HTFRelaxDDPct=7` yuzunden yeni DDS SELL acildi** (yuksek DD'de HTF gevsetme =
+hesap batarken DAHA COK riskli giris). NO-SL geregi margin bitene kadar tasindi.
+
+### Eklendi (hepsi GIRIS kapisi — NO-SL / FIFO / kasa kurallarina SIFIR dokunus)
+- **Yuksek-DD giris freni:** `EnableHighDDBlock=true`, `HighDDBlockEquityPct=70`.
+  equity < balance x %70 (%30 DD) → zarari buyuten TUM yeni girisler durur
+  (ANA + SPM + DDS). Mevcut grid'in FIFO/kasa/kapatma yonetimi normal devam eder.
+  Hedge/DirBalance bilincli SERBEST (ters-yon dengeleyici, margin rahatlatir).
+- **DDS ust DD tavani:** `DDScalp_MaxDDPct=20`. DD > %20 iken yeni DDS acilmaz
+  (alt sinir MinDD=3 zaten vardi, artik ust tavan da var).
+- **DDS ayni-yon zarar kapisi:** yeni `SameDirAnaGridNet()` — ayni yonde ANA/SPM
+  net zarar ≤ `DDScalp_BlockIfSameDirAnaLoss` (-5) ise o yonde yeni DDS acilmaz.
+  (Eski v7.9.1 kontrolu sadece acik DDS'lere bakiyordu, ANA/SPM'i gormuyordu.)
+
+### Degisti
+- **HTFRelax KAPATILDI:** `DDScalp_HTFRelaxDDPct` 7 → 999 (etkisiz). HTF hizasi
+  artik HER ZAMAN sart — yuksek DD'de gevsetme yok. Asil felaket bu parametreydi.
+
+### Notlar
+- DDS-FIFO (v7.9.2) tek-yon birikimde matematiksel olarak calisamaz (kapatacak
+  karli pozisyon yok) — cozum giris freni, FIFO degil.
+- Donus tespiti ("dipte ayni yon ANA acma") BILEREK ertelendi — yanlis kalibrasyon
+  karli trend girislerini de keser; gercek veriyle kalibre edilip sonra eklenecek.
+- Canli dogrulama (07-17): `[HIGH-DD FREN] equity=$139.40 < $144.63 → YENI GIRIS YOK`
+  ve `[DDS] BEKLE: DD=39.3% > tavan 20.0%` loglari calisiyor.
+
+---
+
+## [v7.9.9 - v7.9.12] - 2026-07-16 — USTEC KALIBRASYONU + SEANS SAATLERI
+
+### Degisti
+- **v7.9.9:** USTEC lot tablosu — 0.02 etkisizdi ($1.89/ATR); minLot/Tier1/Tier2=0.08,
+  Tier3=0.10, Tier4=0.12 ($7.6/ATR, SPM ~0.5 ATR).
+- **v7.9.10:** `TradingEndHourTR` 19 → 23 (metal/forex bitis saati).
+- **v7.9.11:** `NightModeMinProfit` 0.50 → 3.00 — $0.50 spread'i karsilamiyordu
+  (USTEC cift-yon spread ~$0.58, $0.52 kapatma NET -$0.06 idi).
+- **v7.9.12:** `IndicesEndHourTR=2` — USTEC/NASDAQ icin ABD after-hours'a gore ayri
+  bitis saati (TR 02:00, gece yarisini gecer). USTEC default spread 380 → 350 puan.
+
+---
+
 ## [v7.9.7] - 2026-07-16 — SPM TETIK TEKDUZE -4
 
 ### Degisti
