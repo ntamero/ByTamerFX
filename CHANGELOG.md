@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.16] - 2026-07-17 — NET SETTLEMENT MIN ZARAR ESIGI
+
+### Degisti
+- **Net Settlement worst-kapatma esigi -0.50 → -5.00** (yeni input
+  `NetSettle_MinWorstLoss`). Eski esik ile -$0.58'lik, 14 saniyelik SPM bile
+  "en kotu" sayilip kasadan netleniyordu — toparlanma sansi hic olmadan zarar
+  realize ediliyordu. Artik kasa ancak ANLAMLI zarari (≥$5) temizlemek icin
+  harcanir; kucuk zarar dogal dalgalanma sayilir ve beklenir.
+
+### Notlar
+- Mum-yonu korumasi (v4.8.0) zaten vardi: mum zarardaki pozisyonun toparlanma
+  yonundeyse settle yapilmaz. Trend korumasi (v4.9.1/v4.9.2) da yerinde.
+  Bu degisiklik sadece ALT esigi yukseltir — owner "zararina satis yok"
+  kuraliyla ayni yonde.
+
+---
+
 ## [v7.9.15] - 2026-07-17 — OFFSETPUMP TP2 KURUS-KAPANIS BUG FIX
 
 ### Duzeltildi

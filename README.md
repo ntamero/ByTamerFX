@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v7.9.15 — OffsetPump TP2 Fix** — Professional automated trading system with a **15-layer intelligence stack** for crypto/forex/metals. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. The new **DOS engine** turns drawdown into opportunity: when the account is in drawdown *and* a strong, fresh, HTF-aligned signal appears, it opens a small isolated scalp **in the direction of the move** and banks $8–10 straight to the vault (kasa) on a QuickTP hit or an M5 candle reversal — no top-guessing required. Live results proved the concept (**+$300 realized, 94% win-rate, 100% on silver**), so the older top-fade module (**SpikeFade**) was retired in favor of DOS. All add-on engines filter or trade **isolated** positions only — zero changes to core rules (NO-SL, SPM, FIFO, kasa).
+**BytamerFX v7.9.16 — Net Settlement Loss Floor** — Professional automated trading system with a **15-layer intelligence stack** for crypto/forex/metals. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. The new **DOS engine** turns drawdown into opportunity: when the account is in drawdown *and* a strong, fresh, HTF-aligned signal appears, it opens a small isolated scalp **in the direction of the move** and banks $8–10 straight to the vault (kasa) on a QuickTP hit or an M5 candle reversal — no top-guessing required. Live results proved the concept (**+$300 realized, 94% win-rate, 100% on silver**), so the older top-fade module (**SpikeFade**) was retired in favor of DOS. All add-on engines filter or trade **isolated** positions only — zero changes to core rules (NO-SL, SPM, FIFO, kasa).
 
 > **NO SL · NO Force Close** | **Drawdown Opportunity Scalp** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Companion Mobile Apps** | **Crypto 7/24**
 
@@ -270,6 +270,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v7.9.16** | **2026-07-17** | **Net Settlement min-loss floor −0.50→−5.00 (`NetSettle_MinWorstLoss`) — tiny losses are no longer settled from the vault; they get a chance to recover** |
 | **v7.9.15** | **2026-07-17** | **OffsetPump TP2 penny-close bug fix — pip→USD conversion used POINT (100x too small on 3-digit XAU, limit was $0.15); now profile-based `max(spmCloseProfit×1.5, $5)`** |
 | **v7.9.14** | **2026-07-17** | **Liq protection completed — DCA also included in the high-DD entry brake (ANA + SPM + DCA + DDS all blocked while equity < 70% of balance)** |
 | **v7.9.13** | **2026-07-17** | **Post-liq entry brakes — high-DD block (equity < balance×70% → no loss-growing entries), DDS upper DD ceiling (20%), same-direction ANA/SPM loss gate for DDS, HTFRelax disabled (the actual culprit). Entry gates only — zero touch to NO-SL/FIFO/vault rules** |
