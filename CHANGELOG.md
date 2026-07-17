@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.18] - 2026-07-17 — PORTFOY GRID BUTCESI + MANUEL POZISYON SEFFAFLIGI
+
+### Eklendi
+- **Portfoy grid butcesi:** semboller grid'i bagimsiz derinlestirirken margin ORTAK
+  (liq gecesi XAG+XAU+USTEC birlikte batti). Hesap-geneli DD > %15 (`PortfolioGridBlockDDPct`)
+  olunca HICBIR sembol yeni SPM/DCA katmani acamaz — ANA serbest. Yuksek-DD freninin (%30)
+  erken tier'i: once grid durur (%15), sonra tum girisler (%30).
+- **EA-disi floating seffafligi:** `GetExternalFloating()` — manuel pozisyonlarin toplam
+  P/L'i [HIGH-DD FREN] ve [PORTFOY-FREN] loglarina eklendi ("EA-disi floating=$X").
+  07-17: DD %22'nin ~dortte ucu manuel pozisyonlardandi, fren kararlari yanlis okunuyordu.
+
+---
+
 ## [v7.9.17] - 2026-07-17 — DONUS KAPISI (TASK 19) + FREN KILIDI + TAZE PARA RAMPASI
 
 ### Eklendi
