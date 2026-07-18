@@ -4,6 +4,25 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.20] - 2026-07-18 — LEADBOOST + LEADSPIKE/GAP GOLGE MOD (ONCU VERI v2)
+
+### Eklendi
+- **Lead daemon v2** (sunucu): PAXGUSDT (Binance, tokenize altin, 7/24) 1sn hizli besleme
+  → XAU bloguna spike alanlari (mom10_pct, spike_z, spike_dir); NQ=F (Yahoo) → yeni NAS
+  referansi (USTEC artik lead-lag kapsaminda); Cuma 21:00 UTC PAXG snapshot → hafta sonu
+  GAP_XAU drift takibi. Cikti v1 ile geriye uyumlu.
+- **LeadBoost (AKTIF):** oncu momentum onerilen yonle ayni ve guclu (>=60) ise sinyal
+  skoruna +10, ters ise -10 (`EnableLeadBoost`). Erken hareket skora cevrilir: 45'lik
+  sinyal onculu teyitle 50 esigini gecebilir. **DDS otomatik yararlanir** (ayni skoru
+  okur → 65 esigine dogru +10). Veri stale/erisilemez → 0 etki (fail-safe).
+- **LeadSpike GOLGE MOD:** hizli oncu 10sn'de z>=3.0 spike yaptiginda broker'in ayni
+  penceredeki hareketiyle kiyaslanip `[LEADSPIKE-SHADOW] GIRIS OLURDU / girilmezdi`
+  logu yazilir — ISLEM ACILMAZ. 1 hafta isabet olcumu sonrasi canliya alma karari.
+- **Hafta sonu GAP GOLGE MOD:** pazartesi acilista PAXG hafta sonu drift'i >= %0.15 ise
+  `[GAP-SHADOW] acilista X GIRILECEKTI` logu — ISLEM ACILMAZ.
+
+---
+
 ## [v7.9.19] - 2026-07-18 — RAMPA KAPALI; GIRIS KALITESI (KULLANICI KARARI)
 
 ### Degisti

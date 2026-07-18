@@ -1,6 +1,6 @@
 # ByTamerFX - Expert Advisor for MetaTrader 5
 
-**BytamerFX v7.9.19 — Quality Gate** — Professional automated trading system with a **15-layer intelligence stack** for crypto/forex/metals. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. The new **DOS engine** turns drawdown into opportunity: when the account is in drawdown *and* a strong, fresh, HTF-aligned signal appears, it opens a small isolated scalp **in the direction of the move** and banks $8–10 straight to the vault (kasa) on a QuickTP hit or an M5 candle reversal — no top-guessing required. Live results proved the concept (**+$300 realized, 94% win-rate, 100% on silver**), so the older top-fade module (**SpikeFade**) was retired in favor of DOS. All add-on engines filter or trade **isolated** positions only — zero changes to core rules (NO-SL, SPM, FIFO, kasa).
+**BytamerFX v7.9.20 — LeadBoost (Independent Fast-Feed Edge)** — Professional automated trading system with a **15-layer intelligence stack** for crypto/forex/metals. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. The new **DOS engine** turns drawdown into opportunity: when the account is in drawdown *and* a strong, fresh, HTF-aligned signal appears, it opens a small isolated scalp **in the direction of the move** and banks $8–10 straight to the vault (kasa) on a QuickTP hit or an M5 candle reversal — no top-guessing required. Live results proved the concept (**+$300 realized, 94% win-rate, 100% on silver**), so the older top-fade module (**SpikeFade**) was retired in favor of DOS. All add-on engines filter or trade **isolated** positions only — zero changes to core rules (NO-SL, SPM, FIFO, kasa).
 
 > **NO SL · NO Force Close** | **Drawdown Opportunity Scalp** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Companion Mobile Apps** | **Crypto 7/24**
 
@@ -270,6 +270,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v7.9.20** | **2026-07-18** | **LeadBoost — independent fast feeds (Binance PAXG 1s for gold, NQ=F for USTEC) add ±10 to signal score when leading momentum confirms/opposes (DDS benefits automatically); LeadSpike z-score and weekend-gap prediction run in SHADOW mode (logged, no trades) for a 1-week accuracy audit** |
 | **v7.9.19** | **2026-07-18** | **Fresh-deposit ramp disabled (SPM is MAIN's rescue — blocking it broke system rules); entry quality raised instead: SignalMinScore 47→50, DDScalp_MinScore 50→65** |
 | **v7.9.18** | **2026-07-17** | **Portfolio grid budget — account-wide DD > 15% stops new SPM/DCA layers on ALL symbols (margin is shared; early tier before the 30% full brake); non-EA (manual) floating P/L now shown in brake logs** |
 | **v7.9.17** | **2026-07-17** | **Reversal Gate (Task 19) — no new ANA/SPM1 against a confirmed reversal (2+ candles + MACD hist momentum); high-DD brake latch (15min hysteresis); fresh-deposit ramp (45min ANA-only after balance jump). Live set reduced to XAU+USTEC at $200 (XAG returns at $500)** |
