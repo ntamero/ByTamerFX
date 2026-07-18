@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.19] - 2026-07-18 — RAMPA KAPALI; GIRIS KALITESI (KULLANICI KARARI)
+
+### Degisti
+- **Taze para rampasi KAPATILDI** (`EnableFreshDepositRamp=false`): SPM, MAIN'in kurtarma
+  mekanizmasi — onu 45 dk kilitlemek sistem kuralina tersti (MAIN zarar ederken SPM
+  acilamayacakti). Kod duruyor, input ile acilabilir.
+- Yerine giris KALITESI yukseltildi:
+  - **`SignalMinScore` 47 → 50** — yeni ANA sadece guclu/garanti sinyalle acilir.
+  - **`DDScalp_MinScore` 50 → 65** — DDS "her seye dalmasin", sadece cok guclu sinyal.
+    (DDS kapilari: DD 3-20%, skor >= 65, HTF D1/W1 hizasi ZORUNLU, taze sinyal,
+    ayni yonde zararli ANA/SPM varsa acilmaz.)
+- Chart profili kalici olarak M15'e sabitlendi (restart sonrasi H1'e donme kozmetigi bitti).
+
+---
+
 ## [v7.9.18] - 2026-07-17 — PORTFOY GRID BUTCESI + MANUEL POZISYON SEFFAFLIGI
 
 ### Eklendi
