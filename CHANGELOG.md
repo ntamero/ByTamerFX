@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.23] - 2026-07-18 — EA KARAR LOGLARI WEB'E PUSH (TERMINAL CANLI LOG)
+
+### Duzeltildi
+- **Terminal canli log kutusu YANLIS/ESKI veri gosteriyordu** — kok sebep: `DashboardSync.AddLog()`
+  mekanizmasi vardi ama sadece startup'ta (2 yer) cagriliyordu; mt5_logs'a yalniz "SYSTEM:
+  baslatildi" gidiyordu, EA'nin karar loglari (PEAK red, sinyal, acilis) HIC gitmiyordu.
+- Yeni `DashLog()` helper + kritik karar noktalarina baglandi: sinyal zayif (skor<esik),
+  PEAK/tepe-dip red, LEADLAG red, ISLEM ACILDI. Bu olaylar artik mt5_logs'a push ediliyor →
+  terminal canli log kutusunda gercek zamanli, kisiye ozel gorunuyor ("neden acmiyor/acti").
+- KALAN: kapanis/SPM loglari PositionManager'da (dashboard erisimi ayri adimda eklenecek).
+
+---
+
 ## [v7.9.22] - 2026-07-18 — SPM KURTARMA FRENLERI KALDIRILDI + SPIKE→DDS + TELEGRAM SADE
 
 ### Duzeltildi (demo log analizi — ANA $400 zararda + kasa $399 var ama SPM acilamadi)
