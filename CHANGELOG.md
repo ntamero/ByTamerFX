@@ -24,6 +24,14 @@ All notable changes to this project are documented in this file.
 - Baslangic mesajina "Aktif Korumalar" bolumu (LeadBoost/Donus Kapisi/Yuksek-DD/DOS ✓/✗) +
   strateji ozeti zenginlestirildi.
 
+### Duzeltildi — Telegram cift mesaj
+- Her kapanista AYNI dakikada 2 mesaj gidiyordu (SmartClosePosition kendi mesaji +
+  ClosePosWithNotification mesaji). SmartClosePosition'daki duplike KALDIRILDI + 4 HEDGE
+  kapanis blogundaki ayni duplike temizlendi. Artik TEK zengin mesaj.
+- Yeni kapanis mesaji `SendPositionClosed()`: emoji + rol + yon + P/L + sebep + hesap ozeti +
+  **MIA eglence** (kazaninca rastgele nese "Ka-ching!/Kasa sisiyor patron!", kaybedince sade
+  motivasyon). Emoji cache TelegramMsg'de (surrogate pair — byte escape MQL5'te calismaz).
+
 ### Not — input override
 Config default'lari dogru (MinScore 50, DDS 65, BTC SPM -5). Demo chart ESKI kayitli input
 setiyle calisiyordu (47/-3/50) → EA'yi chart'tan kaldir+tekrar ekle ile yeni default'lar gelir.
