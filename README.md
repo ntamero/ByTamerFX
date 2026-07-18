@@ -1,4 +1,14 @@
+<p align="center">
+  <img src="screenshots/bytamerfx-logo.png" width="96" alt="BytamerFX logo">
+</p>
+
 # ByTamerFX - Expert Advisor for MetaTrader 5
+
+<p align="center">
+  <img src="screenshots/pro-terminal.png" width="900" alt="BytamerFX Pro Terminal — live desktop companion">
+</p>
+
+**Ecosystem:** 🖥 [Desktop Pro Terminal](https://bytamer.com/download/bytamerfx-terminal-setup.exe) · 📱 [Android App](https://bytamer.com/download/bytamerfx.apk) · 🌐 [bytamer.com/forex](https://bytamer.com/forex)
 
 **BytamerFX v7.9.21 — LeadBoost (Independent Fast-Feed Edge)** — Professional automated trading system with a **15-layer intelligence stack** for crypto/forex/metals. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. The new **DOS engine** turns drawdown into opportunity: when the account is in drawdown *and* a strong, fresh, HTF-aligned signal appears, it opens a small isolated scalp **in the direction of the move** and banks $8–10 straight to the vault (kasa) on a QuickTP hit or an M5 candle reversal — no top-guessing required. Live results proved the concept (**+$300 realized, 94% win-rate, 100% on silver**), so the older top-fade module (**SpikeFade**) was retired in favor of DOS. All add-on engines filter or trade **isolated** positions only — zero changes to core rules (NO-SL, SPM, FIFO, kasa).
 
