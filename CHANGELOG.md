@@ -4,6 +4,32 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.22] - 2026-07-18 — SPM KURTARMA FRENLERI KALDIRILDI + SPIKE→DDS + TELEGRAM SADE
+
+### Duzeltildi (demo log analizi — ANA $400 zararda + kasa $399 var ama SPM acilamadi)
+- **Portfoy grid butcesi KAPATILDI** (`EnablePortfolioGridBlock=false`): %15 DD'de SPM/DCA
+  kesmek SPM KURTARMASINI olduruyordu (kullanici kurali: rescue mekanizmasini frenleme).
+  Yeni ANA riskini zaten yuksek-DD freni (%30) kesiyor.
+- **SinyalGate esigi 50→65** (`SPM_SignalOpposeThreshold`): ters skor 50-64 arasi artik SPM'i
+  engellemiyor. Demo'da BTC ters skor 59 surekli >50 oldugu icin SPM 5435 kez engellenmisti →
+  pozisyon $400 zararda kilitlenmisti. Kurtarma onceligi.
+- **Spike → DDS bagi:** guclu oncu spike (PAXG/NQ z>=LeadSpikeMinZ, ayni yon) artik DDS'in HTF
+  hizasi sartinin YERINE gecebilir — AMA sadece DD tavan altinda (liq dersi: yuksek DD'de spike
+  bile olsa girme). Demo'da z=4.1 BUY spike varken DDS "HTF hizasiz" diye reddediyordu; artik acar.
+  `DrawdownScalp.SetLeadSpike()` + BytamerFX.mq5 her tick besler.
+
+### Degisti — Telegram
+- Baslangic slogani "BytamerFX Alpha Engine ONLINE" → sade "SISTEM AKTIF".
+- Footer "@ByT@MER 💎" → "BytamerFX · bytamer.com".
+- Baslangic mesajina "Aktif Korumalar" bolumu (LeadBoost/Donus Kapisi/Yuksek-DD/DOS ✓/✗) +
+  strateji ozeti zenginlestirildi.
+
+### Not — input override
+Config default'lari dogru (MinScore 50, DDS 65, BTC SPM -5). Demo chart ESKI kayitli input
+setiyle calisiyordu (47/-3/50) → EA'yi chart'tan kaldir+tekrar ekle ile yeni default'lar gelir.
+
+---
+
 ## [v7.9.21] - 2026-07-18 — ONCU VERI CHART BANNER'INDA
 
 ### Eklendi
