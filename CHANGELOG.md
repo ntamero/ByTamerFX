@@ -4,6 +4,15 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.21] - 2026-07-18 — ONCU VERI CHART BANNER'INDA
+
+### Eklendi
+- Ust haber banner'ina canli **ONCU durumu**: yon+guc, aktif boost (BUY+10/SELL+10),
+  spike z-skoru (>=1.5 gorunur), hafta sonu gap %. Renk: boost aktif=yesil,
+  spike esik ustu=turuncu, veri var=gri. 5 sn'de bir tazelenir.
+
+---
+
 ## [v7.9.20] - 2026-07-18 — LEADBOOST + LEADSPIKE/GAP GOLGE MOD (ONCU VERI v2)
 
 ### Eklendi
