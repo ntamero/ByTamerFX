@@ -1,18 +1,81 @@
 <p align="center">
-  <img src="screenshots/bytamerfx-logo.png" width="96" alt="BytamerFX logo">
+  <img src="screenshots/bytamerfx-logo.png" width="110" alt="BytamerFX logo">
 </p>
 
-# ByTamerFX - Expert Advisor for MetaTrader 5
+<h1 align="center">BYTAMERFX <sup>PRO</sup></h1>
 
 <p align="center">
-  <img src="screenshots/pro-terminal.png" width="900" alt="BytamerFX Pro Terminal — live desktop companion">
+  <b>MetaTrader 5 Expert Advisor · Desktop Pro Terminal · Android App · Independent Lead-Data Engine</b><br>
+  <a href="https://www.bytamer.com">www.bytamer.com</a> · <a href="https://bytamer.com/forex">bytamer.com/forex</a>
 </p>
 
-**Ecosystem:** 🖥 [Desktop Pro Terminal](https://bytamer.com/download/bytamerfx-terminal-setup.exe) · 📱 [Android App](https://bytamer.com/download/bytamerfx.apk) · 🌐 [bytamer.com/forex](https://bytamer.com/forex)
+<p align="center">
+  <a href="https://bytamer.com/download/bytamerfx-terminal-setup.exe"><img alt="Windows" src="https://img.shields.io/badge/Desktop%20Terminal-Windows-e8590c?style=for-the-badge&logo=windows"></a>
+  <a href="https://bytamer.com/download/bytamerfx.apk"><img alt="Android" src="https://img.shields.io/badge/Android%20App-v1.2.7-3ddc84?style=for-the-badge&logo=android"></a>
+  <a href="https://bytamer.com/forex"><img alt="Web" src="https://img.shields.io/badge/Web-bytamer.com%2Fforex-0d1424?style=for-the-badge&logo=googlechrome"></a>
+</p>
 
-**BytamerFX v7.9.21 — LeadBoost (Independent Fast-Feed Edge)** — Professional automated trading system with a **15-layer intelligence stack** for crypto/forex/metals. No stop-loss, recovery via SPM + HEDGE + FIFO orchestration. The new **DOS engine** turns drawdown into opportunity: when the account is in drawdown *and* a strong, fresh, HTF-aligned signal appears, it opens a small isolated scalp **in the direction of the move** and banks $8–10 straight to the vault (kasa) on a QuickTP hit or an M5 candle reversal — no top-guessing required. Live results proved the concept (**+$300 realized, 94% win-rate, 100% on silver**), so the older top-fade module (**SpikeFade**) was retired in favor of DOS. All add-on engines filter or trade **isolated** positions only — zero changes to core rules (NO-SL, SPM, FIFO, kasa).
+> ⚠️ **This repository is a product showcase.** It contains documentation, feature guides,
+> installation instructions and screenshots only — **no source code, no .ex5/.mqh files are
+> distributed here.** Licensing: [bytamer.com/forex](https://bytamer.com/forex).
 
-> **NO SL · NO Force Close** | **Drawdown Opportunity Scalp** | **Signal Momentum Lock** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Companion Mobile Apps** | **Crypto 7/24**
+---
+
+## 🖥 Desktop Pro Terminal (Windows)
+
+<p align="center">
+  <img src="screenshots/pro-terminal.png" width="900" alt="BytamerFX Pro Terminal">
+</p>
+
+MOOMOO-style dark trading cockpit connected to your live MT5 account:
+
+- **Live account stream** — balance / equity / floating P&L / margin, 250 ms tick feed, 38+ symbols
+- **Charts** — candlesticks (M1/M5/M15/H1), swing peak/dip pivots, BB · SAR · MACD overlays
+- **Order panel** — BUY/SELL with lot presets, open-position management, manual close (protected by a separate trade key)
+- **◉ ÖNCÜ (Lead) strip** — broker-independent fast feeds confirm direction before you click
+- **7 live stat pockets** — today's net, win-rate, money-flow with sparklines
+- **News engine** — critical-news alert bar, bottom news ticker, economic calendar
+
+**Install:** download → run → login. [`bytamerfx-terminal-setup.exe`](https://bytamer.com/download/bytamerfx-terminal-setup.exe) (~78 MB)
+
+## 📱 Android App (v1.2.7)
+
+<img src="screenshots/mobile_app_icon.png" width="72" align="left" alt="Android app icon">
+
+The full terminal in your pocket: equity hero + live equity/balance chart, position P/L bars,
+strategy mix, Fear & Greed gauge, Alpha Engine HUD, 12-indicator signal scores, **trade ticket
+(BUY/SELL + SL/TP + risk-based lot)**, position close / partial close / SL-TP edit,
+price alarms, critical-news notifications, biometric lock and **in-app auto-update**.
+
+**Install:** download [`bytamerfx.apk`](https://bytamer.com/download/bytamerfx.apk) → allow unknown sources → done. Updates arrive in-app automatically.
+
+## ◉ ÖNCÜ — Independent Lead-Data Engine
+
+The same lead strip runs on **desktop, mobile and the MT5 chart banner**:
+
+| Feed | Source | Purpose |
+|---|---|---|
+| Gold lead | Binance **PAXG** (1-second, 24/7) | direction confirm + **spike z-score** + **weekend gap forecast** |
+| US Tech lead | **NQ futures** | USTEC direction confirm |
+| Crypto lead | Binance BTCUSDT | 24/7 momentum reference |
+
+When lead momentum strongly agrees with a signal, the EA adds **±10 score (LeadBoost)** —
+early moves become confirmed entries; opposing lead momentum blocks weak ones.
+
+## 🤖 The EA — BytamerFX v7.9.x
+
+**15-layer intelligence stack** for crypto/forex/metals/indices on MT5. No stop-loss —
+recovery via **SPM zigzag + Smart FIFO + Hedge** orchestration. The **DOS engine** turns
+drawdown into opportunity (isolated scalps, +$300 realized proof at 94% WR). Multi-tier
+risk brakes: reversal gate, high-DD entry brake with latch, portfolio grid budget,
+DDS quality gates. All add-on engines filter or trade **isolated** positions only —
+zero changes to the core rules (NO-SL, SPM, FIFO, vault).
+
+> **NO SL · NO Force Close** | **Drawdown Opportunity Scalp** | **LeadBoost Fast-Feed Edge** | **Reversal Gate** | **Multi-TF Reversal Detection** | **Alpha Engine** | **Crypto 7/24**
+
+**EA Kurulum (özet):** Lisans al ([bytamer.com/forex](https://bytamer.com/forex)) → MT5'te
+`Experts` klasörüne EA'yı ekle → chart'a sürükle (M15) → Algo Trading aç → EA hesap doğrulama
+ve profil seçimini otomatik yapar (10 dinamik enstrüman profili).
 
 ## v7.7.x — Drawdown Opportunity Scalp Series (2026-07-12 → 13)
 
