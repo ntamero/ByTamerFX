@@ -159,10 +159,10 @@ Layer 12: SmartRecoveryEngine (12-stage decision tree)
 
 ## Screenshots
 
-### BytamerFX Dashboard v4.8.1 — Real-Time Web Interface
-![BytamerFX Dashboard v4.8.1](screenshots/dashboard_v476.png)
+### BytamerFX Pro Terminal — Desktop (Windows)
+![BytamerFX Pro Terminal](screenshots/pro-terminal.png)
 
-*Gold lightning bolt branding, 5-tab sidebar (Dashboard / Pozisyonlar / BIDIR-GRID / Teknik Analiz / Raporlar), real-time charts, live system logs, news ticker, TextScramble animations*
+*Live MT5 account stream (250 ms), candlestick charts with pivots & indicators, order panel, ◉ ÖNCÜ lead-data strip, 7 live stat pockets, news engine*
 
 ### MetaTrader 5 — EA Dashboard Overlay
 ![MT5 EA Dashboard](screenshots/mt5_ea_dashboard.png)
