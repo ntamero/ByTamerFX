@@ -4,6 +4,34 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.28] - 2026-07-19 — FIFO BEKLEMESI DIP TEYITLI + NOTIONAL TAVANI KAPATILDI
+
+### Kullanici karari
+> "tier siniflandirmasi ve lot carpanlarini degistirme. cift acma korumasi ve FIFO sistemi
+>  dogru calissin, zaten birikim olmaz."
+
+- **`EnableNotionalCap = false`** — tavan tier tablosuna dokunmasa da yeni ANA lotunu fiilen
+  kisiyordu (BTC 0.12→0.06). Kullanici lot kararlarini kendi vermisti; geri alindi.
+  Kod duruyor, tek input ile geri acilabilir.
+
+### FIFO'nun "yetersiz kalmasi" — kok sebep bulundu
+Canli log analizi: FIFO Yol-A, `YOL_A_TIMEOUT_SEC = 6 SAAT` boyunca bekliyordu ve bekleme
+sarti SADECE "mum ANA yonune dondu" idi — **zararin gidisatina hic bakmiyordu**.
+Sonuc (07-19 BTC): ANA -$6'dan **-$77**'ye giderken her turda "Toparlanma BEKLENIYOR" yazdi.
+
+- **Dip (trough) teyidi eklendi:** ANA dipten `FIFO_RecoveryMinImprovePct` (%15) kadar
+  toparlandiysa beklenir (kullanicinin istedigi davranis); **yeni dip yapiyorsa yani zarar
+  DERINLESIYORSA bekleme kesilir**, timeout beklenmeden YOL-B'ye dusulur.
+- Canli dogrulama (16:02): `FIFO BEKLEME KESILDI: ANA dip=$-73.46 simdi=$-73.22
+  (toparlanma $0.24 < gerekli $11.02) — mum lehte olsa da zarar DERINLESIYOR`
+
+### Log etiketi duzeltmesi (yanilticiydi)
+Durum satiri ile FIFO ayni anda farkli "Kasa" degeri yaziyordu (`$35.57` vs `$0.00`):
+durum satiri `m_totalCashedProfit` (omur boyu realize kar), FIFO ise `m_spmClosedProfitTotal`
+(aktif dongu kasasi) basiyordu. Artik ayri ayri: **`DonguKasa=` ve `ToplamKar=`**.
+
+---
+
 ## [v7.9.27] - 2026-07-19 — KURTARMA NOTIONAL TAVANINDAN MUAF
 
 ### Duzeltildi — canli takipte yakalandi (kullanici uyarisi dogru cikti)
