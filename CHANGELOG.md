@@ -4,6 +4,40 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.32] - 2026-07-19 — DDS ESIGI 65 -> 58 (DDS HIC TETIKLENEMIYORDU)
+
+### Bulgu — 1 puan farkla olu kalmis
+Kullanici: *"BTC mesela -35'e kadar dusmus, DDS hic devreye girmemis sanirim."* Dogru:
+**bugun 0 DDS islemi.**
+
+| BTC sinyal skoru | adet |
+|---|---|
+| **64** | 6 |
+| 62 | 6 |
+| 60 | 6 |
+| 59/58 | 5 |
+| 50-54 | 48 |
+
+`DDScalp_MinScore = 65` iken **BTC'nin gunluk tavani 64**'te kaldi → DDS skor kapisindan
+sessizce cikti (log bile uretmiyor). ETH'de skor 65-68'e ciktigi icin degerlendirmeye girdi
+ama bu kez **HTF hizasi (4 kez)** ve **ivme (5 kez)** kapilari engelledi.
+
+Esik v7.9.19'da 50→65 yapilmisti (kullanici karari: "DDS her seye dalmasin"). O zaman DDS
+asiri daliyordu; simdi piyasanin urettigi skor bandinin USTUNDE kalmisti.
+
+### Degistirildi
+- `DDScalp_MinScore` **65 → 58** (kullanici karari). **HTF hizasi ve ivme kapilari AYNEN
+  duruyor** — yani skor bandina giren her sinyal acilmayacak, sadece degerlendirmeye girecek.
+- Chart override: `DDScalp_MinScore` chart'lara **65** kayitliydi, her iki MT5'te 58 yapildi.
+  (Ayni islem `InputMaxLot` icin de tekrarlandi.) Dogrulama: `minScore=58` logda.
+
+### Not — dogrulanamayan varsayim
+DDS'in bugun girmemesi zarar ettirmedi, hatta korumus olabilir: BTC sinyalleri BUY yonundeydi
+(50-64) ve fiyat duserken zaten BUY yigini zarardaydi. "DDS girseydi kazanirdik" seklinde bir
+kanit YOK — tersi de mumkundu. Esik dusuruldu cunku 64 ile 65 arasinda anlamli fark yok.
+
+---
+
 ## [v7.9.31] - 2026-07-19 — ETH ATR-NORMALIZE LOT (BTC ILE ESITLENDI)
 
 ### Kullanici karari
