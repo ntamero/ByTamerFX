@@ -4,6 +4,39 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.26] - 2026-07-19 — TOPARLANMA KORUMASI + CIFT ACILIM ENGELI
+
+### Duzeltildi — kullanici tespiti (asil sorun)
+> "FIFO kuralina gore kapanmasi gereken en cok zarardaki lot, mum terse donup zarari
+>  AZALTMA esnasinda sistem bunu algilamayip yuksek zararda kapatiyor."
+
+- **TROUGH (dip) takibi eklendi** (`m_troughProfit[]`) — pozisyonun gordugu EN KOTU P/L.
+  Dip bilinmeden "toparlaniyor mu" sorusu cevaplanamazdi; eski kod sadece "en dusuk
+  profit"e bakiyordu.
+- **Merkezi toparlanma korumasi** (`SmartClosePosition` — TUM kapatma yollarinin gectigi
+  nokta): zarardaki pozisyon dipten `FIFO_RecoveryMinImprovePct` (%15) kadar toparlandiysa
+  VE mum hala pozisyon yonundeyse **kapatma ERTELENIR**. Mum aleyhe donunce ya da yeni dip
+  yapinca normal kapanir. `CloseWorstSPM` (FIFO Yol-A) icinde ayrica ayni koruma var —
+  orada hic yoktu (NET SETTLE'da v4.8.0'dan beri vardi, FIFO Yol-A'da YOKTU).
+- **KARLI kapanislara DOKUNULMAZ** (`profit < 0` kosulu) — TP/peak/trailing aynen calisir.
+  Zarar KESILMEZ (NO-SL zaten); sadece realize etme ANI daha iyi noktaya kayar.
+  Canli ornek: ANA #1544487622 -$17.45, SPM_1 #1544588697 -$27.50'de realize edilmisti.
+
+### Eklendi — cift acilim engeli (kullanici karari)
+> "lot kucultmek degil de cift acilimlari engellemek daha dogru olacak — cift main,
+>  cift dds vb. SPM'ler zaten kuralina gore zigzag ile gidiyor."
+
+- `TradeExecutor::IsDuplicateOpen`: ayni sembolde **ikinci ANA** veya ayni yonde **ikinci
+  DDS** acilmasi engellenir (bagimsiz motorlar birbirinden habersiz ayni yone yiginiyordu).
+- **SPM/DCA/HEDGE/RECOVERY MUAF** — zigzag ve kurtarma zinciri hic etkilenmez.
+
+### Degistirildi
+- `NotionalMaxPortfolio` **10x → 50x** (kullanici: "sistem lot kucultarek de olsa akisi
+  dogru yapmali"). Portfoy tavani artik akisi durdurmuyor; asil koruma cift-acilim engeli
+  ve FIFO toparlanma korumasi. Tek pozisyon (3x) ve sembol (6x) tavanlari aynen kaldi.
+
+---
+
 ## [v7.9.25] - 2026-07-19 — NOTIONAL (PARASAL BUYUKLUK) TAVANI
 
 ### Kok sebep: lot tier'lari KONTRAT BUYUKLUGUNE KOR
