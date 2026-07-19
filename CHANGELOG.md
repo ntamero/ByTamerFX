@@ -4,6 +4,35 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.30] - 2026-07-19 — NOTIONAL TAVANI KODDA DEVRE DISI (KRITIK)
+
+### Sorun: BTC+ETH sinyal veriyordu ama HIC islem acilmiyordu
+```
+[NOTIONAL-TAVAN] BTCUSDm: YENI ANA GIRISI ENGELLENDI — portfoy=$22875 bakiye=$1232
+ISLEM ACMA HATASI: BUY | BTCUSDm | Lot=0.11 | Hata=4806
+```
+EUR pozisyonu (0.20 lot = $22.875) TEK BASINA portfoy tavanini asiyordu → butun
+sembollerde yeni ANA girisi kapandi. Skor 50-59 sinyaller saatlerce bosa gitti.
+
+### KOK SEBEP — INPUT'A GUVENMEK YETMIYOR
+v7.9.28'de `EnableNotionalCap = false` yapilmisti. **ISE YARAMADI:**
+1. MT5, EA input setini **kendi cache'inde** tutar ve Config.mqh default'unu EZER.
+2. `chart*.chr` icindeki `<inputs>` blogu **elle `false` yapildi** — YINE yetmedi;
+   EA hala `true` ile calisti (log "portfoy 10x" derken Config'de 50 yaziyordu).
+
+**COZUM:** `OpenPosition` icindeki `ApplyNotionalCap()` **cagrisi kaldirildi** (yoruma
+alindi). Tavan mantigi fonksiyon olarak DURUYOR; 2 satir yorumdan cikarilarak geri acilir.
+
+**DERS: bir kurali gercekten kapatmak icin input'a guvenme — cagriyi kaldir.**
+(Ayni tuzagin tersi bugun de yasandi: v7.9.19/v7.9.22 kararlari chart'a kayitli eski
+input seti yuzunden aylarca aktif degildi.)
+
+### Dogrulama
+`17:42:41 ISLEM ACILDI: BUY | ETHUSDm | Lot=0.10 | Ticket=1545082555` — lot kullanicinin
+kendi tier tablosundan geliyor, notional mudahalesi yok.
+
+---
+
 ## [v7.9.29] - 2026-07-19 — SPM YONU PIYASAYA SORULUR (REOPEN)
 
 ### Kullanici tespiti
