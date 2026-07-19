@@ -4,6 +4,33 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.29] - 2026-07-19 — SPM YONU PIYASAYA SORULUR (REOPEN)
+
+### Kullanici tespiti
+> "sinyal hala SELL ama ANA tepede kalmis. bunu algilayip SPM'ler sartli olarak bir oncekini
+>  takip etmekten ziyade signal + trend + mum yonu algolamasi yapip ZARARI ABSORVE etmek
+>  icin islem acmalidir."
+
+Canli kanit: BTC sinyal=SELL (32/30, ADX 31.9, RSI 36.4) iken acik pozisyonlar 3x BUY
+(-77/-75/-27) + sadece 0.01 lot SELL.
+
+### Bulgu — mevcut durum ikiye ayriliyordu
+- **Ana SPM acilisi (`ManageActiveSPMs`) zaten 3-bilesenli oylama yapiyordu** (v7.3.0):
+  TREND + SIGNAL + MUM; 2+ oy ANA yonunde ise DCA, 2+ oy ters ise ERKEN HEDGE.
+  Yani sistem dogru yonu (SELL) zaten seciyordu — ama lot 0.01 acilmisti (notional tavani,
+  v7.9.28'de kapatildi). Sorunun bu yarisi lot tarafindaydi.
+- **SPM REOPEN blogu ise KATI ZIGZAG kullaniyordu** (`layer % 2`) — piyasaya hic bakmadan
+  mekanik alternasyon. Duzeltilen yer burasi.
+
+### Eklendi
+- `ResolveSPMDirection()`: her iki yon icin `CalcReopenScore` (trend40 + sinyal30 + mum30 +
+  DI10) hesaplanir; fark `SPM_DirBiasMinGap` (15) esigini asiyorsa **piyasa yonu** secilir,
+  kararsizsa zigzag'a duser (eski davranis korunur).
+- Maruziyet kapisi (`WouldWorsenImbalance`) ve tek-yon birikim frenleri AYNEN devrede.
+- Layer 3 bilincli olarak "HER ZAMAN TERS" (yapisal hedge) kaldi — degistirilmedi.
+
+---
+
 ## [v7.9.28] - 2026-07-19 — FIFO BEKLEMESI DIP TEYITLI + NOTIONAL TAVANI KAPATILDI
 
 ### Kullanici karari
