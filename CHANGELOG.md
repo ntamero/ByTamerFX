@@ -4,6 +4,36 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.24] - 2026-07-19 — YETIM HEDGE YONETIME ALINIR + SEMBOL HEARTBEAT
+
+### Duzeltildi (canli log analizi — floating -$155'in kaynagi arastirildi)
+- **Yetim HEDGE artik yonetime aliniyor.** `OpenHedge` acilis kurallari zaten DOGRUYDU
+  (ayni-yon yasak, ANA yoksa yasak) — eksik olan acilistan SONRA olusan durumdu: hedge'in
+  korudugu karsi-yon pozisyonlar kapaninca hedge YETIM kaliyor, ustelik HEDGE rolu
+  `ManageKarliPozisyonlar`/FIFO/NetSettlement dongulerinden `continue` ile dislandigi icin
+  **hicbir yerde yonetilmiyordu** — sonsuza kadar tasiniyordu.
+  Kanit: 07-18 HEDGE_B 21 saat -$16.63; 07-03'te ayni mekanizma **-$404.95** (hesabin en
+  buyuk tek zarari). Cozum: korudugu taraf kalmadiysa `ROLE_SPM` + `spmLayer=99` (phantom —
+  yeni zigzag katmani dogurmaz). **Kapatma YOK**, sadece kar yonetimi/FIFO/NetSettlement
+  kapsamina alma; NO-SL ve "zararina satis yok" kuralina dokunmaz. Emsal: v5.0.0 Orphan DCA.
+- **Sembol HEARTBEAT** (`DashboardSync.OnTimer`, 15dk): chart kapaninca EA olur ama MT5'teki
+  acik pozisyon yasar ve kimse yonetmez. Canli ornek: EURUSDm 07-03'ten beri acik, **16 gun
+  -$44.40**, o sembolde chart yoktu. Sunucu tarafi bekci bu heartbeat ile yetimleri Telegram'a
+  bildirir. (`mt5_trades.updated_at` bu is icin guvenilmez — onu live-daemon yazar, EA olu
+  olsa bile taze kalir.)
+
+### Yapilandirma
+- **Coklu sembol: 4 → 10** (her iki MT5'te): XAU, XAG, USTEC, BTC, ETH, EURUSD, GBPUSD,
+  USDJPY, GBPJPY, CADJPY — her biri kendi profiliyle (GOLD_XAU / SILVER_XAG / INDICES /
+  CRYPTO_BTC / CRYPTO_ALT / FOREX / FOREX_JPY).
+- **Chart input override'i temizlendi.** MT5 chart'a EA input setini KAYDEDER ve her yuklemede
+  Config.mqh'yi EZER. Kayitli set eskiydi → v7.9.19/v7.9.22 kararlarinin **hicbiri aktif
+  degildi**: `SignalMinScore` 47 (olmali 50), `SPM_SignalOpposeThreshold` 50 (65),
+  `DDScalp_MinScore` 50 (65), `EnablePortfolioGridBlock` **true** (olmali false — bu tam da
+  "SPM kurtarmayi olduruyor" diye kapatilan frendi). Tum chart'lar Config'e hizalandi.
+
+---
+
 ## [v7.9.23] - 2026-07-18 — EA KARAR LOGLARI WEB'E PUSH (TERMINAL CANLI LOG)
 
 ### Duzeltildi
