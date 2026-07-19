@@ -4,6 +4,37 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.25] - 2026-07-19 — NOTIONAL (PARASAL BUYUKLUK) TAVANI
+
+### Kok sebep: lot tier'lari KONTRAT BUYUKLUGUNE KOR
+Ayni `tier4` degeri, $1401 bakiyede sembolden sembole tamamen farkli para demekti:
+
+| Sembol | ANA lot | Notional | Bakiye kati |
+|---|---|---|---|
+| EURUSD | 0.20 | $22.874 | **16.3x** |
+| XAUUSD | 0.03 | $12.111 | **8.6x** |
+| BTCUSD | 0.12 | $ 7.731 | **5.5x** |
+| ETHUSD | 0.07 | $   131 | **0.09x** |
+
+ETH ile EUR arasinda **180 kat** risk farki. 07-19'da BTC'de 0.34 lot birikti =
+bakiyenin **15.6 KATI** ($21.905); BTC sadece %0.74 dustu, floating -$188 oldu
+(hesabin %13'u). Bu kaldiracta BTC %6.4 duserse hesap biterdi.
+`MaxTotalVolume` (lot bazli) bunu YAKALAYAMAZ — 2 lot BTC = $129k, tavan hic devreye girmez.
+
+### Eklendi
+- **Notional tavani** (`TradeExecutor.ApplyNotionalCap`): lot degil PARASAL buyukluk sinirlanir
+  → `lot x contract_size x price`. Uc kademe: tek pozisyon **3x**, sembol toplami **6x**,
+  portfoy toplami **10x** bakiye. Her sembolde otomatik dogru calisir; yeni sembol eklenince
+  ayar gerekmez. Tier tablosuna DOKUNULMADI.
+- **Tum acilislarin gectigi TEK noktada** uygulanir (`OpenPosition`) — ANA/SPM/DCA/HEDGE/DDS
+  hepsi kapsanir, kacak yok.
+- **Kullanici kurali korundu:** kurtarma (SPM/DCA/HEDGE/RECOVERY) ASLA engellenmez — tavan
+  asilirsa min lota iner ama ACILIR. Sadece YENI ANA girisi engellenir (yeni risk almak ile
+  mevcut riski kurtarmak farkli seylerdir).
+- Fail-safe: kontrat/fiyat verisi okunamazsa lota dokunulmaz.
+
+---
+
 ## [v7.9.24] - 2026-07-19 — YETIM HEDGE YONETIME ALINIR + SEMBOL HEARTBEAT
 
 ### Duzeltildi (canli log analizi — floating -$155'in kaynagi arastirildi)
