@@ -4,6 +4,48 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.31] - 2026-07-19 — ETH ATR-NORMALIZE LOT (BTC ILE ESITLENDI)
+
+### Kullanici karari
+> "BTC veya XAU veya EUR gibi kazanc saglayabilmesi icin ETH icin ayri bir lot config
+>  olmali. 0.12 BTC islem actiginda tier4'te lot karsiligi ornek 3 dolar ise ETH da
+>  ayni oranda bir lot acmalidir." → **"ETH'i BTC'ye esitle"**
+
+### Olcum (M15, kontrat = 1 her ikisinde de)
+| | BTC | ETH |
+|---|---|---|
+| ATR | 113.48 | 5.01 |
+| tier4 lot | 0.12 | 0.10 |
+| **1 ATR hareketi** | **$13.62** | **$0.50** |
+| ANA kar hedefi | $7.00 | $5.60 |
+| **Hedefe gereken hareket** | **0.51 ATR** | **11.2 ATR** |
+
+ETH, BTC'nin **27'de biri** kadar para hareket ettiriyordu; kar hedefine 11 ATR gerekiyordu
+yani **matematiksel olarak kar alamiyordu** — sadece zarar biriktirip SPM zincirine yem
+oluyordu (canli kirintilar: +0.78 / +1.14 / +0.27). Ustelik broker min lotu 0.10 oldugu icin
+ETH'in tier1-4 degerlerinin (0.03/0.05/0.06/0.07) **hicbiri uygulanamiyordu**.
+
+### Eklendi — `SetEthereum()` ayri profil
+`lot_ETH = (lot_BTC x ATR_BTC) / ATR_ETH` ile her tier BTC'nin $/ATR degerine esitlendi:
+**t1 0.90 | t2 1.35 | t3 1.80 | t4 2.70** (`minLotOverride` 0.90).
+Esikler/TP/mum degerleri `SetCryptoAlt()`'tan aynen miras alinir — sadece lot degisti.
+Bu sayede ANA hedefi $5.6, ETH'de 11.2 ATR yerine **0.41 ATR** ile ulasilabilir (BTC 0.51).
+
+- **AYRI PROFIL SEBEBI:** `SetCryptoAlt` LTC/XRP/SOL/ADA/DOT/BNB'yi de kapsiyor; onlarin
+  ATR'si olculmedi, yanlislikla dev lot acilmasin diye ETH ayrildi.
+- `InputMaxLot` **0.5 → 3.0** (2.70 lot acilabilsin). Diger semboller kendi `spmLotCap`'i ile
+  zaten sinirli, etkilenmezler.
+- **NOTIONAL ACISINDAN DAHA GUVENLI:** ETH 2.70 lot = $5.050, BTC 0.12 lot = $7.731.
+  ETH daha oynak oldugu icin (ATR/fiyat %0.27 vs %0.18) ayni dolar hareketini daha az
+  sermaye baglayarak veriyor.
+
+### Chart override tuzagi (yine)
+`InputMaxLot` chart'lara **0.5** olarak kayitliydi; Config'i ezecekti. Her iki MT5'te
+`chart*.chr` icindeki deger 3.0 yapildi. Dogrulama: `Profil=CRYPTO_ETH` (BTC ayri kaldi:
+`CRYPTO_BTC`).
+
+---
+
 ## [v7.9.30] - 2026-07-19 — NOTIONAL TAVANI KODDA DEVRE DISI (KRITIK)
 
 ### Sorun: BTC+ETH sinyal veriyordu ama HIC islem acilmiyordu
