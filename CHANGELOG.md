@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.27] - 2026-07-19 — KURTARMA NOTIONAL TAVANINDAN MUAF
+
+### Duzeltildi — canli takipte yakalandi (kullanici uyarisi dogru cikti)
+> "yuksek lotta acilan bir MAIN'i minik lotlarla kapatmaya calismak cok zor bir durum"
+
+v7.9.25'te kurtarma icin "tavan asilirsa min lota iner ama ACILIR" yapilmisti. Canli sonuc
+(07-19 12:15): BTC'nin sembol tavani (6x) zaten doluydu → yeni kurtarma SPM'i **0.01 lot**
+acildi ve 0.14 lotluk **-$74**'luk pozisyonu dengeleyemedi. Kurtarma ISLEVSIZ kaldi.
+
+**Duzeltme:** SPM/DCA/HEDGE/RECOVERY notional tavanindan **tamamen muaf**. Tavan yalnizca
+YENI ANA girisine uygulanir.
+**Gerekce:** tavanin amaci YENI RISK almayi sinirlamak. Kurtarma yeni risk degil, mevcut
+riski cozme araci — ve zaten kendi sinirlari var (MaxBuy/SellLayers, spmLotBase, spmLotCap,
+zigzag). Boylece "yeni ANA kucuk acilir → sisme bastan onlenir, kurtarma ANA ile orantili
+calisir" dengesi kurulur.
+
+---
+
 ## [v7.9.26] - 2026-07-19 — TOPARLANMA KORUMASI + CIFT ACILIM ENGELI
 
 ### Duzeltildi — kullanici tespiti (asil sorun)
