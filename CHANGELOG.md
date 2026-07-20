@@ -4,6 +4,44 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.34] - 2026-07-20 — DDS YENIDEN CANLANDIRILDI (55 / 8 / blok yok)
+
+### Bulgu: DDS'in gercek sicili cok iyiydi, uc kisitlama onu durdurmus
+Hesap 250069384 kayitlari: **141 islem · net +$388.21 · WR %82.3** (07-12..07-17).
+En iyi gun 07-13: 50 islem, +$354.97, WR %96.
+Kiyas — SpikeFade: 10 islem, net **-$0.44**, WR %43 (kapatilmasi dogru karardi).
+
+| Ayar | Karli donem | v7.9.13/19 sonrasi | v7.9.34 (kullanici karari) |
+|---|---|---|---|
+| `DDScalp_MinScore` | 50 | 65 | **55** |
+| `DDScalp_HTFRelaxDDPct` | 7 | 999 (kapali) | **8** |
+| `DDScalp_BlockIfSameDirAnaLoss` | yoktu | -5.0 | **DEVRE DISI** |
+
+**Asil katil ucuncusuydu:** esik -$5 idi; grid sisteminde ANA/SPM neredeyse her zaman
+-$5 ustu zararda olur → kural pratikte "DDS hic acmasin" demeye geliyordu.
+Canli kanit: `BEKLE: ayni yonde (BUY) 2 ANA/SPM zararda (net $-45.94 <= $-5.00)`.
+
+**Guvenlik gerekcesi (kullanici):** *"zaten DDS'yi FIFO icine kattik"* — `CheckDDSSettlement`
+(v7.9.2) zararli scalp'i yetim birakmiyor, kasa onu kapatiyor. Liq korumalari BASKA yerlerde
+duruyor: `MaxDDPct(20)` tavani, tek-yon birikim freni, yuksek-DD giris freni, orphan guard,
+cift acilim engeli.
+Kod blogu `DrawdownScalp.mqh` icinde **yoruma alindi** — chart'a kayitli eski input (-5.0)
+kurali geri dirilltmesin (bugunun dersi: bir kurali gercekten kapatmak icin cagriyi kaldir).
+
+### Canli dogrulama (ayni gun)
+```
+11:40:38  [DDS-XAUUSDm] SCALP ACILDI BUY | lot=0.02 | DD=15.25% | skor=55 | HTF-GEVSEK(yuksekDD)
+10:00:03  +++ DDS SETTLE +++ Kasa=$27.16 + DDS=$-12.06 = Net=$15.10 -> kapatildi
+```
+DDS bugun: **5 islem, net +$15.26, 4 kazanan**. FIFO entegrasyonu da calisti (zararli scalp
+kasa ile netlesip kar olarak kapandi).
+
+### Ust tavan calisiyor
+`DD=20.6% > tavan 20.0% — hesap cok batti, yeni scalp riski YOK` — DD %20'yi asinca DDS
+kendini durdurdu. Koruma yerinde.
+
+---
+
 ## [v7.9.33] - 2026-07-20 — DDS HTF GEVSETME + NET SETTLE DIP TEYIDI
 
 Kullanici: *"1 ve 2 ikisini de yapalim... karlilik artmali."*
