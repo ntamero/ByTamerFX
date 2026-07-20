@@ -4,6 +4,54 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.35] - 2026-07-20 — ONCU VETO + DCA KAPATILDI
+
+### Kullanici tespiti
+> "Bu kadar zararli islem olmasi mantikli gelmiyor. Hem zigzag hem DDS, hedge, scalp, DCA
+>  bir suru katman varken neden bu kadar buyusun ki zararlar... Onunu gormeden kor dalis
+>  yapmamalidir sistem."
+
+### Olcum: sorun katmanlarda DEGIL, kayip/kazanc asimetrisinde
+07-20 gunu katman bazinda:
+
+| Katman | Adet | Net | WR |
+|---|---|---|---|
+| SPM | 21 | **+$104.44** | %86 |
+| HEDGE | 3 | **+$45.12** | %100 |
+| DDS | 5 | **+$15.26** | %80 |
+| **DCA** | 2 | **-$62.81** | **%0** |
+| **ANA** | 10 | **-$111.93** | %70 |
+
+```
+Kazanan ortalama:  +$7.69
+Kaybeden ortalama: -$29.61     (3.85 KATI)
+Kazanma orani:      %79.5
+Beklenen deger = 0.795x7.69 - 0.205x29.61 = +$0.04/islem  → TAM BASABAS
+```
+Basabas icin gereken WR bu oranla **%79.4**. Sistem kil payi ustunde salinliyordu.
+**Kurtarma katmanlari calisiyor; zarari ANA girisleri ve DCA uretiyor.**
+
+### 1) ONCU VETO (`EnableLeadVeto`, SignalEngine)
+LeadBoost yalnizca PUAN katkisi yapiyordu, **veto yetkisi yoktu**: oncu kaynak SELL derken
+BUY'a -10 verip toplam yine `SignalMinScore`'u asinca TERS yonde ANA aciliyordu.
+Canli kanit: `[LEADBOOST-BTCUSDm] skor katkisi: BUY-10 SELL+10` loglanirken ayni gun ANA
+girisleri **50-56 skorla** acildi (tek bir 60+ yok).
+**Yeni:** oncu kaynak bir yone NEGATIF katki veriyorsa o yonde **yeni ANA URETILMEZ**
+(`buyGated/sellGated` mekanizmasina baglandi). Kurtarma katmanlarina dokunmaz.
+Fail-safe: oncu veri yoksa veto da yok.
+
+### 2) DCA KAPATILDI — kanitlanmis zarar kaynagi
+**Omur boyu: 656 islem, net -$745.28, WR %86.3, ortalama -$1.14.** Isabet yuksek, beklenen
+deger negatif. DCA "ters gidene ekleme" mantigidir; NO-SL sisteminde kayip/kazanc
+asimetrisini besleyen ana kaynak. Kurtarma isini zaten SPM/HEDGE/DDS yapiyor.
+`ManageDCA()` cagrisi **yoruma alindi** (input degil — chart override geri diriltemesin).
+
+### Uygulanmayan oneri
+`SignalMinScore` 50→60 onerilmisti; kullanici **sadece 2 ve 3'u** secti. Esik 50'de kaldi —
+ANA giris kalitesi artik oncu veto ile suzuluyor.
+
+---
+
 ## [v7.9.34] - 2026-07-20 — DDS YENIDEN CANLANDIRILDI (55 / 8 / blok yok)
 
 ### Bulgu: DDS'in gercek sicili cok iyiydi, uc kisitlama onu durdurmus
