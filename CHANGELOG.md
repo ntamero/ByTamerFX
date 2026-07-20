@@ -4,6 +4,46 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.33] - 2026-07-20 — DDS HTF GEVSETME + NET SETTLE DIP TEYIDI
+
+Kullanici: *"1 ve 2 ikisini de yapalim... karlilik artmali."*
+
+### 1) DDS artik acabilir — HTF gevsetmesi geri, AMA tavanli
+`DDScalp_HTFRelaxDDPct` **999 (KAPALI) → 10.0**. v7.9.13'te liq dersiyle tamamen
+kapatilmisti; sonucta DDS **iki gundur hic islem acmadi** (HTF hizasi mutlak sart olmustu,
+tek cikis nadir goruken spike onayiydi).
+
+**Liq dersi korunuyor:** gevsetme dali `DDScalp_MaxDDPct` kontrolu YAPMIYORDU — v7.9.13'te
+DD %54'te bile HTF hizasiz DDS acilmasinin sebebi buydu. Artik o dala da tavan eklendi:
+
+| DD | davranis |
+|---|---|
+| < %10 | HTF hizasi SART (spike onayi haric) |
+| %10-20 | HTF hizasiz ac AMA **tier TABANI lot** (kucuk) |
+| >= %20 | **ACMA** — `BEKLE: DD >= tavan — gevsetme YAPILMAZ (liq korumasi)` |
+
+Degismeyen kapilar: ivme filtresi, ayni yonde ANA/SPM zararda ise acmama (v7.9.13),
+ayni yonde RECOVERY varsa acmama, MinScore 58.
+
+### 2) NET SETTLE dip teyidi — "TOPARLANMA BEKLE" nihayet devrede
+v7.9.26'da eklenen toparlanma korumasi `SmartClosePosition`'daydi ama **NET SETTLE oradan
+GECMIYOR** (dogrudan `m_executor.ClosePosition` cagiriyor) → sayac iki gundur 0'da kaldi.
+Mevcut mum korumasi yalniz mum TAM LEHTE iken bekletiyordu; **mum NOTR** (doji/kararsiz)
+oldugunda pozisyon dipten toparlaniyor olsa bile kapatiyordu.
+
+Canli ornek: DCA #1545592934 **dip -$47 iken -$37.15'te** settle edildi (net +$11.65).
+Birkac mum daha beklense ayni kasa ile net kar daha buyuk olurdu.
+
+Yeni: mum NOTR + pozisyon dipten `FIFO_RecoveryMinImprovePct` (%15) toparlanmis ise **bir tur
+bekle**. Mum aleyhe donerse ya da yeni dip yapilirsa normal settle isler — kar realize etmeyi
+ERTELEMEZ, sadece daha iyi noktaya kaydirir.
+
+### Chart override (yine yakalandi)
+`DDScalp_HTFRelaxDDPct` chart'lara **999.0** kayitliydi, Config'i ezecekti. Her iki MT5'te
+10.0 yapildi.
+
+---
+
 ## [v7.9.32] - 2026-07-19 — DDS ESIGI 65 -> 58 (DDS HIC TETIKLENEMIYORDU)
 
 ### Bulgu — 1 puan farkla olu kalmis
