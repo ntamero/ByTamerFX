@@ -4,6 +4,53 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.36] - 2026-07-20 — ATR-ADAPTIF KAR HEDEFI (TUM SEMBOLLER, TABAN KORUNUR)
+
+### Olcum: asimetrinin kaynagi kar hedefinin SABIT dolar olmasi
+7 gunluk kapanis analizi:
+```
+KAR   : 72 islem · ort +$10.90 · ort sure   352 dk
+ZARAR : 20 islem · ort -$58.90 · ort sure 3.627 dk  (10 KAT uzun)
+
+BTC kar  : 54 islem, 439 dk,  hareket 110 puan (~1 ATR)
+BTC zarar: 16 islem, 2.979 dk, hareket 564 puan (~5 ATR)
+XAU kar  : 14 islem,  10 dk   ← ayni EA, ayni kurallar, ZIT sonuc
+```
+Sorun piyasa rejimi degil (ayni donemde XAU/BTC zit sonuc verdi), **yapisal**: kar hedefi
+sabit dolar oldugu icin volatilite artinca cok erken doluyor; zarar tarafinda ise ATR ile
+birlikte buyumeye devam ediyor.
+
+### Kullanici itirazi (hakli) — ExpectedValueCalc IPTAL
+> "Forex son 40 islem veya 100 isleme gore hareket etmiyor ki? Son 40 veri o ayki savasa
+>  veya piyasaya para surulmesine denk geldi ve pozitif geldi ornek. Bu olcum mantikli degil."
+
+Dogru: EV modulu **duraganlik varsayimi** yapiyor, rejim degisince en kotu anda ters sinyal
+verir. Baglanmasi iptal edildi. Yerine **anlik piyasa olcumu** olan ATR kullanildi —
+gecmis istatistige hic bakmaz.
+
+### Eklendi — `UpdateATRAdaptiveTargets()` (OnTick, 60sn'de bir)
+```
+hedef = MAX( TABAN , spread x ATRTarget_SpreadMult , carpan x 1ATR'nin dolar degeri )
+```
+- **TABAN = kullanici min kar kurallari** (profil/tier degerleri) — *"min kar miktari
+  gecersiz mi olacak?"* sorusunun cevabi: **HAYIR, taban asla gecersiz olmaz.**
+- **Spread tabani**: hedef islem maliyetinin altina inemez (v7.9.15 kurus-kapanis bug'inin
+  geri gelmesini onler).
+- Carpanlar: ANA 0.60 · SPM 0.60 · Min 0.35 · FIFO 0.70 x 1ATR
+- Referans lot = **bakiye tier lotu** (ilk denemede `minLotOverride` kullanilmisti; BTC'de
+  0.04 iken gercek acilis 0.12 → ATR karsiligi 3 kat kucuk cikip hedef hep tabanda kaldi).
+
+### Canli dogrulama
+```
+[PM-BTCUSDm] ATR=134.74 (1ATR=$16.17 @0.12 lot) | ANA $7.00→$9.70 SPM $9.70
+             Min $5.66 FIFO $11.32 (taban ANA $7.00)
+```
+BTC'de volatilite yuksek → hedef buyudu. XAU/USTEC'te ATR karsiligi tabanin altinda →
+**taban korundu** (istenen davranis). Tum semboller kapsam icinde; kontrat/ATR farki
+formulde otomatik cozuluyor.
+
+---
+
 ## [v7.9.35] - 2026-07-20 — ONCU VETO + DCA KAPATILDI
 
 ### Kullanici tespiti
