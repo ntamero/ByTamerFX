@@ -4,6 +4,49 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.44] - 2026-07-22 — SPM COOLDOWN BUGFIX + GBPJPY/JP225 PROFILLERI
+
+### 🔴 KRITIK BUG: forex sembollerinde SPM sistemi OLUYDU
+`Config.mqh` satir 1100 ve 1150 (SetForex + SetForexJPY):
+```
+spmLotCap = 2.4;  // v5.8.5: max carpan 1.4 (user)spmCooldownSec = 60; // v5.8.8: 1.4->2.4
+                                                  ^ satir sonu kaybolmus
+```
+Bir duzenleme sirasinda `spmCooldownSec = 60;` **yorumun icine gomulmus** →
+degisken hic atanmiyor, cop deger aliyordu.
+
+**Canli kanit:** `[PM-GBPJPYm] GRID Lot: ... Cooldown=920920858s` (29 YIL).
+Diger profillerde 60s. Sonuc: **FOREX ve FOREX_JPY'de SPM cooldown asla dolmuyor,
+ilk SPM'den sonra grid olu kaliyordu.** EUR'un hic kar uretmemesinin acikamasi
+buyuk ihtimalle bu (v5.8.8'den beri, ~aylardir sessizce bozuk).
+
+### GBPJPY: sembol gunduz bile islem acamazdi
+`FOREX_JPY` tabani USDJPY'ye gore kalibre — `defaultSpreadPoints = 12`
+(yorum: *"USDJPY~10, GBPJPY~18 -> ortalama 12"*). **Canli olcum bunu curuttu:**
+GBPJPY spread gece **303 puan**, gunduz ~18-30. Tolerans 13.8 ile sembol hic
+islem acamazdi — USTEC'te yasanan spread tuzaginin aynisi.
+
+`SetGBPJPY()`: `defaultSpreadPoints = 30` (gunduz gecer, gece 303 ENGELLENIR —
+o spread'de maliyet kar hedefini asiyor).
+**Lot ATR-normalize dusuruldu:** 0.20 lotta $/ATR ~$40 = XAG'in ($16.9) **2.4 kati**
+risk (ETH'de ayni hatayi yasadik). tier4 0.20 -> 0.10 (~$20/ATR).
+
+### JP225: SetNikkei() — deger degismedi
+Olcum: gece spread 71. INDICES tabani 60 (max 69) → gece engeller (dogru, maliyet
+yuksek), Tokyo seansinda gecer. Profil ATR olcumu sonrasi INDICES'i bozmadan ayar
+yapabilmek icin acildi.
+
+### GBPUSD: 12 -> 15
+Olcum: gunduz ~10, gece 59. 15 (max 17.2) gunduz rahat gecer, gece engeller —
+gece 5.9 pip spread 0.20 lotta $11.8 maliyet = kar hedefinin neredeyse tamami.
+
+### CANLI SPREAD OLCUMLERI (00:25 TR, gece = en genis)
+```
+BTC 1000 · US30 35 · XAG 30 · GBPUSD 59 · JP225 71 · XAU 240 · USTEC 360 · GBPJPY 303
+```
+
+---
+
 ## [v7.9.43] - 2026-07-22 — ENDEKS TABAN SPREAD DUZELTMESI + USTEC/DE30 PROFILLERI
 
 ### Kok sorun: aykiri deger TABAN olmus
