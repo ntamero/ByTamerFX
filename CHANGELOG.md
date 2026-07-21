@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.46] - 2026-07-22 — SPREAD TELEMETRISI
+
+Spread yalnizca EA acilisinda olculuyordu (`SPREAD BASELINE`) — **gun ici degisim
+hicbir yere yazilmiyordu.** Bu yuzden filtre kalibrasyonu tahmine dayaniyordu ve
+JP225 (tolerans 60 vs gercek 71) fark edilmeden **hic islem acamadan durdu**.
+
+Artik her periyodik DURUM logunda (5 dk) anlik spread kayda geciyor:
+```
+[PM-JP225m] v7.9.46 DURUM @ ... | Vol=NORMAL BiDir=KAPALI | SPREAD=71
+```
+Gun sonunda her sembolun **seans bazli spread profili** cikarilabilir; kalibrasyon
+tahminle degil olcumle yapilir.
+
+Ilk kullanim: 05:00 TR sonrasi (Tokyo/Londra acilisi) US30 / JP225 / GBPJPY gercek
+calisma spread'leri okunup filtre degerleri kesinlestirilecek.
+
+---
+
 ## [v7.9.45] - 2026-07-22 — CANLI SPREAD KALIBRASYONU
 
 Kullanicidan gelen canli terminal olcumleriyle duzeltildi. Tahmin degil, gercek deger.
