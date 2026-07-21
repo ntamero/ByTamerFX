@@ -4,6 +4,38 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.37] - 2026-07-21 — XAG SPM TETIGI tier4'te -7.00 + YENI SEMBOLLER
+
+### Semboller 3 -> 5 (kullanici): BTC · XAU · USTEC · **USOIL** · **XAG**
+Profiller hazirdi: USOIL→`ENERGY` (CAT_ENERGY dogru tespit), XAG→`SILVER_XAG`.
+v7.9.36 ATR-adaptif hedefler ikisini de otomatik kapsiyor.
+
+### ATR olcumu — XAG'in $/ATR'si en yuksek cikti
+| Sembol | ATR(M15) | 1 ATR @tier4 | SPM tetigi | Tetik/ATR |
+|---|---|---|---|---|
+| BTCUSDm | 135.86 | $16.30 @0.12 | -$6.00 | 0.37 |
+| XAUUSDm | 8.07 | $24.20 @0.03 | -$4.80 | 0.20 |
+| **XAGUSDm** | 0.258 | **$38.71** @0.03 | **-$4.80 → -$7.00** | 0.12 → **0.18** |
+
+XAG'da 0.03 lot, BTC'deki 0.12 lottan **2.4 kat** fazla risk tasiyor. Eski tetik -$4.80
+= **0.12 ATR** ile en dar orandi (v7.9.7 notu: *"gunde 41 SPM1/+$5 churn"*).
+
+**Kullanici karari:** lot tier4 **0.03 KALSIN**, SPM tetigi **tier4'te -7.00** olsun.
+Tier4 carpani 1.2 oldugu icin base `-4.0 → -5.83` yapildi (-5.83 x 1.2 = -7.00).
+`spm2TriggerLoss` ayni oranla (-4.5 → -6.56). Canli dogrulama: `Tetik=$-7.00` ✓
+
+### Timeframe: M15 dogrulandi (kullanici sorusu)
+Belirleyici spread/ATR: M15'te maliyet ATR'nin ~%13'u, M5'te ~%40, **M1'de ~%105**
+(kar imkansiz). Yukari periyotta oran iyilesir ama SPM grid yeterli firsat bulamaz ve tum
+esikler M15'e kalibre. **5 chart da M15** olarak normalize edildi (XAG M1'de acilmisti).
+
+### Izlenen risk — USOIL
+Kontrat 1.000 varil, tier4 0.03 → 1 ATR ≈ $4.50 (tahmin). Bu dogruysa SPM tetigi
+-$4.80 = **1.07 ATR** (cok gec), ANA hedefi $8.40 = **1.87 ATR** (cok uzak) olur —
+ETH'deki "kar alamama" durumunun hafif versiyonu. Gercek ATR gelince olculecek.
+
+---
+
 ## [v7.9.36] - 2026-07-20 — ATR-ADAPTIF KAR HEDEFI (TUM SEMBOLLER, TABAN KORUNUR)
 
 ### Olcum: asimetrinin kaynagi kar hedefinin SABIT dolar olmasi
