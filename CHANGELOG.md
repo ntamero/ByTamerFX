@@ -4,6 +4,42 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.39] - 2026-07-21 — DDS LOTU ANA PROFIL LOTUNA ORANLANIR
+
+### Sorun: DDS lotu SEMBOLDEN BAGIMSIZ sabitti
+`EquityTierLot` equity'ye gore sabit lot veriyordu (0.02/0.04/0.08/0.12-0.20) — sembol
+farkini hic gormuyordu. BTC'de dogruydu (ana lot 0.12 = DDS 0.12) ama **ETH'de ana lot 2.70
+iken DDS 0.12 aciyordu → DDS o sembolde ETKISIZ** ($0.60/ATR).
+
+### Yanlis deneme ve donusu (kayda geciyor)
+Once **$/ATR normalize** denendi (mevcut sabitlerin ortuk olarak ~$16/ATR hedefledigi
+kesfedilmisti: BTC 0.12x135.86=$16.30 · XAU 0.02x8.07x100=$16.14). Ama iki sorun cikti:
+1. **USTEC'te DDS ana lotun 4.5 KATINA cikti** (0.12 → 0.55) — cunku USTEC'in ANA lotu
+   $/ATR bazinda zaten kucuk ($3.55/ATR).
+2. **`DDScalp_MaxLot = 0.20` MUTLAK tavani** ETH'in 3.16 lotunu 0.20'ye kirpiyordu —
+   duzeltme zaten islemeyecekti.
+
+### Dogru cozum: profil-orantili
+```
+DDS taban = ana profil tier lotu x DDScalp_LotRatioBase (1.00)
+DDS max   = ana profil tier lotu x DDScalp_LotRatioMax  (1.67 = 0.20/0.12)
+```
+Kontrat/ATR farki **zaten ana tier'da cozulmus** oldugu icin DDS her sembolde ana sistemle
+ayni olcekte kalir. `DDScalp_MaxLot` mutlak tavani kaldirildi (tier max zaten oranli).
+
+### Canli dogrulama
+```
+BTCUSDm  0.12-0.20  (degismedi)      ETHUSDm  2.70-4.51  (eski 0.12-0.20)
+USTECm   0.12-0.20  (yan etki yok)   XAU/XAG  0.02-0.02  (METAL sabit dali)
+```
+
+### Derleme sirasinda yakalanan hata (ders)
+`sed`/`replace` ile **ilk eslesmeyi** degistirmek `NormalizeLot` icindeki broker
+`SYMBOL_VOLUME_MAX` kontrolunu bozdu (`mx` degiskeni ayni isimdeydi). Derleyici yakaladi,
+geri alindi. **Ders: tek satirlik replace'lerde fonksiyon baglamini dogrula.**
+
+---
+
 ## [v7.9.38] - 2026-07-21 — SPM TETIGI LOT ORANIYLA OLCEKLENIR (TUM PROFILLER)
 
 ### Kullanici tespiti (sistemik tutarsizlik)
