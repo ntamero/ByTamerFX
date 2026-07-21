@@ -4,6 +4,33 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.45] - 2026-07-22 — CANLI SPREAD KALIBRASYONU
+
+Kullanicidan gelen canli terminal olcumleriyle duzeltildi. Tahmin degil, gercek deger.
+
+| Sembol | eski | yeni | olcum | sebep |
+|---|---|---|---|---|
+| **JP225** | 60 | **80** | 71 | 60 (max 69) ile sembol **HIC islem acamiyordu** |
+| **DE30** | 90 | **115** | 100 | 90 (max 103.5) sinirdaydi, 4 puan oynayinca engelleyecekti |
+| **GBPJPY** | 30 | **60** | 167 / 303 | gunduz ~30-50'yi gecirir, 167/303'u ENGELLER |
+| **GBPUSD** | 15 | **12** | 10 / 59 | **kullanici karari** |
+
+### GBPJPY neden 167'yi gecirmiyoruz
+167 puan = 16.7 pip. 0.10 lotta **$11.2 spread maliyeti**; ATR-adaptif kar hedefi
+~$12 → islem **daha acilirken kaybediyor**. O spread'de durmasi dogru davranis.
+Londra seansinda ~30-50'ye indiginde calisacak.
+
+### Oncu veri kapsami (LeadLagFilter)
+Kapsam: `BTC / XAU / XAG / EUR / GBP / NAS`. **GBPJPY, US30 ve JP225 kapsam disi** —
+LeadLag **fail-safe** tasarlandi: kapsam disi sembolde etkisiz kalir, islem ENGELLEMEZ.
+Yani "kapsam disi" uyarisi zararsiz.
+
+**GBPJPY'ye GBP oncusu BAGLANMADI (bilincli):** sembol hem sterlin hem yen tarafindan
+surulur; tek bacaga bakan oncu yaniltici sinyal verir — BTC'de H1 filtresinin karli
+yonu kesmesiyle ayni sinif hata olurdu.
+
+---
+
 ## [v7.9.44] - 2026-07-22 — SPM COOLDOWN BUGFIX + GBPJPY/JP225 PROFILLERI
 
 ### 🔴 KRITIK BUG: forex sembollerinde SPM sistemi OLUYDU
