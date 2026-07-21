@@ -4,6 +4,38 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.43] - 2026-07-22 — ENDEKS TABAN SPREAD DUZELTMESI + USTEC/DE30 PROFILLERI
+
+### Kok sorun: aykiri deger TABAN olmus
+`SetIndices().defaultSpreadPoints = 350` — bu deger **USTEC'e ozeldi** (Exness'in en
+genis spread'li endeksi, gercek ~360). Ama TABAN oldugu icin **her yeni endeks onu
+miras aliyordu**:
+
+| Endeks | gercek spread | miras alinan tolerans | kat |
+|---|---|---|---|
+| US30 | 35 | 402 | **11x** |
+| DE30 | ~75 | 402 | ~5x |
+| JP225 | ~20 | 402 | ~20x |
+| UK100 | ~25 | 402 | ~16x |
+
+Yani hangi endeksi eklersen ekle spread filtresi fiilen KAPALI geliyordu.
+v7.9.42'de US30'u tek tek yamalamistim; bu surumde kokten cozuldu.
+
+**`SetIndices()` tabani 350 -> 60** (makul endeks degeri).
+**`SetNasdaq()`** eklendi -> USTEC aykiri degerini KENDI profilinde tasiyor (350).
+**Davranis degismedi:** canli dogrulama `USTECm -> INDICES_USTEC | Default=350.0`.
+
+### DE30 (DAX) — Exness'te DE40 degil DE30
+`SetDax()` eklendi, `defaultSpreadPoints = 90` (~50-100 tahmini, OLCULMEDI).
+
+### SymbolManager: eksik sembol kodlari (SESSIZ TUZAK)
+Endeks tespit listesinde **`ustec` ve `de30` YOKTU** — ikisi de yalnizca path
+(`Indices\...`) uzerinden taniniyordu. Broker path formatini degistirse veya sembol
+baska bir grupta olsa `CAT_UNKNOWN` -> `SetDefault()` -> lot/spread/tetik/SPM hepsi
+yanlis olurdu. Eklendi: `ustec, de30, us500, hk50, aus200, eu50, fra40, stoxx`.
+
+---
+
 ## [v7.9.42] - 2026-07-22 — US30 + GBPUSD OZEL PROFILLERI
 
 ### US30: gizli spread acigi kapatildi (ASIL KAZANIM)
