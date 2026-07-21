@@ -4,6 +4,45 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.40] - 2026-07-21 — v7.9.38 GERI ALINDI (tetikler eski hali)
+
+### Canli olcum: v7.9.38 EV'yi YARIYA dusurdu
+Deploy 08:01 UTC · karsilastirma ayni gun, ayni hesap:
+
+| | ONCE (00:00-08:00) | SONRA (08:01-15:45) |
+|---|---|---|
+| Kapanan | 46 | 41 |
+| Net | +$348.39 | +$144.61 |
+| WR | %85 | %80 |
+| Kazanan ort | +$10.75 | +$8.59 |
+| **Kaybeden ort** | **-$10.12** | **-$17.35** (%71 ARTIS) |
+| **EV / islem** | **+$7.62** | **+$3.40** |
+
+**SEBEP:** tetik genisleyince (BTC -$6 → -$15 = 0.37 → 0.92 ATR) kurtarma GEC basliyor,
+zarar daha buyukken mudahale ediliyor. Churn azaldi ama bedeli kayip buyuklugu oldu.
+Deploy sirasinda bu risk yazilmisti ("kurtarma daha gec baslar") — canlida dogrulandi.
+
+### Karar (kullanici): tamamen geri al
+> "tamamen geri al, v7.9.38 oncesine don, tetikler eski haline gelsin. cok harika calisiyordu."
+
+`ApplyBalanceTierScaling` uc tier'da da eski sabit carpanlara dondu (1.15/1.15/1.2).
+**Yan fayda:** XAG otomatik olarak v7.9.37'de belirlenen **-$7.00**'a dondu
+(base -5.83 x 1.2), lot-orani olceklemesinde -$8.75 olmustu.
+
+### Canli dogrulama
+```
+BTC -$6.00 · XAG -$7.00 · ETH -$4.80 · USTEC -$4.80 · XAU -$4.80
+DDS lotlari (v7.9.39) KORUNDU: ETH 2.70-4.51 · BTC 0.12-0.20 · metal 0.02
+```
+
+### DERS
+Matematiksel tutarlilik (tetik/ATR oraninin her tier'da sabit olmasi) **pratik iyilesme
+garantisi degil**. Grid sisteminde erken tetik = kucuk zararla kurtarma; gec tetik = buyuk
+zararla kurtarma. Teorik simetri, sistemin calisma mantigina ters dusebiliyor.
+**Kural: her ayar degisikligini ONCE/SONRA olc, teoriye guvenme.**
+
+---
+
 ## [v7.9.39] - 2026-07-21 — DDS LOTU ANA PROFIL LOTUNA ORANLANIR
 
 ### Sorun: DDS lotu SEMBOLDEN BAGIMSIZ sabitti
