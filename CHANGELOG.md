@@ -4,6 +4,44 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.47] - 2026-07-22 — ONCU VERI KAPSAMI: CAPRAZ + ENDEKS (VADELI KAYNAK)
+
+### "kapsam disi" uyarisinin gercek sebebi
+Sunucu daemon'u **GBPJPY, US30, JP225, DE40, UK100, SPX'i ZATEN yayinliyordu**
+(`lead-signal.json`). Eksik olan tek sey **EA tarafindaki esleme** idi —
+`ResolveRefKey()` sadece 6 anahtar taniyordu (BTC/XAU/XAG/EUR/GBP/NAS), gerisi
+`""` donup "kapsam disi" yaziyordu. Veri bosa akiyordu.
+
+Eklenenler: `GBPJPY, EURJPY, AUDJPY, EURGBP, US30, JP225, DE40, UK100, SPX, XPT, XPD`
+
+### Endeks kaynaklari SPOT -> VADELI (asil kazanim)
+Canli tazelik olcumu (Yahoo, gece):
+```
+^DJI    62 dk bayat     YM=F    46 dk   <- Dow vadeli
+^N225  901 dk bayat!    NKD=F   46 dk   <- Nikkei vadeli
+                        GBPJPY=X 0 dk   (forex 24h)
+```
+**^N225 15 SAAT bayatti** — Tokyo kapaninca spot endeks donuyor, EA ise 24 saat
+calisiyor. Spot endeks oncu olarak kullanilamaz. Daemon guncellendi:
+`US30: ^DJI -> YM=F` · `JP225: ^N225 -> NKD=F`
+
+Dogrulama (lead-signal.json, fresh=true):
+```
+US30 52416.0 (YM=F) · JP225 67270.0 (NKD=F) · GBPJPY 218.188
+```
+
+### GBPJPY icin neden sentetik oncu KURULMADI
+Onceki plan GBP oncusunu GBPJPY'ye baglamakti — **yapilmadi**. Sembol hem sterlin
+hem yen tarafindan surulur; tek bacaga bakan oncu yaniltir. Bunun yerine daemon'un
+zaten yayinladigi **dogrudan GBPJPY=X** akisi baglandi.
+
+### NOT: bunlar "oncu" degil, ikinci kaynak teyidi
+Gercek oncu yalnizca BTC (Binance 1sn) ve NAS (NQ=F vadeli). Yahoo spot FX
+(EUR/GBP/GBPJPY) MT5'ten onde DEGIL — teyit katmani olarak calisir.
+LeadLag fail-safe: stale/kapsam disi durumda etkisiz kalir, islem engellemez.
+
+---
+
 ## [v7.9.46] - 2026-07-22 — SPREAD TELEMETRISI
 
 Spread yalnizca EA acilisinda olculuyordu (`SPREAD BASELINE`) — **gun ici degisim
