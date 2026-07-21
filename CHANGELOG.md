@@ -4,6 +4,48 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.38] - 2026-07-21 — SPM TETIGI LOT ORANIYLA OLCEKLENIR (TUM PROFILLER)
+
+### Kullanici tespiti (sistemik tutarsizlik)
+> "Tum sistemde lot degerleri tier bazinda artarken ayni sekilde SPM tetik degerleri de
+>  artmali. Cunku kazanc miktari artiyorsa zarar tetik degeri de ona gore hizli
+>  tetiklenmemeli."
+
+### Olcum: lot 1.5-3.3 kat buyurken tetik sadece 1.2 kat buyuyordu
+| Profil | lot orani (t1→t4) | eski tetik carpani | sonuc |
+|---|---|---|---|
+| FOREX / FOREX_JPY | **3.33x** | 1.20x | **2.8 kat dar** |
+| CRYPTO_BTC / ETH | **3.00x** | 1.20x | **2.5 kat dar** |
+| XAU / XAG / USTEC / ENERGY | 1.50x | 1.20x | 1.2 kat dar |
+
+Somut (BTC): `tier1 lot 0.04 / tetik -$5.00 = 0.92 ATR` ama
+`tier4 lot 0.12 / tetik -$6.00 = 0.37 ATR` → **bakiye buyudukce SPM oransal olarak
+2.5 kat DAHA ERKEN tetikleniyordu** (tam tersi olmaliydi).
+
+### Cozum: `ApplyBalanceTierScaling` icinde carpan = `lotTierN / lotTier1`
+Uc tier de (200/500/1000+) guncellendi; `spmTriggerLoss` ve `spm2TriggerLoss` artik lot
+olcegiyle birebir buyuyor → **tetik/ATR orani her tier'da SABIT kalir**.
+Fail-safe: `lotTier1` tanimsizsa eski carpanlar (1.15/1.2) kullanilir.
+
+### Canli sonuc (bakiye $1268 → tier4)
+```
+BTCUSDm  -$6.00 → -$15.00   (0.92 ATR)
+XAGUSDm  -$7.00 → -$8.75    (0.23 ATR)
+XAUUSDm  -$4.80 → -$6.00    (0.25 ATR)
+USTECm   -$4.80 → -$6.00
+USOILm   -$4.80 → -$6.00
+```
+NOT: XAG icin v7.9.37'de belirlenen -$7.00, yeni olcekleme ile **-$8.75** oldu
+(base -5.83 x lot orani 1.5). Kullanici bilgilendirildi.
+
+### Izlenecek risk
+BTC'de tetik 0.37 → 0.92 ATR'ye cikti (2.5x). Bu **churn'u azaltir** ama **kurtarma
+daha gec baslar** — SPM devreye girene kadar zarar buyuyebilir. Semboller arasi oran
+hala esit degil (BTC 0.92 vs XAU 0.25); tier ICI tutarlilik saglandi, semboller ARASI
+hizalama ayri bir is olarak duruyor.
+
+---
+
 ## [v7.9.37] - 2026-07-21 — XAG SPM TETIGI tier4'te -7.00 + YENI SEMBOLLER
 
 ### Semboller 3 -> 5 (kullanici): BTC · XAU · USTEC · **USOIL** · **XAG**
