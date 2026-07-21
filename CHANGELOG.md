@@ -4,6 +4,53 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.41] - 2026-07-21 — BTC OZEL CONFIG (H1 filtresi kapali + hedef 0.80) · ETH→GBP
+
+### TESHIS: BTC neden kaybediyordu (3 gun, 108 islem, -$34.38)
+| Katman | adet | net | ort |
+|---|---|---|---|
+| **ANA** | 7 | **-$97.06** | -$13.87 |
+| DCA | 6 | -$16.35 | |
+| SPM | 64 | -$5.01 | basabas |
+| HEDGE | 12 | -$2.50 | basabas |
+| PartialClose | 12 | +$40.14 | |
+| DDS | 7 | +$46.40 | WR %86 |
+
+**Yon bazinda:** BUY 62 islem **-$85.14** (WR %81) · SELL 46 islem **+$50.76** (WR %70)
+**Asimetri:** BTC kazanan +$8.77 / kaybeden -$28.99 = **3.30x** (XAG'da 1.68x)
+
+### KOK SEBEP: H1 trend filtresi KARLI YONU kesiyordu
+```
+H1 TREND FILTER: ENGELLENDI 81 · GECIRILIYOR 0
+ornek: "BTCUSDm SELL[51] sinyali ENGELLENDI (H1=BUY, NormalVol)"
+```
+BTC'de H1 trend GECIKMELI — fiyat duserken H1 hala "BUY" diyor, filtre M15'in dogru
+okudugu SELL'leri kesiyor. Sonuc: sistem **zararli yone (BUY) izin verip karli yonu
+(SELL) engelliyordu**.
+**Dis veri SUCSUZ:** LEADBOOST BTC'de 51 kez BUY+10 / 50 kez SELL+10 → tam dengeli.
+Sinyal motoru da SELL uretiyordu; hatayi filtre yapiyordu.
+
+### COZUM: profil bazli iki yeni alan
+`SymbolProfile.h1TrendFilter` (bool) · `SymbolProfile.atrTargetAnaMult` (double)
+- **Kripto (BTC/ETH/ALT): `h1TrendFilter=false`** — H1 gecikmeli, oncu veto (60 kez calisti)
+  + mum/ADX teyidi zaten koruyor.
+- **BTC: `atrTargetAnaMult=0.80`** (global 0.60) — asimetriyi kapatmak icin ANA hedefi %33 buyudu.
+- **XAU/XAG/USTEC/FOREX/ENERGY: filtre ACIK** — o sembollerde H1 guvenilir ve kar getiriyor
+  (XAG +$285.70, XAU +$214.55).
+
+### Sembol degisikligi (kullanici): ETH → GBP
+ETH 3 gunde 3 islem, acik dahil -$43.83. GBPUSDm eklendi → `FOREX` profili, H1 filtresi
+ACIK (forex'te guvenilir), lotTier4 0.20.
+
+### Canli dogrulama
+```
+BTCUSDm: H1 TREND FILTER logu YOK (filtre kapali) · ANA hedefi $7.00→$14.63 (0.80 x $18.29)
+XAGUSDm/GBPUSDm: "SELL sinyali ENGELLENDI" (filtre calisiyor)
+Semboller: GBPUSDm(FOREX) · XAGUSDm · BTCUSDm · USTECm · XAUUSDm
+```
+
+---
+
 ## [v7.9.40] - 2026-07-21 — v7.9.38 GERI ALINDI (tetikler eski hali)
 
 ### Canli olcum: v7.9.38 EV'yi YARIYA dusurdu
