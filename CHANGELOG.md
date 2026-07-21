@@ -4,6 +4,44 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.42] - 2026-07-22 — US30 + GBPUSD OZEL PROFILLERI
+
+### US30: gizli spread acigi kapatildi (ASIL KAZANIM)
+`SetIndices()` USTEC icin kalibre edilmisti — `defaultSpreadPoints = 350`
+(USTEC gercek spread ~360). Kod yorumu bunu zaten uyarmisti:
+*"US30 eklenirse ONA ozel dusuk deger gerekir."*
+
+**US30 gercek spread: 32 puan.** INDICES tabaniyla tolerans 402 puan = gercegin
+**12 kati** → spread filtresi US30'da fiilen KAPALI.
+
+Su an calisan sey bir yedek kural (BytamerFX.mq5:276):
+`broker(32) < profil(350)x0.5` → broker degeri kullanildi, Default=32 oldu.
+**Ama bu kural EA acilisinda BIR KEZ calisir.** EA'yi haber aninda veya seans
+acilisinda restart edersen broker spread'i gecici yuksek okunur (or. 200),
+`200 < 175` saglanmaz → US30 **402 puan toleransla** calisir ve spread patlamasinda
+islem acar. Sessiz, ancak restart zamanlamasi denk gelince patlayan bir acik.
+
+`SetDowJones()`: `defaultSpreadPoints = 45` (olcum 32 + %40 pay).
+
+### GBPUSD: ayri profil kimligi
+`SetForex()` EURUSD icin kalibre (lotTier4 yorumu: *"agresif EUR lot dusuruldu"*).
+GBP tarihsel olarak EUR'dan ~%30 volatil → **ayni lotta $/ATR daha yuksek**, yani
+GBP zaten avantajli. `SetGBP()` acildi ama **degerler FOREX ile ayni baslatildi** —
+sebep: ilk 20-30 islem olculunce tetik/hedef ayari EUR'u bozmadan yapilabilsin.
+
+### DEGISTIRILMEYENLER (bilincli)
+- **Lot tier'lari: DOKUNULMADI** (kullanici kurali). Iki profil de tabanindan miras alir.
+- **SPM tetikleri: DOKUNULMADI.** v7.9.38 dersi: olcumsuz tetik degisikligi zarar avg
+  -$10.12 -> -$17.35 yapmisti. GBP/US30'un islem gecmisi YOK → olcmeden dokunulmaz.
+- **h1TrendFilter = true** her ikisinde. Forex ve endekste H1 guvenilir
+  (XAG +$285.70, XAU +$214.55, USTEC +$24.92); v7.9.41'de sadece kriptoda kapatildi.
+
+### Profil yonlendirme
+US30/DJ30/WS30/DOW -> SetDowJones() · GBPUSD -> SetGBP() (JPY kontrolunden SONRA,
+GBPJPY carpismasin diye)
+
+---
+
 ## [v7.9.41] - 2026-07-21 — BTC OZEL CONFIG (H1 filtresi kapali + hedef 0.80) · ETH→GBP
 
 ### TESHIS: BTC neden kaybediyordu (3 gun, 108 islem, -$34.38)
