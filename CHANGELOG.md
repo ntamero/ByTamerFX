@@ -4,6 +4,18 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.53] - 2026-07-22 — JP225 LOT 15.0 (XAU seviyesi $22/ATR)
+
+Kullanici karari (JP225 lot 5 -> 15). 15 lot = $22.6/ATR (OrderCalcProfit) = XAU
+seviyesi ($25), XAG'a ($32) yaklasir. Risk 1 ATR ters = -$22.6 = %2.3.
+SPM 2x = 30 lot = $45/ATR. Tier 6/9/12/15, minLotOverride=1.0.
+
+IZLENECEK: (1) margin — 15 lot ~$67-134, SPM 30 lot ~$134-268 ($1000 hesapta
+artiyor). (2) JP225 kar hedefine ulasip KAPANIYOR MU (v7.9.50 JPY bug'inin gercekten
+duzeldiginin kaniti). Ulasamiyorsa/margin baskisi olursa lot geri cekilir.
+
+---
+
 ## [v7.9.52] - 2026-07-22 — JP225 LOT 5.0 (kullanici deneme karari)
 
 Kullanici: "JP225 lot 5 yap, deneyelim". JP225'i elemek yerine dusuk-lot denemesi.
