@@ -4,6 +4,43 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.51] - 2026-07-22 — XAG-BAZLI LOT KALIBRASYONU (US30/GBPUSD/GBPJPY)
+
+Kullanici karari: "XAG baz alinarak ATR ve lot ayari". SembolDetay script'i
+OrderCalcProfit ile kesin $/ATR verdi (v7.9.50 formulu dogrulandi, JPY sapmasi 163-165x
+= USDJPY kuru olarak kanitlandi).
+
+### Olcum (ayni an, OrderCalcProfit = kesin)
+```
+XAG    $31.92 @0.03   REFERANS       volMin=0.01
+XAU    $25.25 @0.03   yakin, DOKUNMA volMin=0.01
+BTC    $16.14 @0.12   DOKUNMA        volMin=0.01
+US30   $2.62  @0.12   birim $22/lot  volMin=0.01
+GBPUSD $7.74  @0.20   gece ATR       volMin=0.01
+GBPJPY $3.51  @0.10   gece ATR       volMin=0.01
+JP225  $0.18  @0.12   IMKANSIZ       volMin=1.00 -> CIKAR
+```
+
+### Lot ayari (tier4, $1000 hesap)
+```
+US30   0.12 -> 0.70   (aktif $/ATR ~$24; tam XAG=1.46 ama SPM 2x riski -> guvenli band)
+GBPUSD 0.20 -> 0.30   (aktif seans $/ATR ~$30 = XAG bandi)
+GBPJPY 0.10 -> 0.30   (aktif seans $/ATR ~$30)
+BTC/XAU/XAG DOKUNULMADI (kullanici kurali + zaten XAG bandinda)
+```
+Tum tier'lar oranli guncellendi (SetDowJones/SetGBP/SetGBPJPY).
+
+### JP225 CIKARILDI (iki bagimsiz sebep)
+1. volMin=1.00 (broker dayatiyor, asagi cekilmez)
+2. XAG bandina 21 lot gerekir ($0.18/ATR — bu broker'da dolar yogunlugu cok dusuk)
+$5000+ hesapta bile imkansiz. Bu broker'da JP225 kullanilamaz.
+
+### UYARI: GBPUSD/GBPJPY gece ATR
+Lot hesabi aktif-seans ATR tahminine (gece x2.5) dayaniyor. Aktif Londra/NY seansinda
+(10:00-16:00 TR) v7.9.51 ATR-adaptif loglari gelince dogrulanacak, gerekirse ince ayar.
+
+---
+
 ## [v7.9.50] - 2026-07-22 — 🔴 JPY-QUOTE ATR-USD BUGFIX (kar hedefi 150x sisiyordu)
 
 ### Kok sorun (kullanici tespit etti: "sorun baska yerde")
