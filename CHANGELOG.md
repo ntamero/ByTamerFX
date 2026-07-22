@@ -4,6 +4,29 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.54] - 2026-07-22 — SIG-TRACE TESHIS LOGU (GBPUSD neden acmiyor)
+
+Kullanici karari: "once kesin teshis". GBPUSD SELL[60] guclu ama ANA acmiyor,
+HIC engel logu yok. **Tum bariz kapilar elendi:** yuksek-DD freni (equity %80.8>%70),
+lead veto (GBP oncu NONE), reversal gate (BEARISH->SELL serbest), NightMode
+(pencere 05-23 ici), spread (10<13.8), minscore/trap/momentum/peakdip/leadlag/
+confluence (hic log), margin (%424), MaxTotalVolume (1.52<2.0).
+
+### Kok aday: sessiz NONE return
+`CheckForNewSignal` icinde `SignalData sig = Evaluate(); if(sig.direction==NONE) return;`
+LOG URETMIYOR. GBPUSD celiskili: uzun vade 7-katman BUY (piyasa yukari) + kisa vade
+REVERSAL BEARISH (mum 3/3). Reversal gate BUY'u gate'liyor, SELL net degil -> NONE.
+
+`[SIG-TRACE-<sym>]` logu eklendi: Evaluate() sonucunu 60sn'de bir basar (yon+skor).
+Sadece teshis, davranis DEGISMEDI. PC'de v7.9.54 ile GBPUSD'nin NONE mi dondugu
+kesinlesecek.
+
+### Yan bulgular
+- Tek-yon BUY yigilma PIYASA kaynakli (4 sembol gercek BUY, H1 tuzagi YOK)
+- US30 lot 0.70 (v7.9.51) toplam hacmin %78'i -> MaxTotalVolume=2.0 zorlaniyor
+
+---
+
 ## [v7.9.53] - 2026-07-22 — JP225 LOT 15.0 (XAU seviyesi $22/ATR)
 
 Kullanici karari (JP225 lot 5 -> 15). 15 lot = $22.6/ATR (OrderCalcProfit) = XAU
