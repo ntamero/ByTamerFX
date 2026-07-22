@@ -4,6 +4,33 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.52] - 2026-07-22 — JP225 LOT 5.0 (kullanici deneme karari)
+
+Kullanici: "JP225 lot 5 yap, deneyelim". JP225'i elemek yerine dusuk-lot denemesi.
+
+### Matematik (OrderCalcProfit = broker kesin hesabi)
+```
+JP225 1 lot = $1.51/ATR  ·  5 lot = $7.5/ATR
+XAG referans = $31.92  →  XAG'a 21 lot gerekir (5 lot XAG'in CEYREGI)
+```
+Kullanicinin "5 lot XAG'a gelir" beklentisi matematiksel tutmuyor (net soylendi).
+
+### Ama 5 lot ISLEVSEL (v7.9.50 bug'i duzeldigi icin)
+```
+$/ATR       = $7.5
+1 ATR ters  = -$7.5 = %0.75 risk (cok dusuk)
+kar hedefi  = $9.8 taban (artik sahte $17.4 DEGIL)
+hedefe      = 1.3 ATR (onceki 11 ATR degil)
+```
+XAG kadar kazandirmaz ama dusuk riskle calisir, kar hedefine ulasir. Denenebilir.
+Tier: 2/3/4/5 (t1-t4), minLotOverride=1.0 (broker volMin).
+
+NOT: "$0.18/ATR benim hesabim degil, OrderCalcProfit = MT5'in broker'a sorup aldigi
+kesin cevap; JPY->USD donusumu broker yapiyor". Kullanici JPY hesabina suphelendi,
+dogrulandi: JP225 1 lot = (247/0.10 tick) x $0.00061 = $1.51.
+
+---
+
 ## [v7.9.51] - 2026-07-22 — XAG-BAZLI LOT KALIBRASYONU (US30/GBPUSD/GBPJPY)
 
 Kullanici karari: "XAG baz alinarak ATR ve lot ayari". SembolDetay script'i
