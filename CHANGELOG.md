@@ -4,6 +4,42 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.50] - 2026-07-22 — 🔴 JPY-QUOTE ATR-USD BUGFIX (kar hedefi 150x sisiyordu)
+
+### Kok sorun (kullanici tespit etti: "sorun baska yerde")
+`UpdateATRAdaptiveTargets` icinde 1 ATR'nin dolar karsiligi soyle hesaplaniyordu:
+```
+atrUSD = atr * contract * refLot;   // YANLIS: quote currency'yi USD saniyor
+```
+Bu formul yalnizca **quote currency = USD** oldugunda dogru. JP225 ve GBPJPY **JPY**
+cinsinden fiyatlanir; sonucu USDJPY'ye (~150) BOLMESI gerekirken bolmuyordu.
+
+**Canli kanit:**
+```
+JP225: EA $28.97 hesapladi | gercek ~$0.19 (@0.12 lot) | oran 152 = USDJPY kuru
+kullanici gozlemi: 1 lot acti, islem degeri ~$0.16  ← script'in $0.17'si DOGRUYDU
+```
+
+### Etki
+JP225'te kar hedefi `0.60 x $28.97 = $17.4` set ediliyordu ama 1 lotta 1 ATR ~$1.6
+kazandiriyor → hedefe **~11 ATR** gerekiyor, islem asla kapanmiyor, grid sisiyor
+(ETH'yi cikardigimiz sorunun gizli hali). **Tum JPY ciftlerini etkiliyordu**
+(GBPJPY dahil — kullanici ekledi).
+
+### Cozum
+`atrUSD = (atr / tickSize) * tickValue * refLot`. `SYMBOL_TRADE_TICK_VALUE` hesap
+para birimi (USD) cinsindendir, dönüsümu ZATEN icerir. sprUSD de ayni sekilde.
+**USD-quoted sembollerde iki formul AYNI sonucu verir** (BTC/XAU/XAG/US30/GBPUSD
+degismez) — sadece non-USD quote'ta duzelir. tickValue yoksa eski formule fallback.
+
+### Neden simdiye kadar gorulmedi
+Tum aktif semboller USD-quoted'ti (BTC/XAU/XAG/EUR/GBP/USTEC/US30). JPY-quoted ilk
+kez GBPJPY+JP225 ile eklendi (07-22) ve bug ortaya cikti. ATR olcum scripti de ayni
+dogru degeri ($0.17) veriyordu ama yanlislikla "bozuk" sanildi — EA'nin $28.97'si
+yaniltmisti.
+
+---
+
 ## [v7.9.49] - 2026-07-22 — YOL-A LOG SPAM FIX + JP225 MIN-LOT RISKI TESPITI
 
 ### Log spam + yaniltici mesaj (BTC'de 2169 kez/gun)
