@@ -4,6 +4,34 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.58] - 2026-07-22 — CHART INPUT OVERRIDE ZORLA (ATR cagri kaldirildi, DD 80 sabit)
+
+Canli kanit: v7.9.57 kod yuklu ama log'da ATR-ADAPTIF cikmaya devam etti + DDS tavan 20
+gorunuyordu. Sebep KLASIK CHART INPUT OVERRIDE (memory v7.9.30 dersi): MT5 EA input
+setini chart cache'inde tutar, Config default'unu ezer.
+```
+EnableATRAdaptiveTP: Config false, chart TRUE -> ATR hala calisti
+DDScalp_MaxDDPct:    Config 80,    chart 20   -> DD tavan %20
+```
+
+COZUM (input'a guvenme, KULLANIMI zorla):
+1. `UpdateATRAdaptiveTargets()` cagrisi YORUMA ALINDI -> input ne olursa olsun ATR
+   calismaz. SPM close sabit profil degeri (hizli realize).
+2. `DDScalp_MaxDDPct` -> DrawdownScalp.mqh'de 5 kullanim **80.0 sabit** -> DD tavan
+   kesin %80 (chart input bypass).
+3. `SPM_TriggerLoss` input -4 -> -5 (log tutarliligi + DEFAULT profil fallback).
+
+Artik kaldir+ekle GEREKMEZ, kapat-ac yeterli (kod zorluyor).
+
+### Kullaniciya not: LOT tier4 DOKUNULMADI
+v7.9.57'de sadece ApplyBalanceTierScaling'deki **tetik** olceklemesi (spmTriggerLoss
+*=1.2) kaldirildi. **Lot tier sistemi (lotTier1-4, $1000+ -> lotTier4) ayri ve
+CALISIYOR** (GetSymbolProfile'da, ApplyBalanceTierScaling'de degil). Kar hedefi
+olcekleme (anaClose *=1.4 vb) de duruyor. Sadece TETIK sabit -5 oldu.
+
+Derleme 0 hata.
+
+Co-Authored-By: ByTamer and Claude <info@bytamer.com>
 ## [v7.9.57] - 2026-07-22 — SPM TETIK SABIT -5 (ATR kapali, tier4 tam -5)
 
 Kullanici: "kucuk SPM girisleri ile hizli kar realize ediliyordu. tier4'te tum SPM
