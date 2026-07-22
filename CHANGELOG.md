@@ -4,6 +4,26 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.59] - 2026-07-22 — SPM LOT CARPANI KADEMELI 1.1-1.5 (KURAL, degismez)
+
+Kullanici KURALI: "SPM carpanlari 1.1, 1.2, 1.3, 1.4, 1.5 olacak. Bu bir kural,
+degismeyecek." Onceki spmLotBase=2.0 ile ilk SPM ANA'nin ~2x'i aciliyordu (cok agresif
+baslangic). Formul: `multiplier = spmLotBase + (layer-1)*spmLotIncrement`, cap.
+
+9 profilde: **spmLotBase 2.0 -> 1.1, spmLotCap 2.4 -> 1.5** (increment 0.1 zaten dogru).
+Seri: SPM1=1.1x · SPM2=1.2x · SPM3=1.3x · SPM4=1.4x · SPM5+=1.5x (cap).
+
+Sonuc: SPM'ler ANA'ya cok daha yakin lotla baslar (2x degil 1.1x), kademeli buyur.
+Risk kontrollu, birikim yavas, whipsaw'da daha az maruziyet.
+
+### ADX grid esigi DUSURULMEDI (kullanici sorusu: risk artar mi -> EVET)
+Yatay piyasada SPM2 ADX<25 ile acilamiyor (234 kez 18:00 sonrasi). Esigi 25->20
+dusurmek whipsaw riskini artirir (zayif trendde grid = yon degisiminde ters zarar).
+ADX 25 KORUNDU — piyasa trend kazaninca SPM'ler zaten acilir.
+
+Derleme 0 hata.
+
+Co-Authored-By: ByTamer and Claude <info@bytamer.com>
 ## [v7.9.58] - 2026-07-22 — CHART INPUT OVERRIDE ZORLA (ATR cagri kaldirildi, DD 80 sabit)
 
 Canli kanit: v7.9.57 kod yuklu ama log'da ATR-ADAPTIF cikmaya devam etti + DDS tavan 20
