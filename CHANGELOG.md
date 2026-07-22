@@ -4,6 +4,30 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.57] - 2026-07-22 — SPM TETIK SABIT -5 (ATR kapali, tier4 tam -5)
+
+Kullanici: "kucuk SPM girisleri ile hizli kar realize ediliyordu. tier4'te tum SPM
+girislerini -5 yap, ATR'ye gore olmasin. zigzag+DDS daha aktif calisir, toparlanir.
+sen bunu daha once kanitladin — SPM -4/-5 iken cok daha hizli kazanclar olmustu."
+
+3 degisiklik:
+1. **EnableATRAdaptiveTP = false** — ATR-adaptif TP kapatildi (SPM close ATR ile
+   buyumesin, sabit profil degerleri). Kullanici "ATR'ye gore olmasin".
+2. **Tum profil spmTriggerLoss + spm2TriggerLoss = -5.0** (9+10 deger). XAG -5.83->-5,
+   forex/endeks -4->-5, BTC -5 ayni. "tum sembollerde".
+3. **Tier4 tetik olceklemesi KALDIRILDI** (`spmTriggerLoss *= 1.2` + spm2 aynisi).
+   Yoksa -5 x 1.2 = -6 olurdu; artik tier4'te TAM -5.
+
+Mantik: SPM erken (-5) tetiklenir -> zigzag grid + DDS daha aktif -> kucuk hizli
+realize -> drawdown toparlanir. Referans: ea_spm_tetik_kalibrasyon (SPM -4 tekduze
+hizli kasa). ATR-adaptif (v7.9.36-50) SPM close'u buyutup realize'i geciktiriyordu.
+
+NOT: v7.9.50 JPY-quote tickValue duzeltmesi ATR-adaptif icindeydi; ATR kapali olunca
+o kod yolu calismaz ama JPY sembol lot/risk hesabi etkilenmez (ayri).
+
+Derleme 0 hata.
+
+Co-Authored-By: ByTamer and Claude <info@bytamer.com>
 ## [v7.9.56] - 2026-07-22 — DDS MaxDD TAVANI 20 -> 80 (yuksek-DD kurtarma)
 
 Kullanici: "dd %80 yap, digerlerini elleme, takip edelim". BTC DD %45-57'de DDS
