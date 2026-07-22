@@ -4,6 +4,29 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.48] - 2026-07-22 — CANLI SPREAD KALIBRASYONU 2 (piyasa acik olcumu)
+
+05:00 TR sonrasi (Tokyo/Londra acik) kullanicidan gelen GERCEK spread olcumleriyle
+toleranslar daraltildi. Onceki degerler gece/tahmin bazliydi ve fazla genisti.
+
+| Sembol | eski tol. | yeni tol. | aktif olcum | gece | mantik |
+|---|---|---|---|---|---|
+| **GBPJPY** | 60 | **45** | **21** | 167/303 | 60 tahmindi, gercek cok dar; 45 aktif seansi gecirir, gece patlamasini engeller |
+| **JP225** | 80 | **50** | **34** | 71 | 50 (max 57.5) aktif seansi gecirir, olu-saat 71'ini engeller |
+| **US30** | 45 | **42** | **32** | 35 | 42 (max 48) gecirir, NFP/FOMC patlamasini engeller |
+| GBPUSD | 12 | **12** | **10** | 59 | olcum uyumlu, kullanici karari — DEGISMEDI |
+
+### Prensip
+Tolerans = aktif-seans spread'i + makul pay; ama **olu-saat / haber patlamasi
+spread'ini ENGELLE**. O spread'lerde islem maliyeti kar hedefine yaklasiyor
+(GBPJPY 167 puan = 0.10 lotta ~$11 ~ kar hedefi). Sembolu kisitlamak degil,
+karsiz saatlerde islem acmasini onlemek.
+
+NOT: lot ince ayari ($/ATR) BEKLIYOR — ATR-adaptif loglari pozisyon acilinca gelecek,
+o zaman GBPJPY (0.10) ve JP225 (0.12) lotlari olcumle kesinlestirilecek.
+
+---
+
 ## [v7.9.47] - 2026-07-22 — ONCU VERI KAPSAMI: CAPRAZ + ENDEKS (VADELI KAYNAK)
 
 ### "kapsam disi" uyarisinin gercek sebebi
