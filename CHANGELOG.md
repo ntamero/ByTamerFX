@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.56] - 2026-07-22 — DDS MaxDD TAVANI 20 -> 80 (yuksek-DD kurtarma)
+
+Kullanici: "dd %80 yap, digerlerini elleme, takip edelim". BTC DD %45-57'de DDS
+`hesap cok batti > tavan %20` diye HIC girmiyordu. %80 tavan ile yuksek-DD'de de
+scalp acabilir → BTC (ve tum sembol) kurtarma.
+
+**TEK DEGISIKLIK:** `DDScalp_MaxDDPct` 20.0 -> 80.0. Baska hicbir sey degismedi.
+
+UYARI: v7.9.13 liq dersinin gevsemesi — yuksek DD'de DDS = daha fazla pozisyon =
+liq riski artabilir. MinDD alt tavan (3) korundu. Takip edilecek.
+
+---
+
 ## [v7.9.55] - 2026-07-22 — US30 LOT GERI CEKILDI (XAG kalibrasyonu DD %45 yapti)
 
 ### Canli sonuc: US30 XAG-lotu felaket floating uretti
