@@ -4,6 +4,39 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.55] - 2026-07-22 — US30 LOT GERI CEKILDI (XAG kalibrasyonu DD %45 yapti)
+
+### Canli sonuc: US30 XAG-lotu felaket floating uretti
+v7.9.51'de US30'u XAG bandina ($37/ATR) cikarmak icin lot 0.12->0.70 yapilmisti.
+Canli sonuc (07-22, aktif seans):
+```
+US30 BUY=3 (1.30 lot: ANA 0.70 + SPM'ler) — toplam hacmin ~%80'i
+piyasa ~400 puan dustu -> US30 TEK BASINA ~-$500 floating
+hesap: Bakiye $1143 / Varlik $628 = DD %45 (sabah %19'du)
+```
+**US30 dolar yogunlugu dusuk** ($22/ATR/lot); XAG'a $/ATR eslemek ASIRI lot demek,
+tek ters harekette puan-bazli buyuk zarar. Eski 0.12'de ayni dusus ~-$48 olurdu.
+Bu NOTIONAL TAVANI dersinin (v7.9.25) tekrari.
+
+**Lot geri cekildi: tier 0.10/0.12/0.15/0.20** (eski 0.12'ye yakin).
+DERS: **XAG-bazli $/ATR kalibrasyonu DUSUK-yogunluklu sembollerde (US30/JP225)
+TEHLIKELI** — sadece XAU/BTC gibi benzer-yogunluklu sembollerde guvenli.
+
+### SIG-TRACE teshis kaldirildi (isini gordu)
+GBPUSD `yon=SELL skor=51` donduruyor — NONE DEGIL. Onceki acmama gecici (cooldown/
+margin penceresi) idi; GBPUSD SELL=0.15 lot ACTI. "NONE celiskisi" hipotezi curudu.
+Teshis logu kaldirildi.
+
+### Dunku (7.9.38) performanstan fark: NEDEN
+1. US30 yuksek lot (0.70) — DD %45'in ana kaynagi [DUZELTILDI]
+2. Tek-yon BUY yigilma (5 sembolun 4'u BUY) + piyasa dususu — YAPISAL (sembol-arasi
+   denge yok). Piyasa toparlaniyor ("Mum ANA BUY yonune dondu" tum sembollerde).
+
+NOT: mevcut US30 1.30 lot pozisyonu owner kurali geregi KAPATILMADI (zararina satis
+yasak); kurtarma bekliyor. Lot ayari sadece YENI pozisyonlari etkiler.
+
+---
+
 ## [v7.9.54] - 2026-07-22 — SIG-TRACE TESHIS LOGU (GBPUSD neden acmiyor)
 
 Kullanici karari: "once kesin teshis". GBPUSD SELL[60] guclu ama ANA acmiyor,
