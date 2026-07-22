@@ -4,6 +4,34 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.49] - 2026-07-22 — YOL-A LOG SPAM FIX + JP225 MIN-LOT RISKI TESPITI
+
+### Log spam + yaniltici mesaj (BTC'de 2169 kez/gun)
+`YOL-A TIMEOUT (0s > 21600s)` her tick basiliyordu. Mesaj mantiksizdi (0 saniye
+21600'den buyuk degil). Sebep: bloga iki yoldan giriliyor —
+(a) gercek timeout (yolAWait >= 21600), (b) ANA toparlanmiyor (yolAWait 0 olsa da
+YOL-B'ye dus). (b) durumunda "TIMEOUT" yazmak yanlisti. Artik dogru mesaj +
+120sn rate limit. **Davranis DEGISMEDI, sadece log.**
+
+### JP225 MIN-LOT RISKI (kullanici tespiti + dogrulama)
+Kullanici "JP225 lot dusuk" dedi — GERCEK TAM TERSI:
+```
+[LOT-JP225m] MinLot=1.00     <- broker JP225'te minimum 1.00 lot dayatiyor
+EA 0.12 hesapliyor ama broker 1.00'a zorluyor
+```
+Gercek risk: $/ATR @1.00 = $28.97 x (1.00/0.12) = ~$241/ATR = BTC'nin ($15.81) **15 KATI**.
+$1000 hesapta tek islemin 1 ATR ters hareketi = -$241 = **%24 drawdown**. SPM grid'i
+de 1.0+ lotla katlanir. ETH'yi cikardigimiz notional sorununun daha kotusu.
+**ONERI: JP225 bu hesap boyutu icin uygunsuz, chart'tan kaldirilmali** ($5000+ sermayede
+mantikli). Min lot 1.0 broker kurali, asagi cekilmez.
+
+### ATR olcum scripti dersi
+`BytamerFX_ATROlc` endeks CFD'lerinde tickValue'yu bozuk okuyordu (JP225 $0.17 imkansiz).
+En guvenilir kaynak: EA'nin kendi `ATR-ADAPTIF HEDEF` logu (broker gercek kar hesabi).
+JP225 gercegi: $28.97/ATR @0.12 — ama ACILAN lot 1.00 oldugu icin efektif $241/ATR.
+
+---
+
 ## [v7.9.48] - 2026-07-22 — CANLI SPREAD KALIBRASYONU 2 (piyasa acik olcumu)
 
 05:00 TR sonrasi (Tokyo/Londra acik) kullanicidan gelen GERCEK spread olcumleriyle
