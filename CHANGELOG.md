@@ -4,6 +4,30 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.60] - 2026-07-22 — TAM 7.9.38 DONUS (SPM 2.0, ATR acik, DDS 20)
+
+Kullanici karari (2 soru onayi): "7.9.38 tam geri gelmeli". Bugunku 3 ayar 7.9.38'e
+donduruldu:
+1. **SPM lot carpani 1.1-1.5 -> 2.0/2.4** (9 profil). 7.9.38'deki spmLotBase=2.0
+   (ilk SPM ANA'nin 2x'i, hizli FIFO/kasa). Kademeli 1.1-1.5 kurali IPTAL.
+2. **ATR-adaptif TP KAPALI -> ACIK.** EnableATRAdaptiveTP=true + UpdateATRAdaptiveTargets()
+   cagrisi geri acildi. SPM close ATR ile genisler (7.9.38 davranisi).
+3. **DDS tavan 80 -> 20.** DDScalp_MaxDDPct input geri (DrawdownScalp'ta 80 sabit
+   kaldirildi) + Config 20. v7.9.13 liq korumasi geri aktif.
+
+**SPM tetik -5 KORUNDU** (kullanicinin ayri kanitlanmis karari, bu donuse dahil degil).
+BTC H1 fix (v7.9.41) + JPY-quote fix (v7.9.50) + US30 lot 0.20 de KORUNDU (7.9.38
+ustune iyilestirme, geri alinmadi).
+
+NOT: chart'taki eski input'lar (ATR true, DDS 20) zaten 7.9.38 degerleriydi -> chart
+override sorunu kendiliginden cozuldu.
+
+Bilinen acik: XAG rescue hedge 0.01 lot Hata=10014 (invalid volume) — ayri konu,
+sonra ele alinacak.
+
+Derleme 0 hata.
+
+Co-Authored-By: ByTamer and Claude <info@bytamer.com>
 ## [v7.9.59] - 2026-07-22 — SPM LOT CARPANI KADEMELI 1.1-1.5 (KURAL, degismez)
 
 Kullanici KURALI: "SPM carpanlari 1.1, 1.2, 1.3, 1.4, 1.5 olacak. Bu bir kural,
