@@ -4,6 +4,17 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.65] - 2026-07-24 — DDS MaxDD TAVANI 20 -> 50
+
+Kullanici karari. Sunucu hesabi (250069384) DD %21.8 iken DDS tavan %20 oldugu icin
+KILITLIYDI (XAG -$146 floating kurtarmasina katki veremiyordu). 50 ile yuksek-DD'de
+scalp acabilir.
+
+TEK DEGISIKLIK: DDScalp_MaxDDPct 20.0 -> 50.0. MinDD (3) ve diger tum 7.9.38 ayarlari
+(SPM 2.0 carpani, ATR-adaptif acik, tetik -5) DOKUNULMADI.
+
+---
+
 ## [v7.9.64] - 2026-07-23 — DASHBOARDURL BYTAMER.COM ZORLANDI (terminal baglanti fix)
 
 Kullanici: 250069384 kullanirken veriler geliyordu, terminal sag ustte baglanti yok.
