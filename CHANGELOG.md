@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.62] - 2026-07-22 — SPM TETIK -5 SABIT TUM TIER'LARDA
+
+Kullanici: "tier1-2-3-4 hepsinde tetik -5 olsun." Tier4'te v7.9.57'de zaten
+kaldirilmisti; simdi tier2 ($200-500) ve tier3 ($500-1K) bloklarindaki
+`spmTriggerLoss *= 1.15` + `spm2TriggerLoss *= 1.15` de KALDIRILDI.
+
+Onceki: tier4=-5, tier2/3=-5.75 (tutarsiz). Simdi: TUM tier'larda tetik SABIT -5.
+Tier1 zaten baz (-5). SPM tum bakiyelerde ayni erken tetikle acar (dusuk deposit
+tutarliligi — sunucu icin onemli).
+
+Derleme 0 hata.
+
+Co-Authored-By: ByTamer and Claude <info@bytamer.com>
 ## [v7.9.61] - 2026-07-22 — ATR-ADAPTIF CHART OVERRIDE BYPASS (7.9.38 garanti)
 
 Kullanici: "7.9.38 calisma sekli ne ise aynisi olsun, karlilik ve isleyis mukemmeldi."
