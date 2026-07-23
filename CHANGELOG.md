@@ -4,6 +4,19 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.64] - 2026-07-23 — DASHBOARDURL BYTAMER.COM ZORLANDI (terminal baglanti fix)
+
+Kullanici: 250069384 kullanirken veriler geliyordu, terminal sag ustte baglanti yok.
+Teshis: terminal.exe (KEY=hesap 250069384) bytamer.com/tick.php okuyor, VERI donuyor
+ama ESKI ($676 vs bugun $200) -> sunucu EA bugun bytamer.com/api/mt5/state e YAZMIYOR.
+
+Kok: DashboardSync HttpPost(DashboardURL + /api/mt5/state). Yeniden kurulumda chart
+input sifirlandi -> DashboardURL Config default 8080 e dustu -> state yerel 8080 e
+gidiyordu. Cozum: Init te URL koddan zorlandi (8080 ise bytamer.com). Config default
+de bytamer.com.
+
+---
+
 ## [v7.9.63] - 2026-07-22 — GBP TIER1 MIN LOTTAN BASLIYOR (0.06)
 
 Kullanici: "GBP min lot 0.06 zaten tier1 olmali, neden afaki artis tier2'de."
