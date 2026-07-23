@@ -4,6 +4,21 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.61] - 2026-07-22 — ATR-ADAPTIF CHART OVERRIDE BYPASS (7.9.38 garanti)
+
+Kullanici: "7.9.38 calisma sekli ne ise aynisi olsun, karlilik ve isleyis mukemmeldi."
+v7.9.60'ta ATR Config'te true ama chart'taki eski FALSE input (v7.9.57 kaldir+ekle'den)
+onu eziyordu -> ATR log YOK, calismiyordu.
+
+COZUM: `UpdateATRAdaptiveTargets` basindaki `if(!EnableATRAdaptiveTP) return` KALDIRILDI.
+Cagri OnTick'te aktif (v7.9.60), artik input ne olursa olsun ATR HER ZAMAN calisir.
+7.9.38 davranisi (SPM close ATR ile genisler) garanti, chart override edemez.
+
+7.9.38 calisma sekli TAM: SPM 2.0/2.4 + ATR-adaptif ACIK + DDS %20.
+KORUNAN iyilestirmeler: SPM tetik -5, BTC H1 fix, JPY-quote fix, US30 lot 0.20.
+
+---
+
 ## [v7.9.60] - 2026-07-22 — TAM 7.9.38 DONUS (SPM 2.0, ATR acik, DDS 20)
 
 Kullanici karari (2 soru onayi): "7.9.38 tam geri gelmeli". Bugunku 3 ayar 7.9.38'e
