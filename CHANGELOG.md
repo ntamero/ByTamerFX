@@ -4,6 +4,20 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.63] - 2026-07-22 — GBP TIER1 MIN LOTTAN BASLIYOR (0.06)
+
+Kullanici: "GBP min lot 0.06 zaten tier1 olmali, neden afaki artis tier2'de."
+Hakli — GBP tier1=0.12 (min lot 0.06'nin 2 KATI) idi. Tier1 (en kucuk hesap) min
+lottan baslamali.
+
+GBP tier: **0.06 / 0.12 / 0.24 / 0.30** (onceki 0.12/0.18/0.24/0.30).
+Boylece $200 hesapta (tier2) GBP 0.12 lot (once 0.18) — dusuk deposit guvenli.
+
+NOT: US30'da AYNI sorun var (min 0.05, tier1 0.10). Kullanici sorarsa duzeltilecek.
+
+Derleme 0 hata.
+
+Co-Authored-By: ByTamer and Claude <info@bytamer.com>
 ## [v7.9.62] - 2026-07-22 — SPM TETIK -5 SABIT TUM TIER'LARDA
 
 Kullanici: "tier1-2-3-4 hepsinde tetik -5 olsun." Tier4'te v7.9.57'de zaten
