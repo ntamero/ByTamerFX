@@ -4,6 +4,29 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.68] - 2026-07-25 - SPM CARPANI KADEMELI 1.1-1.5
+
+Kullanici karar sordu; secim: **1.1/1.2/1.3/1.4/1.5** (9 profil, cap 1.5).
+
+### Gerekce - v7.9.66/67 dengeyi degistirdi
+7.9.38'in olculen kari (XAG +$343, XAU +$142, GBP +$128/gun) SPM'lerin COGU ZAMAN
+ACILAMADIGI donemde olustu - ADX blokaji 240 kez engelliyordu. O fren v7.9.66'da
+kalkti, yon karari v7.9.67'de kesinlesti -> SPM'ler artik serbestce aciliyor.
+2.0'i korumak, 7.9.38'in HIC yasamadigi bir maruziyet hizi yaratirdi (ayni carpan +
+cok daha fazla SPM = katlanan risk).
+
+1.1-1.5 avantaji:
+- Kasa yine dolar: daha COK SPM aciliyor, her biri kucuk, toplam besleme benzer.
+- ANA-SPM oran bozuklugu (1:24) YAPISAL olarak cozulur - kullanici bunu isaret etti
+  ("oran korumasi degil, cevap birinci soruda").
+- Hayatta kalma: maruziyet katlanarak degil kademeli buyur.
+
+### CheckMarginEmergency BAGLANMADI
+Olu kod ama icinde TUM KAPAT mantigi var (EnableEmergencyEquityClose ile gated,
+default kapali). Kullanici kurali "onay olmadan close-all yok" geregi dokunulmadi.
+
+---
+
 ## [v7.9.67] - 2026-07-25 - SPM YON KARARI GUC BAZLI (beklemek yok)
 
 Kullanici: trend+signal+mum yonune bakacak, GUC ne tarafa ise ona gore acacak.
