@@ -4,6 +4,24 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.67] - 2026-07-25 - SPM YON KARARI GUC BAZLI (beklemek yok)
+
+Kullanici: trend+signal+mum yonune bakacak, GUC ne tarafa ise ona gore acacak.
+Karar NET ve KESIN olmali, terste kalmamali.
+
+### Eski v7.3.0 oy sisteminin 2 kusuru (liq de ikisi de vurdu)
+1. ANA-vs-TERS ikili oy: hangi yon guclu degil, ANA hakli mi soruyordu.
+2. 1-1 / 0-0 beraberlikte BEKLE + return -> choppy piyasada FELC.
+   Kanit: cok SELL varken trend BUY + signal BUY[45]; SIG oyu +10 marj sartina
+   takildi (45 vs 38 = 7 fark -> notr), oylama 1-1 -> ISLEM ACILMADI.
+
+### Yeni: GUC PUANI
+trend(40) + sinyal(gercek skor x0.30, marj sarti YOK) + mum(30) -> iki yon icin
+ayri puan, BUYUK OLAN KAZANIR. Beklemek yok. Tam esitlikte AZINLIK yonu (tek-yon
+yigilmayi kirar). Layer 3 yapisal hedge + ADX katman limiti korunur.
+
+---
+
 ## [v7.9.66] - 2026-07-25 — LIQ FIX: SPM ADX BLOKAJI + DDS TAVANI KALDIRILDI
 
 Sunucu hesabi 250069384 **LIQ OLDU** ($0.00). Kullanici: "kurtarmak icin saatlerce
