@@ -4,6 +4,37 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.66] - 2026-07-25 — LIQ FIX: SPM ADX BLOKAJI + DDS TAVANI KALDIRILDI
+
+Sunucu hesabi 250069384 **LIQ OLDU** ($0.00). Kullanici: "kurtarmak icin saatlerce
+islem acilamadi, margin yeterliydi ama hesap liq oldu."
+
+### KANIT (07-24 loglari)
+```
+SPM ENGEL      : 272 kez  (240'i "ADX < 25 — trend zayif", ADX 15-23 yatay piyasa)
+DDS tavan BEKLE:  46 kez  (DD %64.6 -> %78.3 -> %87.6 iken tavan %20)
+ISLEM ACILDI   :  11 kez
+equity: $263 -> $47 -> $0   (kurtarma kilitliyken)
+```
+
+### KOK SEBEP 1: olu kod + sabit ADX blokaji (ASIL KATIL)
+`ManageActiveSPMs` Gate 1'de **hardcoded `adxVal < 25 -> return`** vardi. Ama bu satira
+ancak `prevSPMProfit <= triggerLoss` iken gelinir (2711) — yani **buraya gelindiginde
+ZATEN KURTARMA MODUNDAYIZ**. Sabit engel kurtarmayi %100 blokluyordu.
+Daha kotusu: `GetADXGridLimit()` (v3.6.9) tam bu bypass icin yazilmis ama **HICBIR
+YERDEN CAGRILMIYORDU (olu kod)** — bypass aylardir hic devreye girmedi.
+**Duzeltme:** sabit engel yerine `GetADXGridLimit()` katman limiti —
+zayif trendde SIFIR degil SINIRLI kurtarma (ADX<15 -> 2, ADX<25 -> 3, guclu -> 10).
+
+### KOK SEBEP 2: DDS tavani + chart override (3. kez)
+Config'te 50 yapilmisti ama chart input 20'de tutuyordu (log: "tavan 20.0%").
+Kullanici karari: "dds ye bir sinir koyma, firsat bulunca islem acsin."
+**Duzeltme:** `DDS_MAXDD_EFF = 999` **kod sabiti** (chart override edemez), 5 kullanim.
+**KORUNAN:** MinDD(3), minScore, HTF/spike teyidi, KUCUK LOT (tier tabani) —
+sinirsiz lot DEGIL, sinirsiz FIRSAT.
+
+---
+
 ## [v7.9.65] - 2026-07-24 — DDS MaxDD TAVANI 20 -> 50
 
 Kullanici karari. Sunucu hesabi (250069384) DD %21.8 iken DDS tavan %20 oldugu icin
