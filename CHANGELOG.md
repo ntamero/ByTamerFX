@@ -4,6 +4,44 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.69] - 2026-07-26 - BAKIYE KADEMESI DENETIMI
+
+Pazartesi sunucu hesabina (250069384) gecis hazirligi sirasinda bulundu.
+
+### Sorun — kademe olceklemesi DONUYORDU
+`GetSymbolProfile()` -> `ApplyBalanceTierScaling(balance)` zinciri SADECE
+`Initialize()` icinde, yani EA yuklenirken bir kez calisiyordu. Kar hedefleri
+(ANA / SPM / Min / FIFO / quickProfit / peakMin / gridLoss) o andaki bakiyeye
+gore olceklenip sabitleniyordu.
+
+**Canli kanit (07-26, sunucu):** hesapta $0.25 varken EA basladi ->
+`TIER VALUES: ANA=$7.0 SPM=$8.0 Min=$4.0 FIFO=$3.0` — yani $0-200 kademesi,
+hicbir olcekleme yok.
+
+Hesap $1000'e yuklendiginde:
+- **LOTLAR** tier4'e cikar (`GetBalanceTierLot` canli bakiyeyi okur) ✔
+- **HEDEFLER** $0-200 kademesinde KALIR ✘
+
+Sonuc: buyuk lotla acip kucuk hedefte kapatmak. Pozisyon basina risk buyurken
+kar ayni kaliyor — beklenen deger duser.
+
+### Cozum
+`CPositionManager::CheckBalanceTierChange()` — her tick cagrilir, sadece kademe
+ATLAYINCA is yapar (200 / 500 / 1000 esikleri). Profili sifirdan kurar ve
+ATR-adaptif hedefin TABANLARINI da yeniler (yoksa ATR eski tabani kullanirdi).
+Esikler `BalanceTierOf()` ile tek kaynaktan okunur.
+
+### Ayrica
+- **XAU spread tavani 220 -> 230** (kullanici karari). 230 x 1.15 = **264.5**.
+  Hafta sonu olcumu 240 puandi; eski 253 tavani ile pay cok darc.
+  Seans ici ~200 nokta, filtre yine sikida kalir.
+
+### Dokunulmayanlar
+SPM carpanlari (1.1/0.1/1.5), tetik degerleri (-5), ADX grid kapisi, DDS tavani,
+FIFO, lot kademeleri, NO-SL kurali — hicbiri degismedi.
+
+---
+
 ## [v7.9.68] - 2026-07-25 - SPM CARPANI KADEMELI 1.1-1.5
 
 Kullanici karar sordu; secim: **1.1/1.2/1.3/1.4/1.5** (9 profil, cap 1.5).
