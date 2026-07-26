@@ -4,6 +4,49 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.70] - 2026-07-26 - HEDEF OLCEKLEMESI LOT'A BAGLI
+
+Kullanici sordu: *"tier2'ye gecse bile XAU ve XAG'de lot artisi zaten olmuyor.
+ANA neden yukselsin ki?"* — hakliydi.
+
+### Sorun
+`ApplyBalanceTierScaling` kar hedeflerini BAKIYE kademesine gore buyutuyor.
+Altta yatan varsayim: "kademe cikinca lot da buyur". Bu varsayim GBPUSD
+(0.06 -> 0.30), US30 (0.10 -> 0.20), JP225 (6 -> 15) profillerinde DOGRU.
+
+Ama XAU/XAG'da broker lot adimi 0.01 oldugu icin kademe 2 ve 3'te lot
+**0.02'de takili kaliyor** (profil yorumu zaten soyluyordu: `1.1x = 0.022 -> 0.02`).
+
+Sonuc: $200 bakiyede hedef $7.00 -> $9.10 cikiyordu, pozisyon ayni kaliyordu.
+0.02 lot XAU'da $9.10 icin **$4.55/ons** hareket gerekir; $7.00 icin $3.50.
+Kazanmak %30 zorlasiyor, karsiliginda buyuyen bir pozisyon YOK. NO-SL oldugu
+icin bekleme suresi zarar tarafinda da uzuyor.
+
+### Cozum
+Hedef olceklemesi artik LOT olceklemesine bagli:
+
+```
+if(tierLot <= lotTier1) return;   // lot buyumuyor -> hedef de buyumesin
+```
+
+### Etki — sadece tutarsiz durumlar
+
+| profil | lot t1/t2/t3/t4 | sonuc |
+|---|---|---|
+| XAU / XAG / METAL | 0.02/0.02/0.02/0.03 | k2-k3 **tabanda**, k4 olceklenir |
+| INDICES | 0.08/0.08/0.10/0.12 | k2 **tabanda**, k3-k4 olceklenir |
+| ETH · GBPUSD · GBPJPY · US30 · JP225 · FOREX · CRYPTO | her kademe farkli | **degisiklik YOK** |
+
+**Kademe 4 davranisi hicbir sembolde degismedi** — son 60 gunun %84'u orada
+gecti ve kanitlanmis kar orada uretildi (XAU +$785).
+
+### Dokunulmayanlar
+Lot kademeleri (XAU/XAG 0.02/0.02/0.02/0.03), SPM tetik (-5), SPM lot carpani
+(1.1/1.2/1.3/1.4/1.5), FIFO tabani (3.0 + calisma aninda ANA zarari + $5),
+ADX grid kapisi, DDS tavani, NO-SL.
+
+---
+
 ## [v7.9.69] - 2026-07-26 - BAKIYE KADEMESI DENETIMI
 
 Pazartesi sunucu hesabina (250069384) gecis hazirligi sirasinda bulundu.
