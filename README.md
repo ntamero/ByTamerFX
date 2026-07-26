@@ -353,23 +353,23 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
-| v7.9.21 | 2026-07-18 | Live lead-data status on the chart banner (direction/strength, active boost, spike z, weekend gap) |
-| v7.9.24 | 2026-07-19 | Orphan hedge adoption + per-symbol heartbeat — a hedge left behind by a crash is taken back under management instead of drifting |
-| v7.9.25 | 2026-07-19 | Notional exposure ceiling (3x/6x/10x by tier) — caps position *value*, never blocks recovery (falls back to min lot) |
-| v7.9.28 | 2026-07-19 | FIFO wait gated on a confirmed bottom — stops the queue from settling into a falling knife |
-| v7.9.31 | 2026-07-19 | ATR-normalised lot sizing — position size measured in $/ATR so a new symbol inherits calibrated risk |
-| v7.9.36 | 2026-07-20 | **ATR-adaptive profit targets on every symbol — the target breathes with volatility but never drops below its floor** |
-| v7.9.38 | 2026-07-21 | SPM trigger scaled by lot ratio across all profiles |
-| v7.9.44 | 2026-07-22 | SPM cooldown bugfix — the assignment sat inside a comment, so the variable held garbage (measured live: 29 years); GBPJPY/JP225 profiles added |
-| v7.9.50 | 2026-07-22 | **JPY-quote ATR→USD bugfix — targets inflated ~150x on JPY-quoted symbols (JP225 asked $28.97 where reality was $0.19), so those trades could never close** |
-| v7.9.57 | 2026-07-22 | SPM trigger pinned to −5 (ATR scaling off at tier 4) |
-| v7.9.62 | 2026-07-22 | SPM trigger −5 fixed across every balance tier |
-| v7.9.66 | 2026-07-25 | **Liquidation fix — a hard ADX<25 gate blocked the rescue path 240 times while the account bled out; the DD-scalp ceiling was being overridden by a stale chart input** |
-| v7.9.67 | 2026-07-25 | **Strength-based SPM direction — trend, signal score and candle direction each vote with weight; the stronger side wins, no more waiting for agreement** |
-| v7.9.68 | 2026-07-25 | SPM lot multiplier laddered 1.1 → 1.5 (brake removed, exposure balanced) |
-| v7.9.69 | 2026-07-26 | **Balance-tier audit — tier scaling ran only at EA start, so a deposit left profit targets frozen at the old tier while lots grew; targets now re-derive when the tier changes** |
-| **v7.9.70** | **2026-07-26** | **Target scaling tied to lot scaling — the tier multipliers assumed lots grow with balance, but the 0.01 broker lot step pins XAU/XAG at 0.02 through tiers 2–3, so targets rose ~30% against an unchanged position. Targets now hold at base unless the tier's lot actually exceeds the base lot; tier-4 behaviour is untouched** |
 | **v7.9.71** | **2026-07-26** | **FIFO net target raised 3 → 10 on every profile and held flat across all tiers — a $3 settlement was too small to matter. Lot tiers deliberately untouched: the broker's 0.01 volume step makes a finer ladder unrepresentable (verified across 500+ live fills)** |
+| **v7.9.70** | **2026-07-26** | **Target scaling tied to lot scaling — the tier multipliers assumed lots grow with balance, but the 0.01 broker lot step pins XAU/XAG at 0.02 through tiers 2–3, so targets rose ~30% against an unchanged position. Targets now hold at base unless the tier's lot actually exceeds the base lot; tier-4 behaviour is untouched** |
+| v7.9.69 | 2026-07-26 | **Balance-tier audit — tier scaling ran only at EA start, so a deposit left profit targets frozen at the old tier while lots grew; targets now re-derive when the tier changes** |
+| v7.9.68 | 2026-07-25 | SPM lot multiplier laddered 1.1 → 1.5 (brake removed, exposure balanced) |
+| v7.9.67 | 2026-07-25 | **Strength-based SPM direction — trend, signal score and candle direction each vote with weight; the stronger side wins, no more waiting for agreement** |
+| v7.9.66 | 2026-07-25 | **Liquidation fix — a hard ADX<25 gate blocked the rescue path 240 times while the account bled out; the DD-scalp ceiling was being overridden by a stale chart input** |
+| v7.9.62 | 2026-07-22 | SPM trigger −5 fixed across every balance tier |
+| v7.9.57 | 2026-07-22 | SPM trigger pinned to −5 (ATR scaling off at tier 4) |
+| v7.9.50 | 2026-07-22 | **JPY-quote ATR→USD bugfix — targets inflated ~150x on JPY-quoted symbols (JP225 asked $28.97 where reality was $0.19), so those trades could never close** |
+| v7.9.44 | 2026-07-22 | SPM cooldown bugfix — the assignment sat inside a comment, so the variable held garbage (measured live: 29 years); GBPJPY/JP225 profiles added |
+| v7.9.38 | 2026-07-21 | SPM trigger scaled by lot ratio across all profiles |
+| v7.9.36 | 2026-07-20 | **ATR-adaptive profit targets on every symbol — the target breathes with volatility but never drops below its floor** |
+| v7.9.31 | 2026-07-19 | ATR-normalised lot sizing — position size measured in $/ATR so a new symbol inherits calibrated risk |
+| v7.9.28 | 2026-07-19 | FIFO wait gated on a confirmed bottom — stops the queue from settling into a falling knife |
+| v7.9.25 | 2026-07-19 | Notional exposure ceiling (3x/6x/10x by tier) — caps position *value*, never blocks recovery (falls back to min lot) |
+| v7.9.24 | 2026-07-19 | Orphan hedge adoption + per-symbol heartbeat — a hedge left behind by a crash is taken back under management instead of drifting |
+| v7.9.21 | 2026-07-18 | Live lead-data status on the chart banner (direction/strength, active boost, spike z, weekend gap) |
 | **v7.9.20** | **2026-07-18** | **LeadBoost — independent fast feeds (Binance PAXG 1s for gold, NQ=F for USTEC) add ±10 to signal score when leading momentum confirms/opposes (DDS benefits automatically); LeadSpike z-score and weekend-gap prediction run in SHADOW mode (logged, no trades) for a 1-week accuracy audit** |
 | **v7.9.19** | **2026-07-18** | **Fresh-deposit ramp disabled (SPM is MAIN's rescue — blocking it broke system rules); entry quality raised instead: SignalMinScore 47→50, DDScalp_MinScore 50→65** |
 | **v7.9.18** | **2026-07-17** | **Portfolio grid budget — account-wide DD > 15% stops new SPM/DCA layers on ALL symbols (margin is shared; early tier before the 30% full brake); non-EA (manual) floating P/L now shown in brake logs** |
