@@ -10,8 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://bytamer.com/download/bytamerfx-terminal-setup.exe"><img alt="Windows" src="https://img.shields.io/badge/Desktop%20Terminal-Windows-e8590c?style=for-the-badge&logo=windows"></a>
-  <a href="https://bytamer.com/download/bytamerfx.apk"><img alt="Android" src="https://img.shields.io/badge/Android%20App-v1.2.7-3ddc84?style=for-the-badge&logo=android"></a>
+  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-v7.9.69-f7b955?style=for-the-badge&logo=metafilter"></a>
+  <a href="https://bytamer.com/download/bytamerfx-terminal-setup.exe"><img alt="Windows" src="https://img.shields.io/badge/Desktop%20Terminal-v1.22.0-e8590c?style=for-the-badge&logo=windows"></a>
+  <a href="https://bytamer.com/download/bytamerfx.apk"><img alt="Android" src="https://img.shields.io/badge/Android%20App-v1.6.0-3ddc84?style=for-the-badge&logo=android"></a>
   <a href="https://bytamer.com/forex"><img alt="Web" src="https://img.shields.io/badge/Web-bytamer.com%2Fforex-0d1424?style=for-the-badge&logo=googlechrome"></a>
 </p>
 
@@ -21,7 +22,7 @@
 
 ---
 
-## 🖥 Desktop Pro Terminal (Windows)
+## 🖥 Desktop Pro Terminal (Windows) — v1.22.0
 
 <p align="center">
   <img src="screenshots/pro-terminal.png" width="900" alt="BytamerFX Pro Terminal">
@@ -33,19 +34,28 @@ MOOMOO-style dark trading cockpit connected to your live MT5 account:
 - **Charts** — candlesticks (M1/M5/M15/H1), swing peak/dip pivots, BB · SAR · MACD overlays
 - **Order panel** — BUY/SELL with lot presets, open-position management, manual close (protected by a separate trade key)
 - **◉ ÖNCÜ (Lead) strip** — broker-independent fast feeds confirm direction before you click
-- **7 live stat pockets** — today's net, win-rate, money-flow with sparklines
+- **7 live stat pockets** — today's net, win-rate, money-flow with sparklines and hourly profit bars
+- **Decision Chain** — the EA's strength vote rendered live (trend 40 · signal 30 · candle 30) next to the entry gate, so you can see *why* a trade did or didn't open
+- **Collapsible symbol rail** — fold the watchlist to a 38 px strip (`Ctrl+B`); the chart takes the space and your preference is remembered
 - **News engine** — critical-news alert bar, bottom news ticker, economic calendar
 
-**Install:** download → run → login. [`bytamerfx-terminal-setup.exe`](https://bytamer.com/download/bytamerfx-terminal-setup.exe) (~78 MB)
+**Install:** download → run → login. [`bytamerfx-terminal-setup.exe`](https://bytamer.com/download/bytamerfx-terminal-setup.exe) (~78 MB). New versions download, install and relaunch themselves.
 
-## 📱 Android App (v1.2.7)
+## 📱 Android App (v1.6.0)
 
 <img src="screenshots/mobile_app_icon.png" width="72" align="left" alt="Android app icon">
 
-The full terminal in your pocket: equity hero + live equity/balance chart, position P/L bars,
-strategy mix, Fear & Greed gauge, Alpha Engine HUD, 12-indicator signal scores, **trade ticket
-(BUY/SELL + SL/TP + risk-based lot)**, position close / partial close / SL-TP edit,
-price alarms, critical-news notifications, biometric lock and **in-app auto-update**.
+The full terminal in your pocket. **v1.5–1.6 rebuilt the whole surface**: a gradient
+**Pulse hero** with animated equity and a smoothed equity curve, horizontal **symbol pulse**
+cards that flash on every price change, a **live flow strip** of closed trades coloured by
+strategy role, a **position map** where each open trade grows a bar out from centre — profit
+right, loss left — so you feel which trade carries the account, and a drifting **ambience**
+layer whose colour follows your P/L.
+
+Underneath: **Decision Chain** (the EA's v7.9.67 strength vote, shown live), Alpha Engine HUD,
+12-indicator signal scores, **trade ticket (BUY/SELL + SL/TP + risk-based lot)**, position
+close / partial close / SL-TP edit, price alarms, critical-news notifications, biometric lock
+and **in-app auto-update**.
 
 **Install:** download [`bytamerfx.apk`](https://bytamer.com/download/bytamerfx.apk) → allow unknown sources → done. Updates arrive in-app automatically.
 
