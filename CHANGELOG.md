@@ -4,6 +4,28 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.71] - 2026-07-26 - FIFO NET HEDEFI +10
+
+Kullanici karari: *"fifo +10 olacak her kademede ... +3 degeri cok basit kaliyor,
+kazanmak zorundayiz."*
+
+- **9 profilde `fifoNetTarget = 3.0/5.0/7.0 -> 10.0`** (XAU, XAG, Metal, Forex,
+  CryptoAlt, Indices, Energy, BTC dahil).
+- **Kademe olceklemesi FIFO icin KALDIRILDI** — her kademede sabit 10.
+  (Onceden tier2 x1.5, tier3 x1.4, tier4 x1.6 uygulaniyordu.)
+- `SPM_NetTargetUSD = 5.0` **dokunulmadi** — o ayri bir mekanizma:
+  ANA zarardaysa FIFO hedefi = |ANA zarari| + $5.
+- ATR-adaptif hedef 10'u TABAN kabul eder, oynaklik gerektirirse yukari cikarabilir.
+
+### Lot kademeleri — DEGISMEDI
+Kullanici metal icin `0.02 x1.1 / x1.2 / x1.3` merdiveni sordu. Broker lot adimi
+**0.01** oldugu icin 0.022 / 0.024 / 0.026 gonderilemez — 500+ gercek islem tarandi,
+XAU/XAG'de acilmis her lot 0.01'in kati. Profil yorumu bunu zaten soyluyordu:
+`1.1x = 0.022 -> 0.02`. Kullanici: *"broker lot adimlarina uymuyor ise sabit 0.02
+simdiki degerler kalsin."* -> **0.02 / 0.02 / 0.02 / 0.03 aynen korundu.**
+
+---
+
 ## [v7.9.70] - 2026-07-26 - HEDEF OLCEKLEMESI LOT'A BAGLI
 
 Kullanici sordu: *"tier2'ye gecse bile XAU ve XAG'de lot artisi zaten olmuyor.
