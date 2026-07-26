@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-v7.9.69-f7b955?style=for-the-badge&logo=metafilter"></a>
+  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-v7.9.70-f7b955?style=for-the-badge&logo=metafilter"></a>
   <a href="https://bytamer.com/download/bytamerfx-terminal-setup.exe"><img alt="Windows" src="https://img.shields.io/badge/Desktop%20Terminal-v1.22.0-e8590c?style=for-the-badge&logo=windows"></a>
   <a href="https://bytamer.com/download/bytamerfx.apk"><img alt="Android" src="https://img.shields.io/badge/Android%20App-v1.6.0-3ddc84?style=for-the-badge&logo=android"></a>
   <a href="https://bytamer.com/forex"><img alt="Web" src="https://img.shields.io/badge/Web-bytamer.com%2Fforex-0d1424?style=for-the-badge&logo=googlechrome"></a>
@@ -368,6 +368,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 | v7.9.67 | 2026-07-25 | **Strength-based SPM direction — trend, signal score and candle direction each vote with weight; the stronger side wins, no more waiting for agreement** |
 | v7.9.68 | 2026-07-25 | SPM lot multiplier laddered 1.1 → 1.5 (brake removed, exposure balanced) |
 | v7.9.69 | 2026-07-26 | **Balance-tier audit — tier scaling ran only at EA start, so a deposit left profit targets frozen at the old tier while lots grew; targets now re-derive when the tier changes** |
+| **v7.9.70** | **2026-07-26** | **Target scaling tied to lot scaling — the tier multipliers assumed lots grow with balance, but the 0.01 broker lot step pins XAU/XAG at 0.02 through tiers 2–3, so targets rose ~30% against an unchanged position. Targets now hold at base unless the tier's lot actually exceeds the base lot; tier-4 behaviour is untouched** |
 | **v7.9.20** | **2026-07-18** | **LeadBoost — independent fast feeds (Binance PAXG 1s for gold, NQ=F for USTEC) add ±10 to signal score when leading momentum confirms/opposes (DDS benefits automatically); LeadSpike z-score and weekend-gap prediction run in SHADOW mode (logged, no trades) for a 1-week accuracy audit** |
 | **v7.9.19** | **2026-07-18** | **Fresh-deposit ramp disabled (SPM is MAIN's rescue — blocking it broke system rules); entry quality raised instead: SignalMinScore 47→50, DDScalp_MinScore 50→65** |
 | **v7.9.18** | **2026-07-17** | **Portfolio grid budget — account-wide DD > 15% stops new SPM/DCA layers on ALL symbols (margin is shared; early tier before the 30% full brake); non-EA (manual) floating P/L now shown in brake logs** |
