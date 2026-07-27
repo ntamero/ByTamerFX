@@ -4,6 +4,32 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.72] - 2026-07-27 - KADEME DENETIMI ERKEN CIKISLARDAN ONCE
+
+v7.9.69'da eklenen `CheckBalanceTierChange()` **hic calismiyordu.**
+
+Cagri `OnTick()` icinde satir ~826'daydi. Ama satir 770'te su blok var:
+
+```
+if(m_posCount == 0) { ... return; }   // pozisyon yoksa OnTick biter
+```
+
+Hesap BOSKEN OnTick erken donuyor, kademe denetimine ulasamiyordu. Deposit
+aninda hesap tam da bos oldugu icin duzeltme **en kritik anda etkisizdi.**
+
+**Canli kanit (07-27 04:33):** sunucu bakiyesi $0.43 -> $200.43 oldu,
+`[TIER-...] BAKIYE KADEMESI DEGISTI` satiri loga HIC dusmedi.
+
+Cagri `RefreshPositions()`'in hemen arkasina alindi (satir 737); `OnTick`'teki
+ilk `return` satir 802 — artik her kosulda ulasilabilir. Fonksiyon kademe
+degismediyse ilk satirda donuyor, her tick cagrilmasi bedava.
+
+> **Ders (ikinci kez):** v7.9.66'da "bypass yazinca CAGRILDIGINI dogrula"
+> notu dusulmustu. Ayni hata tekrarlandi — kod eklemek yetmiyor, calisma
+> yolunda oldugunu kanitlamak gerekiyor.
+
+---
+
 ## [v7.9.71] - 2026-07-26 - FIFO NET HEDEFI +10
 
 Kullanici karari: *"fifo +10 olacak her kademede ... +3 degeri cok basit kaliyor,

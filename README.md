@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-v7.9.71-f7b955?style=for-the-badge&logo=metafilter"></a>
+  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-v7.9.72-f7b955?style=for-the-badge&logo=metafilter"></a>
   <a href="https://bytamer.com/download/bytamerfx-terminal-setup.exe"><img alt="Windows" src="https://img.shields.io/badge/Desktop%20Terminal-v1.22.0-e8590c?style=for-the-badge&logo=windows"></a>
   <a href="https://bytamer.com/download/bytamerfx.apk"><img alt="Android" src="https://img.shields.io/badge/Android%20App-v1.6.0-3ddc84?style=for-the-badge&logo=android"></a>
   <a href="https://bytamer.com/forex"><img alt="Web" src="https://img.shields.io/badge/Web-bytamer.com%2Fforex-0d1424?style=for-the-badge&logo=googlechrome"></a>
@@ -353,6 +353,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v7.9.72** | **2026-07-27** | **Tier check was unreachable — the v7.9.69 call sat below an `if(no positions) return`, so it never ran while the account was flat, which is exactly the state at deposit time (proven live: $0.43 → $200.43 logged no transition). Moved ahead of every early return** |
 | **v7.9.71** | **2026-07-26** | **FIFO net target raised 3 → 10 on every profile and held flat across all tiers — a $3 settlement was too small to matter. Lot tiers deliberately untouched: the broker's 0.01 volume step makes a finer ladder unrepresentable (verified across 500+ live fills)** |
 | **v7.9.70** | **2026-07-26** | **Target scaling tied to lot scaling — the tier multipliers assumed lots grow with balance, but the 0.01 broker lot step pins XAU/XAG at 0.02 through tiers 2–3, so targets rose ~30% against an unchanged position. Targets now hold at base unless the tier's lot actually exceeds the base lot; tier-4 behaviour is untouched** |
 | v7.9.69 | 2026-07-26 | **Balance-tier audit — tier scaling ran only at EA start, so a deposit left profit targets frozen at the old tier while lots grew; targets now re-derive when the tier changes** |
