@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-v7.9.75-f7b955?style=for-the-badge&logo=metafilter"></a>
+  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-v7.9.79-f7b955?style=for-the-badge&logo=metafilter"></a>
   <a href="https://bytamer.com/download/bytamerfx-terminal-setup.exe"><img alt="Windows" src="https://img.shields.io/badge/Desktop%20Terminal-v1.22.0-e8590c?style=for-the-badge&logo=windows"></a>
   <a href="https://bytamer.com/download/bytamerfx.apk"><img alt="Android" src="https://img.shields.io/badge/Android%20App-v1.6.0-3ddc84?style=for-the-badge&logo=android"></a>
   <a href="https://bytamer.com/forex"><img alt="Web" src="https://img.shields.io/badge/Web-bytamer.com%2Fforex-0d1424?style=for-the-badge&logo=googlechrome"></a>
@@ -353,6 +353,7 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v7.9.79** | **2026-07-29** | **Counter-trade engine — a position past −$15 gets a 1:1 opposite leg, freezing the loss the moment it opens; it escapes either by banking the counter at +$10 or closing the pair at +$4 net. Opened under the isolated scalp magic so the main grid never sees it. First day: 8 counters, 100% win, +$68.95** |
 | **v7.9.75** | **2026-07-29** | **DD-scalp set free — gates added over time made an independent engine depend on ANA/SPM state, and in a grid there is almost always a losing same-direction position, so the rule became "never open". Daily count fell 49 → 0. Thresholds restored to the profitable period and pinned as compile-time constants after a cached chart input was found silently overriding the config** |
 | **v7.9.74** | **2026-07-29** | **Brakes off the recovery path — during the second liquidation the EA attempted recovery 7,951 times in 4.5 hours and a high-drawdown brake blocked every one. Worse, the counter-direction layer is SPM3 and layers are strictly sequential, so blocking SPM1 made hedging structurally impossible** |
 | **v7.9.73** | **2026-07-28** | **Fast vault — ANA/SPM/Min close targets cut to $3 flat across every tier (FIFO stays $10). Post-liquidation analysis: the three XAG positions that emptied the account never once traded in profit, so no target level would have closed them; the binding constraint is silver's 5000-oz contract against a $200 account** |

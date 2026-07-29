@@ -4,6 +4,44 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.76-79] - 2026-07-29 - TERS KARSILIK MOTORU
+
+Kullanici fikri: *"DDS kotuye gidiyorsa ters islemle karsilik vermeli ki zarar
+buyumesin, ters islem ile zarar kara gecsin."* — canli veriyle KANITLANDI:
+ilk gun **8 karsilik, %100 WR, +$68.95**.
+
+### Mekanizma
+Bir pozisyon **−$15**'in altina duser ve karsiligi yoksa **1:1 ters** acilir.
+1:1 oldugu icin cift NET **acildigi anda DONAR** — fiyat nereye giderse gitsin
+zarar BUYUYEMEZ. (Olcum: XAG −$35.10'da hedge edildi, saatler sonra cift −$38.20;
+fark yalnizca spread.)
+
+**Iki cikis yolu**
+- **YOL A** — karsilik tek basina **+$10**'a ulasirsa kasaya alinir, kaynak yalniz
+  kalir; kasadaki kar onun zararini karsilar
+- **YOL B** — fiyat donup kaynak toparlarsa cift NET **+$4**'te ikisi birden kapanir
+
+### Kapsam: ana grid dahil (v7.9.79)
+Karsilik **DAIMA DDS magic'i (+6000)** ile acilir -> ana grid onu HIC gormez;
+promote / renumber / FIFO / hedge-oran mantiklarina sifir mudahale. Cift cozumu
+ticket uzerinden calistigi icin kaynak ister DDS ister ANA/SPM/HEDGE olsun ayni isler.
+`ROLE_HEDGE` olarak eklemek REDDEDILDI — karliyken kapatan iki ayri yonetimi var.
+
+**Canli sonuc (demo, 19:27):** 5 asili ana-grid pozisyonuna aninda karsilik acildi,
+**−$236.08 donduruldu**, korumasiz kalan −$54.29. Marj seviyesi **%946**.
+
+### v7.9.77 — KRITIK BUGFIX
+`HasCounterFor()` icinde `PositionSelectByTicket()` var; MQL5'te bu **secili
+pozisyonu degistirir**. Once cagirip sonra `PositionGetDouble(POSITION_PROFIT)`
+okununca **baska pozisyonun** kari okunuyordu. Belirti: DDS +$12.16'dayken
+QuickTP'ye takilmadi. **Kural: tum degerler kontrollerden ONCE okunur.**
+
+### v7.9.78 — esikler (kullanici)
+`QuickTP 10->8` · `cift net 3->4` · `karsilik kasaya 10` — hepsi `#define`
+(input'tu, chart'a kayitli eski deger Config'i eziyordu).
+
+---
+
 ## [v7.9.75] - 2026-07-29 - DDS BAGIMSIZ: ANA/SPM KAPILARI KALDIRILDI
 
 Kullanici: *"HIGH-DD zaten bagimsiz islem aciyordu. ANA veya SPM'ye bakmadan
