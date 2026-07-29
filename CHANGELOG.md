@@ -4,6 +4,53 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.73] - 2026-07-28 - HIZLI KASA: ANA/SPM/Min +3, FIFO +10
+
+Sunucu hesabi (250069384) $200.43 -> $0.00 liq oldu. Kullanici karari:
+*"sadece FIFO +10 kalsin, digerleri min +3 olsun; kisa karlar ve SPM ile
+kasa hizli doluyordu."*
+
+- `anaCloseProfit` / `spmCloseProfit` / `minCloseProfit` -> **3.0** (29 atama, tum profiller)
+- `fifoNetTarget` -> **10.0** (degismedi, v7.9.71)
+- Bu dortlunun (+ `profitTargetPerPos`) **kademe olceklemesi kaldirildi** (12 carpan) —
+  "+3" HER kademede gecerli.
+
+### Liq analizi — hedefler sucu degil
+Sabah sistem beklendigi gibi calisti: 12 hizli kapanis, **+$64**
+(+9.06 +9.50 +10.20 +8.70 +6.23 +4.99 +4.03 +4.02 +3.89 +3.57 +3.45 +0.60).
+
+Sonra 07:16-07:20 arasinda **uc XAG BUY** acildi (59.737 / 59.695 / 59.787),
+gumus 58.848'e dustu — **$0.94'luk hareket**, toplam 0.05 lot = **250 ons**:
+
+| pozisyon | lot | sonuc |
+|---|---|---|
+| SPM_2 | 0.02 | −$88.90 |
+| HEDGE_B | 0.01 | −$42.35 |
+| DDS_1 | 0.02 | −$93.90 |
+| | | **−$225.15** (hesap $200.43) |
+
+**Bu uc pozisyon hicbir zaman kara gecmedi.** Tepeden alindi, fiyat hic donmedi.
+Yani ANA/SPM hedefi $7 de olsa $3 de olsa kapanmazlardi — hedef degisikligi bu
+liq'i ONLEMEZDI. Ayni gun XAU'nun en buyuk zarari −$19.80 idi.
+
+Kok sebep boyut: XAU'da 0.02 lot = 2 ons, XAG'da 0.02 lot = **100 ons** (kontrat
+100 vs 5000). Gumusun normal gunluk araligi ~%1 = $0.60; $200 hesapta 250 ons
+tasimak tek gunluk normal hareketle silinmek demek.
+
+### ⚠ Bilinen sinir — ATR spread tabani
+ATR-adaptif hedef `max(taban, ATRTarget_SpreadMult x spread$, 0.60 x ATR$)`.
+`ATRTarget_SpreadMult = 3.0` oldugu icin:
+
+| sembol | spread maliyeti (0.02 lot) | 3x taban | istenen $3 |
+|---|---|---|---|
+| XAU | $0.46 | $1.38 | **gecerli** |
+| XAG | $2.80 | **$8.40** | **ezilir** |
+
+XAG'de gercek ANA hedefi yine ~$8.40 olacak. Dusurmek icin `ATRTarget_SpreadMult`
+azaltilmali (1.5 -> $4.20) — kullanici karari bekliyor.
+
+---
+
 ## [v7.9.72] - 2026-07-27 - KADEME DENETIMI ERKEN CIKISLARDAN ONCE
 
 v7.9.69'da eklenen `CheckBalanceTierChange()` **hic calismiyordu.**
