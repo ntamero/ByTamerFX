@@ -4,6 +4,76 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [v7.9.75] - 2026-07-29 - DDS BAGIMSIZ: ANA/SPM KAPILARI KALDIRILDI
+
+Kullanici: *"HIGH-DD zaten bagimsiz islem aciyordu. ANA veya SPM'ye bakmadan
+yuksek drawdown gelince acar, yuksek karlari kisa surede kasaya koyardi.
+Son 7 gundur DDS islemleri acilmiyor."* — olcum onu dogruladi.
+
+### DDS aktivitesinin cokusu
+| tarih | islem | net | kazanan | MinScore |
+|---|---|---|---|---|
+| **07-13** | **49** | **+$360.66** | **48/49** | **50** |
+| 07-16 | 31 | +$60.41 | 25 | 50 |
+| 07-19 | — | — | — | **65** (v7.9.19'da yukseltildi) |
+| 07-20 | 13 | −$48.60 | 10 | 58 |
+| 07-22 | 30 | −$7.64 | 23 | 55 |
+| 07-24 | 3 | −$73.19 | 0 | 55 |
+| 07-25 / 26 | **0** | — | — | 55 |
+| 07-27 | 1 | −$93.90 | 0 | 55 |
+| 07-28 / 29 | **0** | — | — | 55 |
+
+Esik 50 -> 65 yapildi, sonra 58 ve 55'e cekildi ama **hic 50'ye donmedi**.
+
+### Kaldirilan kapilar
+DDS'e zamanla ANA/SPM durumuna BAKAN kapilar eklendi; bu, motorun bagimsizligini
+yok etti. Grid sisteminde ayni yonde zararda pozisyon neredeyse HER ZAMAN bulunur,
+dolayisiyla kural pratikte "DDS hic acmasin" demeye geldi.
+
+- `DDScalp_BlockSameDirLoss` (v7.9.1) — **kod yolu yoruma alindi**
+- `BlockDDSIfRecoverySameDir` (v7.9.2) — **kod yolu yoruma alindi**
+- v7.9.13 ANA/SPM kapisi — zaten v7.9.34'te kapatilmisti
+
+### Chart input override — 3. kez
+`DDScalp_MinScore` Config'de 50 yapildi, log yine **`minScore=55`** gosterdi:
+`input` oldugu icin MT5 chart profilindeki eski deger default'u eziyor.
+(Ayni tuzak: v7.9.61 ATR, v7.9.65 DDS tavani.)
+Cozum — derleme-zamani sabit: `#define DDS_MINSCORE_EFF 50` / `DDS_HTFRELAX_EFF 7.0`.
+Dogrulama: `DOS hazir | minDD=3.0% minScore=50` ✔
+
+### Degismeyenler
+IVME filtresi (v7.7.4 — 07-13'te de aktifti), MaxEntries=3, MinDDPct=3.0,
+QuickTP=$10, lot 0.02, ANA/SPM/Min=$3, FIFO=$10, tetik −5.
+
+---
+
+## [v7.9.74] - 2026-07-29 - KURTARMA YOLUNDAKI FRENLER KALDIRILDI
+
+Ikinci liq (07-27, $200.43 -> $0) sonrasi. Kullanici: *"koruma amacli yapalim
+derken liq oluyoruz."*
+
+**Olculen kilit (07:42-12:11, 4.5 saat, XAG):**
+| kapi | kez |
+|---|---|
+| SPM1 TETIK (kurtarma denemesi) | **7.951** |
+| HIGH-DD FREN (hepsini kesti, hic kalkmadi) | 98 log |
+| REV-GATE | 39 |
+| SPM3 = TERS YON katmani | **sadece 2** (ADX 24.3 -> limit 0) |
+
+**Yapisal tuzak:** `PositionManager.mqh:2709` -> `if(!foundPrevSPM) return;`
+SPM3 ancak SPM2 varsa, SPM2 ancak SPM1 varsa acilir. SPM1 = ANA ile AYNI yon;
+ters/hedge yon SPM3. HIGH-DD freni SPM1'i kesince zincir kirildi ve **ters islem
+yapisal olarak imkansiz** hale geldi. 3 BUY pozisyon 4.5 saat tek yonde asili kaldi.
+
+**Duzeltmeler:**
+- `IsHighDDBlocked()` -> `OpenSPM` + `OpenDCA`'dan kaldirildi; sadece
+  `OpenNewMainTrade` (yeni bagimsiz giris) icinde kaldi
+- `GetADXGridLimit()` baypasi artik ANA'nin degil **GRIDIN TOPLAM** zararina bakar
+  (liq aninda ANA −$1.05 iken SPM2 −$19.20 idi -> baypas devreye girmemisti)
+- Normal modda `return 0` yerine -> **pozisyon varken en az 2 katman**
+
+---
+
 ## [v7.9.73] - 2026-07-28 - HIZLI KASA: ANA/SPM/Min +3, FIFO +10
 
 Sunucu hesabi (250069384) $200.43 -> $0.00 liq oldu. Kullanici karari:

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-v7.9.73-f7b955?style=for-the-badge&logo=metafilter"></a>
+  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-v7.9.75-f7b955?style=for-the-badge&logo=metafilter"></a>
   <a href="https://bytamer.com/download/bytamerfx-terminal-setup.exe"><img alt="Windows" src="https://img.shields.io/badge/Desktop%20Terminal-v1.22.0-e8590c?style=for-the-badge&logo=windows"></a>
   <a href="https://bytamer.com/download/bytamerfx.apk"><img alt="Android" src="https://img.shields.io/badge/Android%20App-v1.6.0-3ddc84?style=for-the-badge&logo=android"></a>
   <a href="https://bytamer.com/forex"><img alt="Web" src="https://img.shields.io/badge/Web-bytamer.com%2Fforex-0d1424?style=for-the-badge&logo=googlechrome"></a>
@@ -353,6 +353,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **v7.9.75** | **2026-07-29** | **DD-scalp set free — gates added over time made an independent engine depend on ANA/SPM state, and in a grid there is almost always a losing same-direction position, so the rule became "never open". Daily count fell 49 → 0. Thresholds restored to the profitable period and pinned as compile-time constants after a cached chart input was found silently overriding the config** |
+| **v7.9.74** | **2026-07-29** | **Brakes off the recovery path — during the second liquidation the EA attempted recovery 7,951 times in 4.5 hours and a high-drawdown brake blocked every one. Worse, the counter-direction layer is SPM3 and layers are strictly sequential, so blocking SPM1 made hedging structurally impossible** |
 | **v7.9.73** | **2026-07-28** | **Fast vault — ANA/SPM/Min close targets cut to $3 flat across every tier (FIFO stays $10). Post-liquidation analysis: the three XAG positions that emptied the account never once traded in profit, so no target level would have closed them; the binding constraint is silver's 5000-oz contract against a $200 account** |
 | **v7.9.72** | **2026-07-27** | **Tier check was unreachable — the v7.9.69 call sat below an `if(no positions) return`, so it never ran while the account was flat, which is exactly the state at deposit time (proven live: $0.43 → $200.43 logged no transition). Moved ahead of every early return** |
 | **v7.9.71** | **2026-07-26** | **FIFO net target raised 3 → 10 on every profile and held flat across all tiers — a $3 settlement was too small to matter. Lot tiers deliberately untouched: the broker's 0.01 volume step makes a finer ladder unrepresentable (verified across 500+ live fills)** |
