@@ -4,6 +4,45 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [BTFX-1.1] - 2026-09-14 - DONUS TERS GIRISI
+
+Dönüş kapısı SPM1'i blokladığında pozisyon **çıplak** kalıyordu: üç kurtarma
+yolunun üçü de (SPM1 / RescueHedge / DirBalance) en az bir SPM'in varlığına
+bağlıydı. Koruma freni, kurtarma yolunun kendisini kapatıyordu.
+
+**Kural:** blok yerine ANA lotunda **ters yönde** pozisyon açılır — zarar 1:1
+donar, dönüş hareketinden kâr üretilir, kâr FIFO kasasına girip ANA'yı +$10
+kuralıyla kapatacak yakıtı sağlar.
+
+---
+
+## [BTFX-1.0] - 2026-09-13 - ANA SURUM
+
+7.9.38 tabanı ana sürüm ilan edildi; 7.9.108 emekliye ayrıldı. Sürüm şeması
+`v7.9.x` → **`BTFX-x.y`**.
+
+### SPM kademe çarpanları
+`2.0 / 2.0 / 2.4 / 2.4` → **`1.1 / 1.2 / 1.3 / 1.4`** (kademeli artış kuralı)
+
+| ölçüm (XAU, 5 hafta, yoğun tick) | önce | sonra |
+|---|---|---|
+| ortalama kayıp | −165.55 | **−18.01** |
+| kazanç/kayıp asimetrisi | 1 / 15 | **1 / 2.1** |
+
+### Zirve koruması kâr kapısının dışına
+Tüm kâr koruması `profit >= closeTarget` kapısının arkasındaydı; pozisyon
+eksiye döndüğü an hiçbir koruma çalışamıyordu. Artık zirveden %30 geri
+çekilmede, hedefe ulaşılmamış olsa bile kâr pozitifse kasaya alınır.
+
+### Mum hassasiyeti
+Doji eşiği sembolden bağımsız `point × 3` idi (XAU'da $0.03 — ATR'nin binde
+6'sı), yani mum yönü gürültüydü. Artık **ATR × 0.10**.
+
+### Lot / tier
+XAU · XAG `0.03` sabit · BTC `0.05/0.07/0.08/0.10` · US30 `0.40/0.50/0.70/0.80`
+
+---
+
 ## [v7.9.76-79] - 2026-07-29 - TERS KARSILIK MOTORU
 
 Kullanici fikri: *"DDS kotuye gidiyorsa ters islemle karsilik vermeli ki zarar
