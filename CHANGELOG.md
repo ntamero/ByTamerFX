@@ -4,6 +4,13 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [BTFX-3.9] - 2026-09-24 - BAL VE SPM UST USTE ACMAZ
+
+SPM açıldıktan sonraki 60 sn içinde denge (BAL) pozisyonu açılmaz. Canlı: XAU'da SPM1
+SELL ve yarım saniye sonra BAL_S SELL aynı fiyattan açılmıştı (iki kez).
+
+---
+
 ## [BTFX-3.8] - 2026-09-24 - TERFI KURALI KALICI
 
 Kural terfi eden zararlı ANA kapanana kadar geçerli: SPM1 kârla kapanıp ANA yine
