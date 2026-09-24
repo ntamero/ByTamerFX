@@ -4,6 +4,23 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [BTFX-3.8] - 2026-09-24 - TERFI KURALI KALICI
+
+Kural terfi eden zararlı ANA kapanana kadar geçerli: SPM1 kârla kapanıp ANA yine
+yalnız kalınca ilk SPM yeniden trend + mum + sinyal yönüne açılır (3.6'da tek
+seferlikti; BTC ANA 10 dk korumasız kalmıştı).
+
+---
+
+## [BTFX-3.7] - 2026-09-24 - FIRSAT KACMAZ
+
+- Varlık/bakiye < %50 iken yeni ANA reddi kaldırıldı (2 günde 74 sinyal kaybolmuştu);
+  serbest marj kontrolü duruyor.
+- Broker 10011 ("request error") ile reddederse emir 5 sn sonra bir kez yeniden
+  gönderilir (2 günde 33 red, hepsi XAU).
+
+---
+
 ## [BTFX-3.6] - 2026-09-24 - TERFI SONRASI ANA CIPLAK KALMAZ
 
 3.5 kuralı yalnız tek terfi yolunda çalışıyordu. Canlı: SELL ANA + SPM1 kârla

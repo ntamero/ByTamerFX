@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-BTFX--3.6-f7b955?style=for-the-badge&logo=metafilter"></a>
+  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-BTFX--3.8-f7b955?style=for-the-badge&logo=metafilter"></a>
   <a href="https://bytamer.com/download/bytamerfx-terminal-setup.exe"><img alt="Windows" src="https://img.shields.io/badge/Desktop%20Terminal-v1.22.0-e8590c?style=for-the-badge&logo=windows"></a>
   <a href="https://bytamer.com/download/bytamerfx.apk"><img alt="Android" src="https://img.shields.io/badge/Android%20App-v1.6.0-3ddc84?style=for-the-badge&logo=android"></a>
   <a href="https://bytamer.com/forex"><img alt="Web" src="https://img.shields.io/badge/Web-bytamer.com%2Fforex-0d1424?style=for-the-badge&logo=googlechrome"></a>
@@ -353,6 +353,8 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **BTFX-3.8** | **2026-09-24** | **The promotion rule stays bound to the promoted base until it closes — each time that base is left alone again, the first grid leg again follows trend + candle + signal.** |
+| **BTFX-3.7** | **2026-09-24** | **No missed entries — the equity/balance < 50% entry refusal was removed (74 signals were being dropped in two days); a broker "request error" (10011) is retried once after 5 s.** |
 | **BTFX-3.6** | **2026-09-24** | **Promotion never leaves the base naked — two more promotion paths (grid leg re-assigned as base, and base re-adopted after a restart) now trigger the 3.5 rule; the reversal gate no longer strands a losing promoted base without a trend-side leg.** |
 | **BTFX-3.5** | **2026-09-23** | **Trend-side leg after a losing promotion — when a counter leg that was left behind becomes the base, the next grid leg follows trend + candle + signal strength instead of the base's direction. Measured before: same-side legs deepened the base loss by −$15.2 on average vs −$4.1 for opposite-side legs, and 71% of the vault was spent closing such bases.** |
 | **BTFX-3.4** | **2026-09-23** | **No re-buy at the top — a grid layer closed in profit re-opens in the same direction only after a 1 ATR pullback and a confirming candle (live case: gold re-bought the exact top 29 s after banking it, then carried −$93).** |
