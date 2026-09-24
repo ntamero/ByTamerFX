@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-BTFX--1.1-f7b955?style=for-the-badge&logo=metafilter"></a>
+  <a href="https://bytamer.com/forex"><img alt="EA" src="https://img.shields.io/badge/MT5%20EA-BTFX--3.6-f7b955?style=for-the-badge&logo=metafilter"></a>
   <a href="https://bytamer.com/download/bytamerfx-terminal-setup.exe"><img alt="Windows" src="https://img.shields.io/badge/Desktop%20Terminal-v1.22.0-e8590c?style=for-the-badge&logo=windows"></a>
   <a href="https://bytamer.com/download/bytamerfx.apk"><img alt="Android" src="https://img.shields.io/badge/Android%20App-v1.6.0-3ddc84?style=for-the-badge&logo=android"></a>
   <a href="https://bytamer.com/forex"><img alt="Web" src="https://img.shields.io/badge/Web-bytamer.com%2Fforex-0d1424?style=for-the-badge&logo=googlechrome"></a>
@@ -72,7 +72,7 @@ The same lead strip runs on **desktop, mobile and the MT5 chart banner**:
 When lead momentum strongly agrees with a signal, the EA adds **±10 score (LeadBoost)** —
 early moves become confirmed entries; opposing lead momentum blocks weak ones.
 
-## 🤖 The EA — BytamerFX **BTFX-1.x**
+## 🤖 The EA — BytamerFX **BTFX-3.x**
 
 **15-layer intelligence stack** for crypto/forex/metals/indices on MT5. No stop-loss —
 recovery via **SPM zigzag + Smart FIFO + Hedge** orchestration. The **DOS engine** turns
@@ -353,6 +353,13 @@ See [CHANGELOG.md](CHANGELOG.md) for detailed changes.
 
 | Version | Date | Description |
 |---------|------|-------------|
+| **BTFX-3.6** | **2026-09-24** | **Promotion never leaves the base naked — two more promotion paths (grid leg re-assigned as base, and base re-adopted after a restart) now trigger the 3.5 rule; the reversal gate no longer strands a losing promoted base without a trend-side leg.** |
+| **BTFX-3.5** | **2026-09-23** | **Trend-side leg after a losing promotion — when a counter leg that was left behind becomes the base, the next grid leg follows trend + candle + signal strength instead of the base's direction. Measured before: same-side legs deepened the base loss by −$15.2 on average vs −$4.1 for opposite-side legs, and 71% of the vault was spent closing such bases.** |
+| **BTFX-3.4** | **2026-09-23** | **No re-buy at the top — a grid layer closed in profit re-opens in the same direction only after a 1 ATR pullback and a confirming candle (live case: gold re-bought the exact top 29 s after banking it, then carried −$93).** |
+| **BTFX-3.3** | **2026-09-22** | **Net settlement closes the true worst position — base and hedge were excluded from the candidate list, so 11 of 11 settlements hit the first grid layer. Priority is now loss size, with a safe promotion chain when the base is closed.** |
+| **BTFX-3.2** | **2026-09-22** | **Exit at the peak — peak protection no longer waits for the full target; a 20% pullback from a meaningful peak banks the profit for every role. Measured: 120 positions gave back −$755 from peak before; now ~70% of peak is kept.** |
+| **BTFX-3.1** | **2026-09-22** | **Hedge opening off (largest loss source in broker history) · grid ADX brake threshold 25 → 10.** |
+| **BTFX-3.0** | **2026-09-22** | **Full return to the BTFX-1.x core plus a net exposure cap: total lots on one side ≤ tier × 3, enforced at the single order gate for every opening path.** |
 | **BTFX-1.1** | **2026-09-14** | **Reversal counter-entry — when the reversal gate blocks a same-side grid layer, the position was left completely unprotected (all three recovery paths required an existing grid leg). Now the block opens an opposite-side leg instead: the loss freezes 1:1 and the reversal itself funds the exit.** |
 | **BTFX-1.0** | **2026-09-13** | **Main release. Grid layer multipliers 2.0/2.4 → 1.1/1.2/1.3/1.4 — average loss −$165.55 → −$18.01, win/loss asymmetry 1:15 → 1:2.1. Peak protection moved outside the profit gate. Candle doji threshold made ATR-relative (was a symbol-blind $0.03 on gold).** |
 | **v7.9.79** | **2026-07-29** | **Counter-trade engine — a position past −$15 gets a 1:1 opposite leg, freezing the loss the moment it opens; it escapes either by banking the counter at +$10 or closing the pair at +$4 net. Opened under the isolated scalp magic so the main grid never sees it. First day: 8 counters, 100% win, +$68.95** |

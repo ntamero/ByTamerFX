@@ -4,6 +4,67 @@ All notable changes to this project are documented in this file.
 
 ---
 
+## [BTFX-3.6] - 2026-09-24 - TERFI SONRASI ANA CIPLAK KALMAZ
+
+3.5 kuralı yalnız tek terfi yolunda çalışıyordu. Canlı: SELL ANA + SPM1 kârla
+kapandı, terste kalan BUY başka bir yoldan ANA oldu; SPM1 BUY dönüş kapısına 27
+kez takıldı, trend yönünü açan yol yoktu → ANA 57 dk tek başına. Artık üç terfi
+yolu da (terfi, "ANA yoktu" ataması, yeniden başlatmada geri alma) kuralı
+tetikler; SPM trend + mum + sinyal yönüne açılır.
+
+---
+
+## [BTFX-3.5] - 2026-09-23 - TERFI SONRASI SPM TREND YONUNE
+
+Terste kalan SPM zararla ANA olunca sistem onun yönüne SPM açıyordu → zarardaki
+tarafa yığma. Artık ilk SPM **trend + mum + sinyal gücü** aynı yöndeyse o yöne
+açılır, değilse bekler.
+
+| terfi sonrası ilk SPM | adet | ANA zararı ek derinleşme |
+|---|---|---|
+| ANA ile aynı yön | 12 | ort. −$15.2 |
+| ters yön | 8 | ort. −$4.1 |
+
+Ölçüm dönemi: kasaya giren kârın **%71**'i bu zararlı ANA'ları kapatmaya gitti.
+
+---
+
+## [BTFX-3.4] - 2026-09-23 - TEPEDEN ALIM ENGELI
+
+Kârla kapanan SPM katmanı aynı yöne ancak **1 ATR geri çekilme + mum teyidi** ile
+yeniden açılır. Canlı: XAU tepede +$5 ile kapanan BUY'ı 29 sn sonra aynı tepeden
+yeniden açtı → ANA'ya terfi, −$93.
+
+---
+
+## [BTFX-3.3] - 2026-09-22 - NET SETTLE EN KOTUYU KAPATIR
+
+ANA ve HEDGE aday listesinden çıkarılıyordu; 11 settle'ın 11'i SPM1'e gitti.
+Öncelik artık zarar büyüklüğü; ANA kapanırsa terfi zinciri çalışır.
+
+---
+
+## [BTFX-3.2] - 2026-09-22 - KAR ZIRVEDEN ALINIR
+
+Zirve koruması hedefi beklemiyor: anlamlı zirveden **%20** geri çekilmede tüm
+rollerde kâr kasaya. Önce: 120 pozisyonda zirve +$550 → kapanış −$204.
+Sonra: zirvenin ~%70'i kasada.
+
+---
+
+## [BTFX-3.1] - 2026-09-22 - HEDGE KAPALI + ADX 10
+
+Hedge açılışı kapatıldı (broker kaydında en büyük kaybettiren). SPM ADX freni 25 → 10.
+
+---
+
+## [BTFX-3.0] - 2026-09-22 - BTFX-1.x CEKIRDEGINE DONUS
+
+2.3–2.9 geri alındı; 1.x çekirdeği + **net maruziyet tavanı** (tek yönde lot ≤
+tier × 3, tüm açılış yolları tek emir kapısından geçer).
+
+---
+
 ## [BTFX-1.1] - 2026-09-14 - DONUS TERS GIRISI
 
 Dönüş kapısı SPM1'i blokladığında pozisyon **çıplak** kalıyordu: üç kurtarma
